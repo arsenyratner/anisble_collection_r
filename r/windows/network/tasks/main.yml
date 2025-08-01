@@ -1,0 +1,58 @@
+---
+- name: Disable IPv6
+  ansible.windows.win_powershell:
+    script: |
+      $iface = get-netipaddress -AddressFamily IPv4 -IPAddress {{ ansible_host }} -ErrorAction Stop
+      if ( (Get-NetAdapterBinding -Name $iface.InterfaceAlias -ComponentID 'ms_tcpip6').Enabled ) {
+        Write-Host "Disable IPv6"
+        Disable-NetAdapterBinding -Name $iface.InterfaceAlias -ComponentID 'ms_tcpip6' -Confirm:$false -ErrorAction SilentlyContinue
+      } else {
+        Write-Host "IPv6 disabled alredy"
+        $Ansible.Changed = $false
+      }
+  when: 
+    - win_network_ipv6_disable is true
+
+- name: Converting dynamic to static IPv4 address
+  block:
+    - name: Converting dynamic to static IPv4 address
+      ansible.windows.win_powershell:
+        script: |
+          $iface = get-netipaddress -AddressFamily IPv4 -IPAddress {{ ansible_host }}
+          if ((get-netipaddress -AddressFamily IPv4 -InterfaceIndex $iface.InterfaceIndex).PrefixOrigin -ne "Manual" -and (get-netipaddress -AddressFamily IPv4 -InterfaceIndex $iface.InterfaceIndex).SuffixOrigin -ne "Manual") {
+            $adapter = Get-NetAdapter | ? {$_.InterfaceIndex -eq $iface.InterfaceIndex}
+            If (($adapter | Get-NetIPConfiguration).IPv4Address.IPAddress) {
+                Write-Host "Removing existing IP"
+                $adapter | Remove-NetIPAddress -AddressFamily IPv4 -Confirm:$false -ErrorAction SilentlyContinue
+            }
+            If (($adapter | Get-NetIPConfiguration).Ipv4DefaultGateway) {
+                Write-Host "Removing existing gateway"
+                $adapter | Remove-NetRoute -AddressFamily IPv4 -Confirm:$false -ErrorAction SilentlyContinue
+            }
+            Write-Host "Configuring static IP"
+            New-NetIPAddress -AddressFamily IPv4 -InterfaceIndex $iface.InterfaceIndex -IPAddress $iface.IPAddress -PrefixLength $iface.PrefixLength -DefaultGateway 10.20.4.254 -Confirm:$False
+            Write-Host "Restarting adapter"
+            $adapter | Restart-NetAdapter
+            } else {
+              Write-Host "IPv4 static alredy"
+              $Ansible.Changed = $false
+          }
+      ignore_errors: true
+      async: 100 # Using "fire-and-forget" asynchronous execution for this task, otherwise it will always fail and timeout
+      poll: 0
+    - name: Waiting for adapter restart and reconnect
+      local_action:
+        module: wait_for
+        host: "{{ ansible_host }}"
+        port: 5985
+        delay: 10
+        state: started
+      register: wait_result
+  when: 
+    - win_network_ipv4_method == 'convert'
+
+- name: Seting DNS servers
+  ansible.windows.win_dns_client:
+    adapter_names: '{{ ansible_interfaces[0].connection_name }}'
+    dns_servers: "{{ win_network_dnsservers }}"
+  when: win_network_dnsservers != []

@@ -1,0 +1,2 @@
+win_network_ipv6_disable: true
+win_network_dnsservers: []

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<AnyConnectProfile xmlns="http://schemas.xmlsoap.org/encoding/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://schemas.xmlsoap.org/encoding/ AnyConnectProfile.xsd">
+
+	<ClientInitialization>
+		<UseStartBeforeLogon UserControllable="false">false</UseStartBeforeLogon>
+		<StrictCertificateTrust>false</StrictCertificateTrust>
+		<RestrictPreferenceCaching>false</RestrictPreferenceCaching>
+		<RestrictTunnelProtocols>IPSec</RestrictTunnelProtocols>
+		<BypassDownloader>true</BypassDownloader>
+		<WindowsVPNEstablishment>AllowRemoteUsers</WindowsVPNEstablishment>
+		<CertEnrollmentPin>pinAllowed</CertEnrollmentPin>
+		<CertificateMatch>
+			<KeyUsage>
+				<MatchKey>Digital_Signature</MatchKey>
+			</KeyUsage>
+			<ExtendedKeyUsage>
+				<ExtendedMatchKey>ClientAuth</ExtendedMatchKey>
+			</ExtendedKeyUsage>
+		</CertificateMatch>
+
+		<BackupServerList>
+	            <HostAddress>vpn.ratners.ru</HostAddress>
+	            <HostAddress>vpn2.ratners.ru</HostAddress>
+		</BackupServerList>
+	</ClientInitialization>
+
+	<ServerList>
+		<HostEntry>
+	            <HostName>vpn.ratners.ru</HostName>
+	            <HostAddress>vpn.ratners.ru</HostAddress>
+		</HostEntry>
+	</ServerList>
+</AnyConnectProfile>

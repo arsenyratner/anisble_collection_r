@@ -1,0 +1,38 @@
+function load_video {
+insmod efi_gop
+insmod efi_uga
+insmod video_bochs
+insmod video_cirrus
+insmod all_video
+}
+load_video
+set gfxpayload=keep
+set default=0
+set timeout=60
+insmod gzio
+
+menuentry 'Local Disk' {
+    insmod chain
+    search --set=root --file /EFI/redos/grubx64.efi
+    chainloader /EFI/redos/grubx64.efi
+}
+
+{% for bootmenuitem in pxeserver_bootmenu %}
+menuentry '{{ bootmenuitem.label }}' {
+    linux {{ bootmenuitem.tftppath }}/{{ bootmenuitem.kernel }} ip=dhcp kernel vmlinuz inst.repo={{ bootmenuitem.instrepourl }} inst.ks={{ bootmenuitem.instksurl }}/{{ bootmenuitem.instksfile }}
+    initrd {{ bootmenuitem.tftppath }}/{{ bootmenuitem.initrd }}
+    #end menu
+}
+{% endfor %}
+
+menuentry 'EFI Firmware System Setup' $menuentry_id_option 'uefi-firmware' {
+  fwsetup
+}
+
+menuentry 'Reboot' {
+  reboot
+}
+
+menuentry 'Shutdown' {
+  halt
+}

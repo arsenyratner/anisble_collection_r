@@ -1,0 +1,123 @@
+---
+- name: Distribution specific variables
+  ansible.builtin.include_vars: "{{ ansible_distribution }}.yml"
+
+- name: Distribution specific tasks
+  ansible.builtin.include_tasks: "{{ ansible_distribution }}.yml"
+
+- name: Create dirs
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: "0775"
+    owner: "{{ bind_user }}"
+    group: "{{ bind_group }}"
+  loop: "{{ bind_dirs }}"
+  when: bind_dirs != []
+  notify: Restart bind
+
+- name: "{{ bind_confd_dir }}/options.conf"
+  ansible.builtin.template:
+    src: options.conf
+    dest: "{{ bind_confd_dir }}/options.conf"
+    owner: "{{ bind_user }}"
+    group: "{{ bind_group }}"
+    mode: "0640"
+  notify: Restart bind
+
+- name: "{{ bind_confd_dir }}/acl-trusted.conf"
+  ansible.builtin.copy:
+    dest: "{{ bind_confd_dir }}/acl-trusted.conf"
+    owner: "{{ bind_user }}"
+    group: "{{ bind_group }}"
+    mode: "0640"
+    content: |
+      acl "trusted" {
+      {% for address in bind_acl_trusted %}
+        {{ address }};
+      {% endfor %}
+      };
+  notify: Restart bind
+
+- name: "{{ bind_zoned_dir }}/default-zones.conf"
+  ansible.builtin.copy:
+    dest: "{{ bind_zoned_dir }}/default-zones.conf"
+    owner: "{{ bind_user }}"
+    group: "{{ bind_group }}"
+    mode: "0640"
+    content: "{{ bind_default_zones }}"
+  notify: Restart bind
+
+- name: "{{ bind_confd_dir }}"
+  ansible.builtin.copy:
+    dest: "{{ bind_confd_dir }}/{{ item.name }}.conf"
+    owner: "{{ bind_user }}"
+    group: "{{ bind_group }}"
+    mode: "0640"
+    content: "{{ item.content }}"
+  loop: "{{ bind_confd_files }}"
+  when: bind_confd_files != []
+  notify: Restart bind
+
+- name: "{{ bind_optiond_dir }}"
+  ansible.builtin.copy:
+    dest: "{{ bind_optiond_dir }}/{{ item.name }}.conf"
+    owner: "{{ bind_user }}"
+    group: "{{ bind_group }}"
+    mode: "0640"
+    content: "{{ item.content }}"
+  loop: "{{ bind_optiond_files }}"
+  when: bind_optiond_files != []
+  notify: Restart bind
+
+- name: "{{ bind_zoned_dir }}"
+  ansible.builtin.template:
+    src: zone.conf
+    dest: "{{ zone.conf_file | default(bind_zoned_dir + '/' + zone.name + '.conf') }}"
+    owner: "{{ bind_user }}"
+    group: "{{ bind_group }}"
+    mode: "0644"
+  loop: "{{ bind_zones }}"
+  loop_control:
+    label: "{{ zone.name }}"
+    loop_var: zone
+  when: 
+    - bind_zones is defined
+    - zone.dbonly | default(false) is false
+  notify: Restart bind
+
+- name: "{{ bind_db_dir }}"
+  ansible.builtin.copy:
+    dest: "{{ zone.db_file | default(bind_db_dir + '/' + zone.name) }}"
+    owner: "{{ bind_user }}"
+    group: "{{ bind_group }}"
+    mode: "0644"
+    content: "{{ zone.db }}"
+  loop: "{{ bind_zones }}"
+  loop_control:
+    label: "{{ zone.name }}"
+    loop_var: zone
+  when: zone.db is defined
+  notify: Restart bind
+
+- name: "{{ bind_conf_file }}"
+  ansible.builtin.template:
+    src: bind.conf
+    dest: "{{ bind_conf_file }}"
+    owner: "{{ bind_user }}"
+    group: "{{ bind_group }}"
+    mode: "0640"
+    # validate: "/bin/named-checkconf %s"
+  notify: Restart bind
+
+- name: systemctl enable {{ bind_service_name }}
+  ansible.builtin.systemd:
+    name: "{{ bind_service_name }}"
+    enabled: true
+  when: bind_sambadc_dnsbackend != 'SAMBA_INTERNAL'
+
+- name: systemctl disable {{ bind_service_name }}
+  ansible.builtin.systemd:
+    name: "{{ bind_service_name }}"
+    enabled: false
+  when: bind_sambadc_dnsbackend == 'SAMBA_INTERNAL'

@@ -1,0 +1,8 @@
+postinstall_domainname: ""
+postinstall_hostname: "{{ inventory_hostname_short }}"
+postinstall_packages:
+  - mc
+postinstall_updatepackages: false
+# postinstall_selinux: disabled
+postinstall_serivces_disabled: []
+postinstall_serivces_masked: []

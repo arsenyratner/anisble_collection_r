@@ -1,0 +1,4 @@
+- name: Install packages
+  ansible.builtin.dnf: 
+    name: "{{ ocserv_packages }}"
+    state: present

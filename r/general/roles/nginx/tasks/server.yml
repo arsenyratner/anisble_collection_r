@@ -1,0 +1,42 @@
+- name: create server root
+  ansible.builtin.file:
+    state: directory
+    path: "{{ server.root }}"
+
+- name: "{{ server.ssl.certificate }}"
+  ansible.builtin.stat:
+    path: "{{ server.ssl.certificate }}"
+  register: certificate_result
+  when: server.ssl is defined
+
+- name: "{{ server.ssl.key }}"
+  ansible.builtin.stat:
+    path: "{{ server.ssl.key }}"
+  register: key_result
+  when: server.ssl is defined
+
+- name: "{{ nginx_sites_available_dir }}/{{ server.filename | default(server.server_name) }}"
+  ansible.builtin.template:
+    backup: true
+    src: nginx-server.conf
+    dest: "{{ nginx_sites_available_dir }}/{{ server.filename | default(server.server_name) }}"
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Nginx restart
+
+- name: "{{ server.root }}/index.html"
+  ansible.builtin.copy:
+    dest: "{{ server.root }}/index.html"
+    content: |
+      <h1>{{ server.server_name }}</h1>
+  changed_when: false 
+
+- name: enable {{ nginx_sites_enabled_dir }}/{{ server.linkname | default(server.server_name) }}
+  ansible.builtin.file:
+    state: link
+    src: "{{ nginx_sites_available_dir }}/{{ server.filename | default(server.server_name) }}"
+    dest: "{{ nginx_sites_enabled_dir }}/{{ server.linkname | default(server.server_name) }}"
+  when: 
+    - server.enabled | default(false)
+  notify: Nginx restart

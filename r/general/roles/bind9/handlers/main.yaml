@@ -1,0 +1,9 @@
+---
+- name: Restart bind
+  ansible.builtin.systemd:
+    name: "{{ bind_service_name }}"
+    state: restarted
+    enabled: true
+    daemon_reload: true
+  when: 
+    - bind_sambadc_dnsbackend != 'SAMBA_INTERNAL'

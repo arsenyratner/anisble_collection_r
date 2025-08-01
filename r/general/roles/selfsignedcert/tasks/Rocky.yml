@@ -1,0 +1,4 @@
+- name: install packages
+  ansible.builtin.dnf:
+    name: "{{ openssl_packages }}"
+    state: present

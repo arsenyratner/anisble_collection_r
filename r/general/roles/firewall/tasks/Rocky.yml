@@ -1,0 +1,63 @@
+---
+- name: Check if firewalld is installed (on redhat)
+  ansible.builtin.yum:
+    list: firewalld
+  register: firewall_installed
+
+- name: Disable the firewalld service (on rhel, if configured)
+  ansible.builtin.service:
+    name: firewalld
+    state: stopped
+    enabled: false
+  when:
+    - not ansible_check_mode
+    - firewall_disable_firewalld
+    - firewall_installed.results | selectattr("yumstate", "match", "installed")|list|length > 0
+
+- name: Install iptables centos/rhel 8
+  ansible.builtin.dnf:
+    name:
+      - iptables
+      - iptables-services
+  when: ansible_distribution_major_version|int in [8,9]
+
+- name: Enable firewall on boot
+  ansible.builtin.service:
+    name: iptables
+    enabled: "{{ firewall_enable_on_boot }}"
+  when: not ansible_check_mode
+
+- name: Iptables templates
+  ansible.builtin.template:
+    src: "{{ item }}.j2"
+    dest: "/etc/sysconfig/{{ item }}"
+    owner: root
+    group: root
+    mode: '0600'
+    validate: bash -c 'cat %s | /sbin/{{ item }}-restore --test'
+  loop:
+    - iptables
+    - ip6tables
+  register: iptables_templates
+
+- name: Load new rules
+  ansible.builtin.shell: "set -o pipefail && cat /etc/sysconfig/{{ item }} | {{ item }}-restore --noflush"
+  args:
+    executable: bash
+  loop:
+    - iptables
+    - ip6tables
+  when:
+    - iptables_templates is changed
+    - not firewall_flush_on_change
+
+- name: Restart iptables
+  ansible.builtin.service:
+    name: "{{ item }}"
+    state: restarted
+  loop:
+    - iptables
+    - ip6tables
+  when:
+    - iptables_templates is changed
+    - firewall_flush_on_change

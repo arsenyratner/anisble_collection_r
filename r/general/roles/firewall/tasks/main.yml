@@ -1,0 +1,25 @@
+---
+- name: Distribution specific variables
+  ansible.builtin.include_vars: "{{ distribution }}"
+  loop: 
+    - "{{ ansible_distribution }}.yml"
+  loop_control:
+    loop_var: distribution
+  ignore_errors: true
+  failed_when: false
+
+- name: Distribution specific tasks
+  ansible.builtin.include_tasks:
+    file: "{{ distribution }}"
+  loop: 
+    - "{{ ansible_distribution }}.yml"
+  loop_control:
+    loop_var: distribution
+  ignore_errors: true
+
+- name: sysctl
+  ansible.posix.sysctl:
+    name: "{{ item.name }}"
+    value: "{{ item.value }}"
+  loop: "{{ firewall_default_sysctl + firewall_sysctl }}"
+  when: (firewall_default_sysctl + firewall_sysctl) != []

@@ -1,0 +1,2 @@
+- name: catrust update
+  ansible.builtin.command: "{{ catrust_update_cmd }}"

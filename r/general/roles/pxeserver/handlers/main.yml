@@ -1,0 +1,10 @@
+---
+- name: systemctl reload all
+  ansible.builtin.systemd:
+    daemon_reload: true
+
+- name: start tftp
+  ansible.builtin.systemd:
+    state: restarted
+    enabled: yes 
+    name: tftp

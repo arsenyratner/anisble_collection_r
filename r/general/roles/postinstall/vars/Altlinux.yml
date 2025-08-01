@@ -1,0 +1,18 @@
+postinstall_serivces_disabled:
+  - systemd-resolved.service
+  - altlinux-openresolv.service
+  - altlinux-libresolv.service
+  - altlinux-simpleresolv.service
+  - altlinux-openresolv.path 
+  - altlinux-libresolv.path 
+  - altlinux-simpleresolv.path
+
+postinstall_serivces_masked:
+  - avahi-daemon.service
+  - avahi-daemon.socket
+
+postinstall_control_params:
+      sudo: public
+      su: public
+      sshd-permit-root-login: without_password
+      sshd-password-auth: enabled

@@ -1,0 +1,25 @@
+- name: Install packages
+  community.general.apt_rpm:
+    pkg: "{{ postinstall_packages }}"
+    state: present_not_latest
+
+- name: apt-get dist-upgrade
+  community.general.apt_rpm:
+    update_cache: true
+    dist_upgrade: true
+    update_kernel: true
+  notify: General reboot system
+  when: postinstall_updatepackages is true
+
+- name: Control
+  ansible.builtin.shell: |
+    control {{ param.key }} {{ param.value }}
+    control {{ param.key }}
+  loop: "{{ postinstall_control_params | dict2items }}"
+  loop_control:
+    loop_var: param
+    label: "{{ param.key }}: {{ param.value }}"
+  register: control_result
+  ignore_errors: true
+  changed_when: control_result.stdout != param.value
+  when: postinstall_control_params != {}

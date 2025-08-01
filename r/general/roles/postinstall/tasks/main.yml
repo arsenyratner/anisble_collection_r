@@ -1,0 +1,51 @@
+- name: Distribution specific variables
+  ansible.builtin.include_vars: "{{ ansible_distribution }}.yml"
+
+- name: Distribution specific tasks
+  ansible.builtin.include_tasks:
+    file: "{{ ansible_distribution }}.yml"
+
+- name: Set fqdn
+  ansible.builtin.hostname:
+    name: "{{ postinstall_hostname }}.{{ postinstall_domainname }}"
+    use: systemd
+  when: postinstall_domainname != ""
+
+- name: Set short name
+  ansible.builtin.hostname:
+    name: "{{ postinstall_hostname }}"
+    use: systemd
+  when: postinstall_domainname == ""
+
+- name: Populate service facts
+  ansible.builtin.service_facts:
+
+- name: Disable and stop services
+  ansible.builtin.systemd_service:
+    name: "{{ service }}"
+    state: stopped
+    enabled: false
+  loop: "{{ (postinstall_serivces_disabled + postinstall_serivces_masked) }}"
+  loop_control:
+    loop_var: service
+  when:
+    - ansible_facts.services[service] is defined
+    - ansible_facts.services[service].status == "enabled"
+    - (postinstall_serivces_disabled + postinstall_serivces_masked) != []
+  notify: General reboot system
+
+- name: Mask services
+  ansible.builtin.systemd_service:
+    name: "{{ service }}"
+    masked: true
+  loop: "{{ postinstall_serivces_masked }}"
+  loop_control:
+    loop_var: service
+  when:
+    - ansible_facts.services[service] is defined
+  notify: General reboot system
+
+- name: Set timezone
+  community.general.timezone:
+    name: "{{ postinstall_timezone }}"
+  when: postinstall_timezone is defined

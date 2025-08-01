@@ -1,0 +1,39 @@
+---
+firewall_disable_firewalld: true
+firewall_disable_ufw: true
+firewall_enable_on_boot: true
+
+firewall_policy_input: ACCEPT
+firewall_policy_forward: ACCEPT
+firewall_policy_output: ACCEPT
+
+firewall_log_enabled: true
+firewall_log_level: -m limit --limit 3/min --limit-burst 10
+
+firewall_default_filter_ipv4: "" # |
+#   -A fw4-input -p tcp -m tcp --dport 22 -j ACCEPT
+firewall_default_filter_ipv6: "" # |
+#   -A fw6-input -p tcp -m tcp --dport 22 -j ACCEPT
+
+firewall_filter_ipv4: ''
+firewall_filter_ipv6: ''
+
+firewall_enable_ipv4_forward: false
+firewall_enable_ipv6_forward: false
+
+firewall_flush_on_change: false
+firewall_is_neutron: false
+
+firewall_default_mangle_ipv4: ""
+firewall_mangle_ipv4: ""
+
+firewall_default_nat_ipv4: ""
+firewall_nat_ipv4: ""
+
+firewall_default_sysctl:
+  - name: net.ipv4.ip_forward
+    value: "{{ 1 if firewall_enable_ipv4_forward else 0 }}"
+  - name: net.ipv6.conf.all.forwarding
+    value: "{{ 1 if firewall_enable_ipv6_forward else 0 }}"
+
+firewall_sysctl: []

@@ -1,0 +1,23 @@
+ocserv_fqdn: "{{ ansible_nodename }}"
+ocserv_conf_file: /etc/ocserv/ocserv.conf
+ocserv_users_file: /etc/ocserv/ocpasswd
+ocserv_profile_file: /etc/ocserv/profile.xml
+ocserv_listen_host: "{{ ansible_default_ipv4.address }}"
+ocserv_tcp_port: 443
+ocserv_udp_listen_host: "{{ ansible_default_ipv4.address }}"
+ocserv_udp_port: 443
+ocserv_server_cert: ""
+ocserv_server_key: ""
+ocserv_user: ocserv
+ocserv_group: ocserv 
+ocserv_default_domain: "{{ ansible_domain }}"
+ocserv_ipv4network: ""
+ocserv_nameservers: []
+ocserv_cacert: ""
+ocserv_sysctl:
+  - name: net.ipv6.conf.all.forwarding
+    value: 1
+  - name: net.ipv4.ip_forward
+    value: 1
+ocserv_routes: []
+ocserv_noroutes: []

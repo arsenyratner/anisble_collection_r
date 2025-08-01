@@ -1,0 +1,59 @@
+- name: Distribution specific variables
+  ansible.builtin.include_vars: "{{ ansible_distribution }}.yml"
+
+- name: Distribution specific tasks
+  ansible.builtin.include_tasks:
+    file: "{{ ansible_distribution }}.yml"
+
+- name: create dirs
+  ansible.builtin.file:
+    state: directory
+    path: "{{ item }}"
+  loop: "{{ nginx_dirs }}"
+
+- name: "{{ nginx_conf_file }}"
+  ansible.builtin.template:
+    backup: true
+    src: nginx.conf
+    dest: "{{ nginx_conf_file }}"
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Nginx restart
+
+- name: "{{ nginx_default_root }}/index.html"
+  ansible.builtin.copy:
+    dest: "{{ nginx_default_root }}/index.html"
+    content: |
+      <h1>{{ ansible_default_ipv4.address }}</h1>
+  changed_when: false
+
+- name: disable "{{ nginx_sites_enabled_dir }}/default"
+  ansible.builtin.file:
+    state: absent
+    path: "{{ nginx_sites_enabled_dir }}/default"
+  notify: Nginx restart
+
+- name: Add nginx servers
+  ansible.builtin.include_tasks:
+    file: server.yml
+  loop: "{{ nginx_default_server + nginx_servers }}"
+  loop_control:
+    loop_var: server
+    label: "{{ server.filename | default(server.server_name) }}"
+  when: (nginx_default_server + nginx_servers) != []
+
+# - name: Nginx snippets
+#   ansible.builtin.include_tasks:
+#     file: location.yml
+#   loop: "{{ nginx_location_files }}"
+#   loop_control:
+#     loop_var: location_file
+#     label: "{{ location_file.name }}"
+#   when: nginx_location_files != []
+
+- name: systemctl enable nginx
+  ansible.builtin.systemd_service:
+    name: nginx
+    enabled: true
+  notify: Nginx restart

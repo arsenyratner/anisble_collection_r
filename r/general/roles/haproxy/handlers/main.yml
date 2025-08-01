@@ -1,0 +1,10 @@
+- name: systemct daemon-reload
+  ansible.builtin.systemd_service:
+    daemon_reload : true
+  listen: haproxy daemon-reload
+
+- name: haproxy restart
+  ansible.builtin.systemd_service:
+    name: haproxy
+    state: restarted
+  listen: haproxy daemon-reload

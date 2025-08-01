@@ -1,0 +1,58 @@
+---
+pxeserver_tftproot: /var/lib/tftpboot
+pxeserver_packages:
+  - tftp-server 
+  - nginx 
+  - dnf-plugins-core
+  - grub2-efi-x64-modules
+  - grub2-pc-modules
+  - grub2-tools-extra
+  - shim-ia32
+  # - syslinux 
+  # - grub2-pc
+  # - grub2-efi-x64
+
+pxeserver_dirs_create:
+  - "{{ pxeserver_tftproot }}"
+  # - "{{ pxeserver_tftproot }}/pxelinux.cfg"
+  - "{{ pxeserver_tftproot }}/images"
+  - "{{ pxeserver_tftproot }}/images/redos80"
+  - "{{ pxeserver_tftproot }}/images/redos73"
+
+pxeserver_get_url:
+  # - src: file:///usr/share/syslinux/chain.c32
+  #   dst: "{{ pxeserver_tftproot }}/chain.c32"
+  # - src: file:///usr/share/syslinux/mboot.c32
+  #   dst: "{{ pxeserver_tftproot }}/mboot.c32"
+  # - src: file:///usr/share/syslinux/memdisk
+  #   dst: "{{ pxeserver_tftproot }}/memdisk"
+  # - src: file:///usr/share/syslinux/menu.c32
+  #   dst: "{{ pxeserver_tftproot }}/menu.c32"
+  # - src: file:///usr/share/syslinux/pxelinux.0
+  #   dst: "{{ pxeserver_tftproot }}/pxelinux.0"
+  # - src: file:///usr/share/syslinux/ldlinux.c32
+  #   dst: "{{ pxeserver_tftproot }}/ldlinux.c32"
+  # - src: file:///usr/share/syslinux/libutil.c32
+  #   dst: "{{ pxeserver_tftproot }}/libutil.c32"
+  # - src: file:///root/boot/efi/EFI/BOOT/BOOTX64.EFI
+  #   dst: "{{ pxeserver_tftproot }}/BOOTX64.EFI"
+  # - src: file:///root/boot/efi/EFI/redos/grubx64.efi
+  #   dst: "{{ pxeserver_tftproot }}/grubx64.efi"
+  - src: http://192.168.126.5/pub/iso/redos/8.0/images/pxeboot/initrd.img
+    dst: "{{ pxeserver_tftproot }}/images/redos80/initrd.img"
+  - src: http://192.168.126.5/pub/iso/redos/8.0/images/pxeboot/vmlinuz
+    dst: "{{ pxeserver_tftproot }}/images/redos80/vmlinuz"
+  - src: http://192.168.126.5/pub/iso/redos/7.3/images/pxeboot/initrd.img
+    dst: "{{ pxeserver_tftproot }}/images/redos73/initrd.img"
+  - src: http://192.168.126.5/pub/iso/redos/7.3/images/pxeboot/vmlinuz
+    dst: "{{ pxeserver_tftproot }}/images/redos73/vmlinuz"
+
+pxeserver_bootmenu:
+  - label: REDOS 8.0 minimal VMWARE
+    menulabel: REDOS 8.0 minimal VMWARE
+    tftppath: images/redos80
+    kernel: vmlinuz
+    initrd: initrd.img
+    additional: net.ifnames=0 biosdevname=0
+    instrepourl: http://192.168.126.5/pub/iso/redos/8.0/
+    instksurl: http://192.168.126.5/pub/iso/redos/ks/redos-8.0-minimal.ks

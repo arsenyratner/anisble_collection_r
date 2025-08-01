@@ -1,0 +1,168 @@
+{{ ansible_managed|comment }}
+
+*filter
+:INPUT {{ firewall_policy_input if firewall_policy_input in ['ACCEPT', 'DROP'] else 'ACCEPT' }} [0:0]
+:fw6-before-input - [0:0]
+:fw6-input - [0:0]
+:fw6-after-input - [0:0]
+-F INPUT
+-F fw6-before-input
+-F fw6-input
+-F fw6-after-input
+-A INPUT -j fw6-before-input
+-A INPUT -j fw6-input
+-A INPUT -j fw6-after-input
+
+:FORWARD {{ firewall_policy_forward if firewall_policy_forward in ['ACCEPT', 'DROP'] else 'ACCEPT' }} [0:0]
+:fw6-before-forward - [0:0]
+:fw6-forward - [0:0]
+:fw6-after-forward - [0:0]
+-F FORWARD
+-F fw6-before-forward
+-F fw6-forward
+-F fw6-after-forward
+-A FORWARD -j fw6-before-forward
+-A FORWARD -j fw6-forward
+-A FORWARD -j fw6-after-forward
+
+:OUTPUT {{ firewall_policy_output if firewall_policy_output in ['ACCEPT', 'DROP'] else 'ACCEPT' }} [0:0]
+:fw6-before-output - [0:0]
+:fw6-output - [0:0]
+:fw6-after-output - [0:0]
+-F OUTPUT
+-F fw6-before-output
+-F fw6-output
+-F fw6-after-output
+-A OUTPUT -j fw6-before-output
+-A OUTPUT -j fw6-output
+-A OUTPUT -j fw6-after-output
+
+{% if firewall_policy_input in ['DROP'] %}
+{% if firewall_log_enabled %}
+:fw6-log-deny -
+{% endif %}
+{% endif %}
+
+{% if firewall_policy_input in ['ACCEPT', 'DROP'] %}
+#
+# INPUT RULES
+#
+
+{% if firewall_policy_input in ['DROP'] %}
+-A fw6-before-input -i lo -j ACCEPT
+-A fw6-before-input -m rt --rt-type 0 -j DROP
+-A fw6-before-input -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+{% if firewall_policy_input in ['DROP']  %}
+{% if firewall_log_enabled %}
+-A fw6-before-input -m conntrack --ctstate INVALID {{ firewall_log_level }} -j LOG --log-prefix "[IPT BLOCK INVALID] "
+{% endif %}
+-A fw6-before-input -m conntrack --ctstate INVALID -j {{ firewall_policy_input }}
+{% endif %}
+-A fw6-before-input -p ipv6-icmp -m icmp6 --icmpv6-type 1 -j ACCEPT
+-A fw6-before-input -p ipv6-icmp -m icmp6 --icmpv6-type 2 -j ACCEPT
+-A fw6-before-input -p ipv6-icmp -m icmp6 --icmpv6-type 3 -j ACCEPT
+-A fw6-before-input -p ipv6-icmp -m icmp6 --icmpv6-type 4 -j ACCEPT
+{% if firewall_echo_request_from_ipv6 is defined %}
+-A fw6-before-input -s {{ firewall_echo_request_from_ipv6 }} -p ipv6-icmp -m icmp6 --icmpv6-type 128 -j ACCEPT
+{% else %}
+-A fw6-before-input -p ipv6-icmp -m icmp6 --icmpv6-type 128 -j ACCEPT
+{% endif %}
+-A fw6-before-input -p ipv6-icmp -m icmp6 --icmpv6-type 129 -j ACCEPT
+-A fw6-before-input -p ipv6-icmp -m icmp6 --icmpv6-type 133 -m hl --hl-eq 255 -j ACCEPT
+-A fw6-before-input -p ipv6-icmp -m icmp6 --icmpv6-type 134 -m hl --hl-eq 255 -j ACCEPT
+-A fw6-before-input -p ipv6-icmp -m icmp6 --icmpv6-type 135 -m hl --hl-eq 255 -j ACCEPT
+-A fw6-before-input -p ipv6-icmp -m icmp6 --icmpv6-type 136 -m hl --hl-eq 255 -j ACCEPT
+-A fw6-before-input -p ipv6-icmp -m icmp6 --icmpv6-type 141 -m hl --hl-eq 255 -j ACCEPT
+-A fw6-before-input -p ipv6-icmp -m icmp6 --icmpv6-type 142 -m hl --hl-eq 255 -j ACCEPT
+-A fw6-before-input -p ipv6-icmp -m icmp6 --icmpv6-type 148 -m hl --hl-eq 255 -j ACCEPT
+-A fw6-before-input -p ipv6-icmp -m icmp6 --icmpv6-type 149 -m hl --hl-eq 255 -j ACCEPT
+-A fw6-before-input -p ipv6-icmp -m icmp6 --icmpv6-type 144 -j ACCEPT
+-A fw6-before-input -p ipv6-icmp -m icmp6 --icmpv6-type 145 -j ACCEPT
+-A fw6-before-input -p ipv6-icmp -m icmp6 --icmpv6-type 146 -j ACCEPT
+-A fw6-before-input -p ipv6-icmp -m icmp6 --icmpv6-type 147 -j ACCEPT
+{% endif %}
+
+### Ansible comes here
+
+{% if firewall_policy_input in ['DROP']  %}
+{% if firewall_log_enabled %}
+-A fw6-after-input {{ firewall_log_level }} -j LOG --log-prefix "[IPT BLOCK INPUT] "
+{% endif %}
+{% endif %}
+{% endif %}
+
+{% if firewall_policy_forward in ['ACCEPT', 'DROP'] %}
+#
+# FORWARD RULES
+#
+
+{% if firewall_policy_forward in ['DROP'] %}
+-A fw6-before-forward -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+-A fw6-before-forward -p ipv6-icmp -m icmp6 --icmpv6-type 1 -j ACCEPT
+-A fw6-before-forward -p ipv6-icmp -m icmp6 --icmpv6-type 2 -j ACCEPT
+-A fw6-before-forward -p ipv6-icmp -m icmp6 --icmpv6-type 3 -j ACCEPT
+-A fw6-before-forward -p ipv6-icmp -m icmp6 --icmpv6-type 4 -j ACCEPT
+{% if firewall_echo_request_from_ipv6 is defined %}
+-A fw6-before-forward -s {{ firewall_echo_request_from_ipv6 }} -p ipv6-icmp -m icmp6 --icmpv6-type 128 -j ACCEPT
+{% else %}
+-A fw6-before-forward -p ipv6-icmp -m icmp6 --icmpv6-type 128 -j ACCEPT
+{% endif %}
+-A fw6-before-forward -p ipv6-icmp -m icmp6 --icmpv6-type 129 -j ACCEPT
+{% endif %}
+
+{% if firewall_policy_forward in ['DROP']  %}
+{% if firewall_log_enabled %}
+-A fw6-after-forward {{ firewall_log_level }} -j LOG --log-prefix "[IPT BLOCK FORWARD] "
+{% endif %}
+{% endif %}
+{% endif %}
+
+{% if firewall_policy_output in ['ACCEPT', 'DROP'] %}
+#
+# OUTPUT RULES
+#
+
+{% if firewall_policy_output in ['DROP'] %}
+-A fw6-before-output -o lo -j ACCEPT
+-A fw6-before-output -m rt --rt-type 0 -j DROP
+-A fw6-before-output -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+-A fw6-before-output -p ipv6-icmp -m icmp6 --icmpv6-type 1 -j ACCEPT
+-A fw6-before-output -p ipv6-icmp -m icmp6 --icmpv6-type 2 -j ACCEPT
+-A fw6-before-output -p ipv6-icmp -m icmp6 --icmpv6-type 3 -j ACCEPT
+-A fw6-before-output -p ipv6-icmp -m icmp6 --icmpv6-type 4 -j ACCEPT
+-A fw6-before-output -p ipv6-icmp -m icmp6 --icmpv6-type 133 -m hl --hl-eq 255 -j ACCEPT
+-A fw6-before-output -p ipv6-icmp -m icmp6 --icmpv6-type 136 -m hl --hl-eq 255 -j ACCEPT
+-A fw6-before-output -p ipv6-icmp -m icmp6 --icmpv6-type 135 -m hl --hl-eq 255 -j ACCEPT
+-A fw6-before-output -p ipv6-icmp -m icmp6 --icmpv6-type 134 -m hl --hl-eq 255 -j ACCEPT
+-A fw6-before-output -p ipv6-icmp -m icmp6 --icmpv6-type 141 -m hl --hl-eq 255 -j ACCEPT
+-A fw6-before-output -p ipv6-icmp -m icmp6 --icmpv6-type 142 -m hl --hl-eq 255 -j ACCEPT
+-A fw6-before-output -p ipv6-icmp -m icmp6 --icmpv6-type 148 -m hl --hl-eq 255 -j ACCEPT
+-A fw6-before-output -p ipv6-icmp -m icmp6 --icmpv6-type 149 -m hl --hl-eq 255 -j ACCEPT
+{% endif %}
+
+{% if firewall_policy_output in ['DROP']  %}
+{% if firewall_log_enabled %}
+-A fw6-after-output {{ firewall_log_level }} -j LOG --log-prefix "[IPT BLOCK OUTPUT] "
+{% endif %}
+{% endif %}
+{% endif %}
+
+{% if firewall_policy_input in ['DROP']  %}
+{% if firewall_log_enabled %}
+#
+# LOGGING
+#
+
+-A fw6-log-deny {{ firewall_log_level }} -j LOG --log-prefix "[IPT BLOCK INPUT] "
+{% endif %}
+{% endif %}
+
+#
+# ANSIBLE MANAGED RULES
+#
+
+{{ firewall_default_filter_ipv6 }}
+{{ firewall_filter_ipv6 }}
+
+COMMIT
+

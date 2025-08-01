@@ -1,0 +1,26 @@
+nginx_packages:
+  - epel-release
+  - nginx
+
+nginx_user: nginx
+nginx_modules_enabled_dir: /usr/share/nginx/modules
+nginx_default_root: /usr/share/nginx/html
+nginx_snippet_dir: /etc/nginx/default.d
+
+nginx_default_server:
+  - server_name: _
+    redirect_to_https: true
+    filename: default
+    linkname: 00default
+    enabled: true
+    listens: 
+      - "80"
+      - "[::]:80"
+    # ssl:
+    #   listens: 
+    #     - "{{ nginx_default_ssl_listen }}"
+    #   certificate: "/etc/pki/tls/certs/{{ ansible_nodename }}.crt"
+    #   key: "/etc/pki/tls/private/{{ ansible_nodename }}.key"
+    access_log: "{{ nginx_log_dir }}/{{ ansible_nodename }}_access.log"
+    error_log: "{{ nginx_log_dir }}/{{ ansible_nodename }}_error.log"
+    root: "{{ nginx_default_root }}"

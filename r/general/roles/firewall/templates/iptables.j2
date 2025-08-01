@@ -1,0 +1,183 @@
+{{ ansible_managed|comment }}
+*mangle
+:PREROUTING ACCEPT [16:1024]
+:INPUT ACCEPT [15:1004]
+:FORWARD ACCEPT [0:0]
+:OUTPUT ACCEPT [10:1428]
+:POSTROUTING ACCEPT [10:1428]
+
+{{ firewall_default_mangle_ipv4 }}
+{{ firewall_mangle_ipv4 }}
+
+COMMIT
+
+*nat
+:PREROUTING ACCEPT [0:0]
+:INPUT ACCEPT [0:0]
+:OUTPUT ACCEPT [0:0]
+:POSTROUTING ACCEPT [0:0]
+
+{{ firewall_default_nat_ipv4 }}
+{{ firewall_nat_ipv4 }}
+
+COMMIT
+
+*filter
+:fw4-trusted - [0:0]
+:INPUT {{ firewall_policy_input if firewall_policy_input in ['ACCEPT', 'DROP'] else 'ACCEPT' }} [0:0]
+:fw4-before-input - [0:0]
+:fw4-input - [0:0]
+:fw4-after-input - [0:0]
+:fw4-not-local - [0:0]
+-F INPUT
+-F fw4-before-input
+-F fw4-input
+-F fw4-after-input
+-A INPUT -j fw4-before-input
+-A INPUT -j fw4-trusted
+-A INPUT -j fw4-input
+-A INPUT -j fw4-after-input
+# -A INPUT -j REJECT --reject-with icmp-host-prohibited
+
+:FORWARD {{ firewall_policy_forward if firewall_policy_forward in ['ACCEPT', 'DROP'] else 'ACCEPT' }} [0:0]
+:fw4-before-forward - [0:0]
+:fw4-forward - [0:0]
+:fw4-after-forward - [0:0]
+-F FORWARD
+-F fw4-before-forward
+-F fw4-forward
+-F fw4-after-forward
+-A FORWARD -j fw4-before-forward
+-A FORWARD -j fw4-trusted
+-A FORWARD -j fw4-forward
+-A FORWARD -j fw4-after-forward
+
+:OUTPUT {{ firewall_policy_output if firewall_policy_output in ['ACCEPT', 'DROP'] else 'ACCEPT' }} [0:0]
+:fw4-before-output - [0:0]
+:fw4-output - [0:0]
+:fw4-after-output - [0:0]
+-F OUTPUT
+-F fw4-before-output
+-F fw4-output
+-F fw4-after-output
+-A OUTPUT -j fw4-before-output
+-A OUTPUT -j fw4-trusted
+-A OUTPUT -j fw4-output
+-A OUTPUT -j fw4-after-output
+
+{% if firewall_policy_input in ['DROP'] %}
+{% if firewall_log_enabled %}
+:fw4-log-deny -
+{% endif %}
+{% endif %}
+
+{% if firewall_policy_input in ['ACCEPT', 'DROP'] %}
+#
+# INPUT RULES
+#
+
+{% if firewall_policy_input in ['DROP'] %}
+-A fw4-before-input -i lo -j ACCEPT
+-A fw4-before-input -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+{% if firewall_policy_input in ['DROP']  %}
+{% if firewall_log_enabled %}
+-A fw4-before-input -m conntrack --ctstate INVALID {{ firewall_log_level }} -j LOG --log-prefix "[IPT BLOCK INVALID] "
+{% endif %}
+-A fw4-before-input -m conntrack --ctstate INVALID -j {{ firewall_policy_input }}
+{% endif %}
+-A fw4-before-input -p icmp -m icmp --icmp-type 3 -j ACCEPT
+-A fw4-before-input -p icmp -m icmp --icmp-type 4 -j ACCEPT
+-A fw4-before-input -p icmp -m icmp --icmp-type 11 -j ACCEPT
+-A fw4-before-input -p icmp -m icmp --icmp-type 12 -j ACCEPT
+{% if firewall_echo_request_from_ipv4 is defined %}
+-A fw4-before-input -s {{ firewall_echo_request_from_ipv4 }} -p icmp -m icmp --icmp-type 8 -j ACCEPT
+{% else %}
+-A fw4-before-input -p icmp -m icmp --icmp-type 8 -j ACCEPT
+{% endif %}
+-A fw4-before-input -p udp -m udp --sport 67 --dport 68 -j ACCEPT
+-A fw4-before-input -j fw4-not-local
+-A fw4-not-local -m addrtype --dst-type LOCAL -j RETURN
+-A fw4-not-local -m addrtype --dst-type MULTICAST -j RETURN
+-A fw4-not-local -m addrtype --dst-type BROADCAST -j RETURN
+{% if firewall_log_enabled %}
+-A fw4-not-local -j fw4-log-deny
+{% endif %}
+-A fw4-not-local -j DROP
+{% endif %}
+
+{% if firewall_policy_input in ['DROP']  %}
+{% if firewall_log_enabled %}
+-A fw4-after-input {{ firewall_log_level }} -j LOG --log-prefix "[IPT BLOCK INPUT] "
+{% endif %}
+{% endif %}
+{% endif %}
+
+{% if firewall_policy_forward in ['ACCEPT', 'DROP'] %}
+#
+# FORWARD RULES
+#
+
+{% if firewall_policy_forward in ['DROP'] %}
+-A fw4-before-forward -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+-A fw4-before-forward -p icmp -m icmp --icmp-type 3 -j ACCEPT
+-A fw4-before-forward -p icmp -m icmp --icmp-type 4 -j ACCEPT
+-A fw4-before-forward -p icmp -m icmp --icmp-type 11 -j ACCEPT
+-A fw4-before-forward -p icmp -m icmp --icmp-type 12 -j ACCEPT
+{% if firewall_echo_request_from_ipv4 is defined %}
+-A fw4-before-forward -s {{ firewall_echo_request_from_ipv4 }} -p icmp -m icmp --icmp-type 8 -j ACCEPT
+{% else %}
+-A fw4-before-forward -p icmp -m icmp --icmp-type 8 -j ACCEPT
+{% endif %}
+{% endif %}
+
+{% if firewall_policy_forward in ['DROP']  %}
+{% if firewall_log_enabled %}
+-A fw4-after-forward {{ firewall_log_level }} -j LOG --log-prefix "[IPT BLOCK FORWARD] "
+{% endif %}
+{% endif %}
+{% endif %}
+
+{% if firewall_policy_output in ['ACCEPT', 'DROP'] %}
+#
+# OUTPUT RULES
+#
+
+{% if firewall_policy_output in ['DROP'] %}
+-A fw4-before-output -o lo -j ACCEPT
+-A fw4-before-output -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+{% endif %}
+
+{% if firewall_policy_output in ['DROP']  %}
+{% if firewall_log_enabled %}
+-A fw4-after-output {{ firewall_log_level }} -j LOG --log-prefix "[IPT BLOCK OUTPUT] "
+{% endif %}
+{% endif %}
+{% endif %}
+
+{% if firewall_policy_input in ['DROP']  %}
+{% if firewall_log_enabled %}
+#
+# LOGGING
+#
+
+-A fw4-log-deny {{ firewall_log_level }} -j LOG --log-prefix "[IPT BLOCK INPUT] "
+{% endif %}
+{% endif %}
+
+{% if firewall_trusted_ipv4 != "" %}
+#
+# trusted addresses
+#
+{{ firewall_trusted_ipv4 }}
+# -A fw4-trusted -j RETURN
+{% endif %}
+
+#
+# ANSIBLE MANAGED RULES
+#
+
+{{ firewall_default_filter_ipv4 }}
+{{ firewall_filter_ipv4 }}
+
+COMMIT
+

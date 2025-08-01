@@ -1,0 +1,57 @@
+- name: Distribution specific variables
+  ansible.builtin.include_vars: "{{ ansible_distribution }}.yml"
+
+- name: Distribution specific tasks
+  ansible.builtin.include_tasks:
+    file: "{{ ansible_distribution }}.yml"
+
+- name: create dirs
+  ansible.builtin.file:
+    state: directory
+    path: "{{ item }}"
+  loop: "{{ haproxy_dirs }}"
+
+- name: "{{ haproxy_conf }}"
+  ansible.builtin.template:
+    src: haproxy.cfg
+    dest: "{{ haproxy_conf }}"
+  notify: haproxy restart
+
+- name: "{{ haproxy_confd_dir }}"
+  ansible.builtin.copy:
+    dest: "{{ haproxy_confd_dir }}/{{ file.name }}"
+    content: "{{ file.content }}"
+  loop: "{{ haproxy_confd_files }}"
+  loop_control:
+    loop_var: file
+    label: "{{ file.name }}"
+  when: haproxy_confd_files != []
+  notify: haproxy restart
+
+- name: "systemd dropin dirs"
+  ansible.builtin.file:
+    state: directory
+    path: "{{ dropin.dir }}"
+  loop: "{{ haproxy_systemd_dropin }}"
+  loop_control:
+    loop_var: dropin
+    label: "{{ dropin.dir }}"
+  when: haproxy_systemd_dropin != []
+  notify: haproxy daemon-reload
+
+- name: "systemd dropin files"
+  ansible.builtin.copy:
+    dest: "{{ dropin.dir }}/{{ dropin.file }}"
+    content: "{{ dropin.content }}"
+  loop: "{{ haproxy_systemd_dropin }}"
+  loop_control:
+    loop_var: dropin
+    label: "{{ dropin.dir }}/{{ dropin.file }}"
+  when: haproxy_systemd_dropin != []
+  notify: haproxy daemon-reload
+
+- name: systemctl enable haproxy
+  ansible.builtin.systemd_service:
+    name: haproxy
+    enabled: true
+  notify: haproxy restart

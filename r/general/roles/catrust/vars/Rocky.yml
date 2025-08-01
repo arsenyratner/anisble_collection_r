@@ -1,0 +1,2 @@
+catrust_cacert_dir: "/etc/pki/ca-trust/source/anchors/"
+catrust_update_cmd: update-ca-trust extract

@@ -1,0 +1,51 @@
+- name: Distribution specific variables
+  ansible.builtin.include_vars: "{{ ansible_distribution }}.yml"
+
+- name: Distribution specific tasks
+  ansible.builtin.include_tasks:
+    file: "{{ ansible_distribution }}.yml"
+
+- name: sysctl 
+  ansible.posix.sysctl:
+    reload: true
+    sysctl_set: true
+    name: "{{ item.name }}"
+    value: "{{ item.value }}"
+  loop: "{{ ocserv_sysctl }}"
+
+- name: "{{ ocserv_conf_file }}"
+  ansible.builtin.template:
+    backup: true
+    src: ocserv.conf
+    dest: "{{ ocserv_conf_file }}"
+    owner: root
+    group: root
+    mode: '0644'
+  notify: ocserv restart
+
+- name: "{{ ocserv_users_file }}"
+  ansible.builtin.template:
+    backup: true
+    src: ocpasswd.j2
+    dest: "{{ ocserv_users_file }}"
+    owner: root
+    group: root
+    mode: '0644'
+  changed_when: false 
+  
+- name: "{{ ocserv_profile_file }}"
+  ansible.builtin.template:
+    backup: true
+    src: profile.xml
+    dest: "{{ ocserv_profile_file }}"
+    owner: root
+    group: root
+    mode: '0644'
+  notify: ocserv restart
+
+- name: systemctl enable ocserv
+  ansible.builtin.systemd_service:
+    name: ocserv
+    enabled: true
+  notify: ocserv restart
+

@@ -1,0 +1,71 @@
+bind_service_name: ""
+bind_conf_dir: ""
+bind_conf_file: "/etc/named.conf"
+bind_data_dir: ""
+bind_cache_dir: ""
+bind_user: root
+bind_group: named
+bind_packages:
+  - bind
+  - bind-utils
+bind_namedca_file: ""
+
+bind_confd_dir: "{{ bind_conf_dir }}/conf.d"
+bind_optiond_dir: "{{ bind_conf_dir }}/option.d"
+bind_zoned_dir: "{{ bind_conf_dir }}/zone.d"
+bind_db_dir: "{{ bind_data_dir }}/db"
+bind_sambadc_dnsbackend: "{{ sambadc_dnsbackend | default('') }}"
+bind_acl_trusted:
+  - localhost
+  - 127.0.0.0/8
+bind_forwarders: []
+bind_default_zones: ""
+bind_zones: [] 
+  # - name: forward.ru
+  #   type: forward
+  #   conf: |
+  #       zone "{{ item.name }}" in {
+  #         type {{ item.type }};
+  #         forwarders {
+  #         {% for forwarder in item.forwarders %}
+  #           {{ forwarder }}; 
+  #         {% endfor %}
+  #         #end
+  #         };
+  #       };
+  # - name: slave.tu
+  #   type: slave
+  #   conf: 
+  # - name: master.ru
+  #   type: master
+  #   conf:
+  #     db:
+ 
+bind_dirs:
+  - "{{ bind_conf_dir }}"
+  - "{{ bind_data_dir }}"
+  - "{{ bind_cache_dir }}"
+  - "{{ bind_confd_dir }}"
+  - "{{ bind_optiond_dir }}"
+  - "{{ bind_zoned_dir }}"
+  - "{{ bind_db_dir }}"
+
+bind_managed_files:
+  - "{{ bind_conf_file }}"
+
+bind_confd_files: []
+bind_optiond_files: []
+bind_default_options: |
+  version "unknown";
+  directory "{{ bind_cache_dir }}";
+  recursion yes;
+  # dump-file "/var/run/named_dump.db";
+  # statistics-file "/var/run/named.stats";
+  # recursing-file "/var/run/recursing";
+  # pid-file none;
+  listen-on { any; };
+  listen-on-v6 { ::1; };
+  dnssec-validation no;
+  allow-query { any; };
+  allow-recursion { trusted; };
+  allow-query-cache { trusted; };

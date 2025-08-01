@@ -1,0 +1,28 @@
+- name: Distribution specific variables
+  ansible.builtin.include_vars: "{{ ansible_distribution }}.yml"
+
+- name: Distribution specific tasks
+  ansible.builtin.include_tasks:
+    file: "{{ ansible_distribution }}.yml"
+
+- name: create dirs
+  ansible.builtin.file:
+    state: directory
+    path: "{{ item }}"
+  loop: "{{ squid_dirs }}"
+
+- name: "{{ squid_conf_file }}"
+  ansible.builtin.template:
+    backup: true
+    src: squid.conf
+    dest: "{{ squid_conf_file }}"
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Squid restart
+
+- name: systemctl enable squid
+  ansible.builtin.systemd_service:
+    name: squid
+    enabled: true
+  notify: Squid restart

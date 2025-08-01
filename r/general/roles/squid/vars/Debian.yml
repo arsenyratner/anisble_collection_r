@@ -1,0 +1,5 @@
+squid_packages:
+  - squid
+
+squid_user: proxy
+squid_group: proxy

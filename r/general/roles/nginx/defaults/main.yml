@@ -1,0 +1,28 @@
+nginx_conf_file: /etc/nginx/nginx.conf
+nginx_pid_file: /run/nginx.pid
+nginx_conf_dir: /etc/nginx
+nginx_confd_dir: /etc/nginx/conf.d
+nginx_snippet_dir: ""
+nginx_modules_available_dir: /etc/nginx/modules-available
+nginx_modules_enabled_dir: "" # nginx_modules_dir: /usr/share/nginx/modules
+nginx_log_dir: /var/log/nginx
+nginx_sites_available_dir: /etc/nginx/sites-available
+nginx_sites_enabled_dir: /etc/nginx/sites-enabled
+nginx_wellknown_dir: "{{ nginx_default_root }}/.well-known"
+nginx_default_root: ""
+nginx_default_ssl_listen: 127.0.0.3:443 ssl
+
+nginx_dirs: 
+  - "{{ nginx_conf_dir }}"
+  - "{{ nginx_confd_dir }}"
+  - "{{ nginx_log_dir }}"
+  - "{{ nginx_modules_available_dir }}"
+  - "{{ nginx_modules_enabled_dir }}"
+  - "{{ nginx_sites_available_dir }}"
+  - "{{ nginx_sites_enabled_dir }}"
+  - "{{ nginx_snippet_dir }}"
+  - "{{ nginx_wellknown_dir }}"
+
+nginx_snippet_files: []
+nginx_servers: []
+nginx_default_server: []

@@ -1,0 +1,11 @@
+haproxy_packages: []
+haproxy_global: {}
+haproxy_defaults: {}
+haproxy_frontends: []
+haproxy_backends: []
+haproxy_conf: /etc/haproxy/haproxy.cfg
+haproxy_confd_dir: /etc/haproxy/conf.d
+haproxy_confd_files: []
+haproxy_dirs:
+  - "{{ haproxy_confd_dir }}"
+haproxy_systemd_dropin: []

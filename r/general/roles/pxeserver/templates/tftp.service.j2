@@ -1,0 +1,12 @@
+[Unit]
+Description=Tftp Server
+Requires=tftp.socket
+Documentation=man:in.tftpd
+ 
+[Service]
+ExecStart=/usr/sbin/in.tftpd -v -4 -s {{ pxeserver_tftproot }}
+StandardInput=socket
+ 
+[Install]
+WantedBy=multi-user.target
+Also=tftp.socket

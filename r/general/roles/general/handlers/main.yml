@@ -1,0 +1,4 @@
+- name: General reboot
+  ansible.builtin.reboot:
+    reboot_command: reboot || reboot -f
+  listen: General reboot system

@@ -1,0 +1,4 @@
+- name: ocserv restart
+  ansible.builtin.systemd_service:
+    name: ocserv
+    state: restarted

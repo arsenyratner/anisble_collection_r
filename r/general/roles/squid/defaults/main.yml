@@ -1,0 +1,23 @@
+squid_conf_file: /etc/squid/squid.conf
+squid_pid_file: /run/squid.pid
+squid_conf_dir: /etc/squid
+squid_confd_dir: /etc/squid/conf.d
+squid_cache_dir: /var/spool/squid
+squid_coredump_dir: /var/spool/squid
+squid_user: ""
+squid_group: ""
+squid_port: 3128 
+
+squid_acls: []
+
+squid_dirs: 
+  - "{{ squid_conf_dir }}"
+  - "{{ squid_confd_dir }}"
+  - "{{ squid_cache_dir }}"
+  - "{{ squid_coredump_dir }}"
+#   - "{{ squid_log_dir }}"
+#   - "{{ squid_sites_available_dir }}"
+#   - "{{ squid_sites_enabled_dir }}"
+#   - "{{ squid_snippet_dir }}"
+#   - "{{ squid_wellknown_dir }}"
+

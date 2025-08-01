@@ -1,0 +1,4 @@
+openssl_packages:
+  - openssl
+openssl_key_dir: /etc/ssl/private
+openssl_cert_dir: /etc/ssl/certs

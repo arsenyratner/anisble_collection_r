@@ -1,0 +1,50 @@
+---
+- name: Install packages
+  ansible.builtin.dnf:
+    name: "{{ pxeserver_packages }}"
+    state: present
+
+- name: Create tftp directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+  loop: "{{ pxeserver_dirs_create }}"
+
+- name: Create /tftproot symlink
+  ansible.builtin.file:
+    src: "{{ pxeserver_tftproot }}"
+    path: /tftproot
+    state: link
+  #when: pxeserver_tftproot != "/tftproot"
+
+- name: Make net dir
+  ansible.builtin.shell: |
+    grub2-mknetdir --net-directory={{ pxeserver_tftproot }}
+    restorecon -R {{ pxeserver_tftproot }}
+
+- name: Copy files
+  ansible.builtin.get_url:
+    url: "{{ item.src }}"
+    dest: "{{ item.dst }}"
+    # remote_src: true
+  loop: "{{ pxeserver_get_url }}"
+  ignore_errors: true
+
+- name: Setup grub2
+  ansible.builtin.template:
+    src: grub.cfg.j2
+    dest: "{{ pxeserver_tftproot }}/boot/grub2/grub.cfg"
+
+- name: TFTPD service
+  block:
+    - name: Create tftp.service
+      ansible.builtin.template:
+        src: tftp.service.j2
+        dest: /etc/systemd/system/tftp.service
+    - name: Create tftp.socket
+      ansible.builtin.template:
+        src: tftp.socket.j2
+        dest: /etc/systemd/system/tftp.socket
+  notify:
+    - systemctl reload all
+    - start tftp

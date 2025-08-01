@@ -1,0 +1,12 @@
+openssl_create_csronly: false
+openssl_key_dir: ""
+openssl_cert_dir: ""
+openssl_createsscert_organization_name: ""
+openssl_createsscert_key_size: 2048
+openssl_createsscert_key_type: RSA
+openssl_createsscert_key_path: "{{ openssl_key_dir }}/{{ ansible_nodename }}.key"
+openssl_createsscert_crt_path: "{{ openssl_cert_dir }}/{{ ansible_nodename }}.crt"
+openssl_createsscert_san:
+  - "DNS:{{ ansible_hostname }}"
+  - "DNS:{{ ansible_nodename }}"
+  - "IP:{{ ansible_default_ipv4.address }}"

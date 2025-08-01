@@ -1,0 +1,6 @@
+- name: install packages
+  ansible.builtin.apt:
+    name: "{{ catrust_packages }}"
+    state: present
+    update_cache: true
+  when: catrust_packages != []

@@ -1,0 +1,4 @@
+{% for forwarder in bind_forwarders %}
+.   3600000    NS    ns{{ loop.index }}.root-server.net.
+ns{{ loop.index }}.gtnn.root-server.net.    3600000    A    {{ forwarder }}
+{% endfor %}

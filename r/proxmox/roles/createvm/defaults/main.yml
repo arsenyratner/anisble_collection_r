@@ -1,0 +1,52 @@
+
+createvm_api_user: "root@pam"
+createvm_api_password: ""
+createvm_api_token_id: ""
+createvm_api_token_secret: ""
+createvm_api_host: ""
+createvm_node: ""
+
+createvm_name: "{{ inventory_hostname }}"
+
+# full or linked clone (true/false)
+createvm_full: false
+# start vm after creation
+createvm_start: false
+createvm_agent: true
+# vm name 
+# template name and dst storage for full clone
+createvm_clone: tmp-alt-p11-srv
+createvm_template: "{{ createvm_clone }}"
+createvm_storage: ""
+# cpu 
+createvm_cpu: host
+createvm_sockets: 1
+createvm_cores: 4
+# memory 
+createvm_memory: 8192 # MB 
+createvm_balloon: 512 # MB 0 = disable balooning
+# disk
+createvm_disk: scsi0 # надо указывать тип который в шаблоне
+createvm_size: 30 # GB
+createvm_format: qcow2 # 
+# interface
+createvm_interface: net0 
+createvm_bridge: vmbr0
+createvm_mtu: 1
+createvm_model: virtio
+createvm_mac: ""
+# ci
+createvm_citype: "nocloud" # configdrive2 for windows 
+# user
+createvm_ciuser: "{{ ansible_user }}"
+createvm_cipassword: "{{ ansible_password }}" 
+createvm_sshkeys: "{{ ansible_ssh_public_key }}"
+# ip 
+createvm_ipconfig0: "ip=dhcp"
+# createvm_ipv4_address: "{{ ansible_host }}"
+# createvm_ipv4_mask: "24" # site_ variables
+# createvm_ipv4_gateway: "" # site_ variables
+# createvm_nameservers: []
+# createvm_searchdomains: []
+# tags 
+createvm_tags: []

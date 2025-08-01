@@ -1,0 +1,9 @@
+**/.terraform/*
+*.tfstate
+*.tfstate.*
+*.backup
+*.exe
+*.hcl
+*.log
+windows-automation/cloudimage/windows-imaging-tools
+.vscode

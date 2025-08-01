@@ -1,3 +1,3 @@
-# Ansible Collection - k2tech.redos
+# Ansible Collection - r.proxmox
 
 Documentation for the collection.

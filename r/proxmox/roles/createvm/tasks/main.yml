@@ -47,9 +47,9 @@
     vmid: "{{ result_newvm.vmid }}"
     config: current
   register: vm_info
-# - debug:
-#     var: vm_info.proxmox_vms[0]
-#     # msg: "Current: {{ vm_info.proxmox_vms[0].maxdisk }}, Resize: {{ createvm_size - ((vm_info.proxmox_vms[0].maxdisk / (1024 * 1024 * 1024)) | int) }}"
+  retries: 3
+  delay: 3
+  until: vm_info.failed is false
 
 - name: Resize disk
   community.general.proxmox_disk:

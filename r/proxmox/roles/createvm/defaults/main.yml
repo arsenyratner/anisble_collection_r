@@ -15,7 +15,7 @@ createvm_start: false
 createvm_agent: true
 # vm name 
 # template name and dst storage for full clone
-createvm_clone: tmp-alt-p11-srv
+createvm_clone: ""
 createvm_template: "{{ createvm_clone }}"
 createvm_storage: ""
 # cpu 

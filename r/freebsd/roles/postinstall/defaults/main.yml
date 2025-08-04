@@ -1,0 +1,19 @@
+postinstall_packages:
+  - qemu-guest-agent
+  - mc
+
+postinstall_sysrc:
+  - sysrc_name: hostname
+    sysrc_value: "{{ inventory_hostname }}"
+  - sysrc_name: sshd_enable
+    sysrc_value: "YES"
+  - sysrc_name: qemu_guest_agent_enable
+    sysrc_value: "YES"
+  - sysrc_name: ipv6_activate_all_interfaces
+    sysrc_value: "NO"
+
+postinstall_services:
+  - service_name: sshd
+    service_state: started
+  - service_name: qemu-guest-agent
+    service_state: started

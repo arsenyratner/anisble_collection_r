@@ -3,7 +3,7 @@
       ansible.builtin.gather_facts:
   rescue:
     - name: install python
-      ansible.builtin.raw: "pkg install -y python"
+      ansible.builtin.raw: "pkg install -y python sudo"
       changed_when: false
     - name: gather facts
       ansible.builtin.gather_facts:
@@ -24,7 +24,7 @@
     value: "{{ item.sysrc_value }}"
   loop: "{{ postinstall_sysrc }}"
   loop_control:
-    label: "{{ item.sysrc_name }}"
+    label: "{{ item.sysrc_name }}={{ item.sysrc_value }}"
 
 - name: service
   ansible.builtin.service:

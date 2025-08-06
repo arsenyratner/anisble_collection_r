@@ -11,7 +11,7 @@ nginx_default_server:
   - server_name: _
     redirect_to_https: true
     filename: default
-    linkname: 00default
+    linkname: default
     enabled: true
     listens: 
       - "80"

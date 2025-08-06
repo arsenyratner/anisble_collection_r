@@ -1,0 +1,35 @@
+- block: # noqa name[missing]
+    - name: gather facts
+      ansible.builtin.gather_facts:
+  rescue:
+    - name: install python
+      ansible.builtin.raw: "pkg install -y python sudo"
+      changed_when: false
+    - name: gather facts
+      ansible.builtin.gather_facts:
+
+- name: hostname
+  ansible.builtin.hostname:
+    name: "{{ inventory_hostname }}"
+    use: freebsd
+
+- name: packages
+  community.general.pkgng:
+    state: present
+    name: "{{ postinstall_packages }}"
+
+- name: sysrc
+  community.general.sysrc:
+    name: "{{ item.sysrc_name }}"
+    value: "{{ item.sysrc_value }}"
+  loop: "{{ postinstall_sysrc }}"
+  loop_control:
+    label: "{{ item.sysrc_name }}={{ item.sysrc_value }}"
+
+- name: service
+  ansible.builtin.service:
+    name: "{{ item.service_name }}"
+    state: "{{ item.service_state }}"
+  loop: "{{ postinstall_services }}"
+  loop_control:
+    label: "{{ item.service_name }}"

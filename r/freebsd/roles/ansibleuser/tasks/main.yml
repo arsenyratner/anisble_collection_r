@@ -1,0 +1,46 @@
+- block:
+  - name: check connection
+    ansible.builtin.raw: whoami
+    register: result
+    ignore_unreachable: true
+    changed_when: false
+    failed_when: "'root' not in result.stdout_lines"
+  rescue:
+  - debug: "var=result"
+
+- name: check alternate credentials
+  block: 
+  - name: install python
+    ansible.builtin.raw: "pkg install -y python sudo"
+    changed_when: false
+  - name: useradd
+    ansible.builtin.user:
+      user: "{{ ansibleuser_createuser_name }}"
+      password: "{{ ansibleuser_createuser_password | password_hash('sha512') }}"
+      groups: "{{ ansibleuser_createuser_groups }}"
+  - name: authorized_key 
+    ansible.posix.authorized_key:
+      user: "{{ ansibleuser_createuser_name }}"
+      key : "{{ ansibleuser_createuser_ssh_public_key }}"
+  - name: /usr/local/etc/sudoers.d/{{ ansibleuser_createuser_name }}
+    ansible.builtin.copy:
+      dest: "/usr/local/etc/sudoers.d/{{ ansibleuser_createuser_name }}"
+      content : |
+        {{ ansibleuser_createuser_name }} ALL=(ALL:ALL) NOPASSWD: ALL
+  when: result.unreachable is true 
+  vars:
+    ansible_user: "{{ ansibleuser_defaultuser }}"
+    ansible_password: "{{ ansibleuser_defaultpassword }}" 
+    ansible_connection: paramiko
+    ansible_become_method: su
+    ansible_become_user: root
+    ansible_become: true
+
+- block:
+  - name: check connection one more time
+    ansible.builtin.raw: whoami
+    register: result
+    changed_when: false
+    failed_when: "'root' not in result.stdout_lines"
+  rescue:
+  - debug: "var=result"

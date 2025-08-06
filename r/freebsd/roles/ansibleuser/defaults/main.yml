@@ -1,0 +1,7 @@
+ansibleuser_defaultuser: freebsd
+ansibleuser_defaultpassword: freebsd
+ansibleuser_createuser_name: "{{ project.remoteuser }}"
+ansibleuser_createuser_password: "{{ vault.ansible_password }}"
+ansibleuser_createuser_groups:
+  - wheel
+ansibleuser_createuser_ssh_public_key: "{{ ansible_ssh_public_key }}"

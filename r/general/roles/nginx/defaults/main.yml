@@ -25,4 +25,13 @@ nginx_dirs:
 
 nginx_snippet_files: []
 nginx_servers: []
-nginx_default_server: []
+nginx_default_server:
+  - server_name: _
+    redirect_to_https: false
+    filename: default
+    linkname: default
+    enabled: true
+    listens: 
+      - "80"
+      - "[::]:80"
+    root: "{{ nginx_default_root }}"

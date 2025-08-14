@@ -21,3 +21,4 @@ ocserv_sysctl:
     value: 1
 ocserv_routes: []
 ocserv_noroutes: []
+ocserv_groups: []

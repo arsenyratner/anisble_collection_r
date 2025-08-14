@@ -28,11 +28,14 @@
       <h1>{{ ansible_default_ipv4.address }}</h1>
   changed_when: false
 
-# - name: disable "{{ nginx_sites_enabled_dir }}/default"
-#   ansible.builtin.file:
-#     state: absent
-#     path: "{{ nginx_sites_enabled_dir }}/default"
-#   notify: Nginx restart
+- name: disable "{{ nginx_sites_enabled_dir }}/default"
+  ansible.builtin.copy:
+    dest: "{{ nginx_conf_dir }}/well-known.conf"
+    content: |
+      location /.well-known {
+        alias {{ nginx_wellknown_dir }};
+        allow all;
+      }
 
 - name: Add nginx servers
   ansible.builtin.include_tasks:

@@ -1,5 +1,5 @@
-- debug: "var=server.server_name"
-- debug: "var=server.redirect_to_https"
+# - debug: "var=server.server_name"
+# - debug: "var=server.redirect_to_https"
 
 - block:
   - name: create server root
@@ -26,6 +26,7 @@
     path: "{{ server.ssl.key }}"
   register: key_result
   when: server.ssl is defined
+
 - name: "{{ nginx_sites_available_dir }}/{{ server.filename | default(server.server_name) }}"
   ansible.builtin.template:
     backup: true
@@ -43,4 +44,6 @@
     dest: "{{ nginx_sites_enabled_dir }}/{{ server.linkname | default(server.server_name) }}"
   when: 
     - server.enabled | default(false)
+    - certificate_result.stat.exists 
+    - key_result.stat.exists
   notify: Nginx restart

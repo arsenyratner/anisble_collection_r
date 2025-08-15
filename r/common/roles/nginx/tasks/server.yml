@@ -15,16 +15,26 @@
     changed_when: false 
   when: server.root is defined
 
-- name: "{{ server.ssl.certificate }}"
-  ansible.builtin.stat:
-    path: "{{ server.ssl.certificate }}"
-  register: certificate_result
-  when: server.ssl is defined
-
-- name: "{{ server.ssl.key }}"
-  ansible.builtin.stat:
-    path: "{{ server.ssl.key }}"
-  register: key_result
+- name: Check key and cert exists
+  block:
+    - name: "{{ server.ssl.certificate }}"
+      ansible.builtin.stat:
+        path: "{{ server.ssl.certificate }}"
+      register: certificate_result
+    - debug: 
+        msg: "{{ server.ssl.certificate }} not exists, disable server"
+      when: not certificate_result.stat.exists
+    - name: "{{ server.ssl.key }}"
+      ansible.builtin.stat:
+        path: "{{ server.ssl.key }}"
+      register: key_result
+    - debug: 
+        msg: "{{ server.ssl.key }} not exists, disable server"
+      when: not key_result.stat.exists
+    - name: 
+      ansible.builtin.set_fact:
+        nginx_server_disable: false
+      when: certificate_result.stat.exists | default(false) and key_result.stat.exists | default(false)
   when: server.ssl is defined
 
 - name: "{{ nginx_sites_available_dir }}/{{ server.filename | default(server.server_name) }}"
@@ -42,8 +52,7 @@
     state: link
     src: "{{ nginx_sites_available_dir }}/{{ server.filename | default(server.server_name) }}"
     dest: "{{ nginx_sites_enabled_dir }}/{{ server.linkname | default(server.server_name) }}"
-  when: 
+  when:
     - server.enabled | default(false)
-    - certificate_result.stat.exists 
-    - key_result.stat.exists
+    - not nginx_server_disable | default(false)
   notify: Nginx restart

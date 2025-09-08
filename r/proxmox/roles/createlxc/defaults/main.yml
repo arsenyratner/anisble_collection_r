@@ -1,0 +1,52 @@
+
+createlxc_api_user: "root@pam"
+createlxc_api_password: ""
+createlxc_api_token_id: ""
+createlxc_api_token_secret: ""
+createlxc_api_host: ""
+createlxc_node: ""
+
+createlxc_name: "{{ inventory_hostname }}"
+
+# full or linked clone (true/false)
+createlxc_full: false
+# start vm after creation
+createlxc_start: false
+createlxc_agent: true
+# vm name 
+# template name and dst storage for full clone
+createlxc_clone: ""
+createlxc_template: "{{ createlxc_clone }}"
+createlxc_storage: ""
+# cpu 
+createlxc_cpu: host
+createlxc_sockets: 1
+createlxc_cores: 4
+# memory 
+createlxc_memory: 8192 # MB 
+createlxc_balloon: 512 # MB 0 = disable balooning
+# disk
+createlxc_disk: scsi0 # надо указывать тип который в шаблоне
+createlxc_size: 30 # GB
+createlxc_format: qcow2 # 
+# interface
+createlxc_interface: net0 
+createlxc_bridge: vmbr0
+createlxc_mtu: 1
+createlxc_model: virtio
+createlxc_mac: ""
+# ci
+createlxc_citype: "nocloud" # configdrive2 for windows 
+# user
+createlxc_ciuser: "{{ ansible_user }}"
+createlxc_cipassword: "{{ ansible_password }}" 
+createlxc_sshkeys: "{{ ansible_ssh_public_key }}"
+# ip 
+createlxc_ipconfig0: "ip=dhcp"
+# createlxc_ipv4_address: "{{ ansible_host }}"
+# createlxc_ipv4_mask: "24" # site_ variables
+# createlxc_ipv4_gateway: "" # site_ variables
+# createlxc_nameservers: []
+# createlxc_searchdomains: []
+# tags 
+createlxc_tags: []

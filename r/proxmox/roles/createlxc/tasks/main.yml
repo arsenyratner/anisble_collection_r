@@ -1,0 +1,182 @@
+- name: Create new container automatically selecting the next available vmid.
+  community.general.proxmox:
+    node: 'uk-mc02'
+    api_user: 'root@pam'
+    api_password: '1q2w3e'
+    api_host: 'node1'
+    password: '123456'
+    hostname: 'example.org'
+    ostemplate: 'local:vztmpl/ubuntu-14.04-x86_64.tar.gz'
+    netif:
+      net0: "name=eth0,ip=dhcp,ip6=dhcp,bridge=vmbr0"
+    netif:
+      net0: "name=eth0,gw=192.168.0.1,ip=192.168.0.2/24,bridge=vmbr0"
+    netif:
+      net0: "name=eth0,gw=192.168.0.1,ip=192.168.0.2/24,ip6=fe80::1227/64,gw6=fe80::1,bridge=vmbr0,firewall=1,tag=934,mtu=1500"
+
+
+- name: Full clone
+  # async: 0
+  community.general.proxmox_kvm:
+    timeout: 90
+    full: true
+    state: present
+    agent: true
+    api_user: "{{ createlxc_api_user }}"
+    api_password: "{{ createlxc_api_password }}"
+    api_token_id: "{{ createlxc_api_password }}"
+    api_token_secret: "{{ createlxc_api_token_secret }}"
+    api_host: "{{ createlxc_api_host }}"
+    node: "{{ createlxc_node }}"
+    name: "{{ createlxc_name }}"
+    clone: "{{ createlxc_template }}"
+    storage: "{{ createlxc_storage }}"
+    format: "{{ createlxc_format }}"
+  when: createlxc_full is true
+  register: result_newvm
+
+- name: Linked clone 
+  # async: 0
+  community.general.proxmox_kvm:
+    timeout: 90
+    full: false
+    agent: true
+    state: present
+    api_user: "{{ createlxc_api_user }}"
+    api_password: "{{ createlxc_api_password }}"
+    api_token_id: "{{ createlxc_api_password }}"
+    api_token_secret: "{{ createlxc_api_token_secret }}"
+    api_host: "{{ createlxc_api_host }}"
+    node: "{{ createlxc_node }}"
+    name: "{{ createlxc_name }}"
+    clone: "{{ createlxc_template }}"
+  when: createlxc_full is false
+  register: result_newvm
+
+- name: Get vm_info
+  community.general.proxmox_vm_info:
+    api_user: "{{ createlxc_api_user }}"
+    api_password: "{{ createlxc_api_password }}"
+    api_token_id: "{{ createlxc_api_password }}"
+    api_token_secret: "{{ createlxc_api_token_secret }}"
+    api_host: "{{ createlxc_api_host }}"
+    node: "{{ createlxc_node }}"
+    vmid: "{{ result_newvm.vmid }}"
+    config: current
+  register: vm_info
+  retries: 3
+  delay: 3
+  until: vm_info.failed is false
+
+- name: Resize disk
+  community.general.proxmox_disk:
+    state: resized
+    api_user: "{{ createlxc_api_user }}"
+    api_password: "{{ createlxc_api_password }}"
+    api_token_id: "{{ createlxc_api_password }}"
+    api_token_secret: "{{ createlxc_api_token_secret }}"
+    api_host: "{{ createlxc_api_host }}"
+    vmid: "{{ result_newvm.vmid }}"
+    disk: "{{ createlxc_disk }}"
+    size: "{{ createlxc_size }}G"
+  when: 
+    - createlxc_size is defined
+    - createlxc_size >= ((vm_info.proxmox_vms[0].maxdisk / (1024 * 1024 * 1024)) | int)
+
+- name: Set nic mac 
+  community.general.proxmox_nic:
+    api_user: "{{ createlxc_api_user }}"
+    api_password: "{{ createlxc_api_password }}"
+    api_token_id: "{{ createlxc_api_password }}"
+    api_token_secret: "{{ createlxc_api_token_secret }}"
+    api_host: "{{ createlxc_api_host }}"
+    vmid: "{{ result_newvm.vmid }}"
+    interface: "{{ createlxc_interface }}"
+    bridge: "{{ createlxc_bridge }}"
+    model: "{{ createlxc_model }}"
+    mtu: "{{ createlxc_mtu }}"
+    mac: "{{ createlxc_mac }}"
+  when: 
+    - createlxc_mac is defined
+    - createlxc_mac != ""
+
+- name: Set nic
+  community.general.proxmox_nic:
+    api_user: "{{ createlxc_api_user }}"
+    api_password: "{{ createlxc_api_password }}"
+    api_token_id: "{{ createlxc_api_password }}"
+    api_token_secret: "{{ createlxc_api_token_secret }}"
+    api_host: "{{ createlxc_api_host }}"
+    vmid: "{{ result_newvm.vmid }}"
+    interface: "{{ createlxc_interface }}"
+    bridge: "{{ createlxc_bridge }}"
+    model: "{{ createlxc_model }}"
+    mtu: "{{ createlxc_mtu }}"
+  when: 
+    - createlxc_mac is undefined or createlxc_mac == omit or createlxc_mac == ""
+
+- name: Set CPU, memory
+  community.general.proxmox_kvm:
+    update: true
+    api_user: "{{ createlxc_api_user }}"
+    api_password: "{{ createlxc_api_password }}"
+    api_token_id: "{{ createlxc_api_password }}"
+    api_token_secret: "{{ createlxc_api_token_secret }}"
+    api_host: "{{ createlxc_api_host }}"
+    node: "{{ createlxc_node }}"
+    vmid: "{{ result_newvm.vmid }}"
+    cpu: "{{ createlxc_cpu | default('host') }}" # cputype=host,flags=
+    cores: "{{ createlxc_cores }}"
+    sockets: "{{ createlxc_sockets }}"
+    memory: "{{ createlxc_memory }}"
+    balloon: "{{ createlxc_balloon }}"
+  register: result
+# - debug: "var=result"
+
+- name: Set cloud-init
+  community.general.proxmox_kvm:
+    update: true
+    api_user: "{{ createlxc_api_user }}"
+    api_password: "{{ createlxc_api_password }}"
+    api_token_id: "{{ createlxc_api_password }}"
+    api_token_secret: "{{ createlxc_api_token_secret }}"
+    api_host: "{{ createlxc_api_host }}"
+    vmid: "{{ result_newvm.vmid }}"
+    node: "{{ createlxc_node }}"
+    citype: "{{ createlxc_citype }}"
+    ciuser: "{{ createlxc_ciuser }}"
+    cipassword: "{{ createlxc_cipassword }}"
+    sshkeys: "{{ createlxc_sshkeys }}"
+    ipconfig: 
+      ipconfig0: '{{ createlxc_ipconfig0 }}'
+    nameservers: "{{ createlxc_nameservers }}"
+    searchdomains: "{{ createlxc_searchdomains }}"
+  register: result
+# - debug: "var=result"
+# - pause: 
+
+- name: Set tags 
+  community.general.proxmox_kvm:
+    update: true
+    api_user: "{{ createlxc_api_user }}"
+    api_password: "{{ createlxc_api_password }}"
+    api_token_id: "{{ createlxc_api_password }}"
+    api_token_secret: "{{ createlxc_api_token_secret }}"
+    api_host: "{{ createlxc_api_host }}"
+    node: "{{ createlxc_node }}"
+    vmid: "{{ result_newvm.vmid }}"
+    tags: "{{ createlxc_tags }}"
+  when: createlxc_tags != []
+
+- name: Start VM 
+  community.general.proxmox_kvm:
+    state: started
+    api_user: "{{ createlxc_api_user }}"
+    api_password: "{{ createlxc_api_password }}"
+    api_token_id: "{{ createlxc_api_password }}"
+    api_token_secret: "{{ createlxc_api_token_secret }}"
+    api_host: "{{ createlxc_api_host }}"
+    node: "{{ createlxc_node }}"
+    vmid: "{{ result_newvm.vmid }}"
+  when: createlxc_start is true
+  ignore_errors: true

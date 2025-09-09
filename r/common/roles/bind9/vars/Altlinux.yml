@@ -11,6 +11,6 @@ bind_acl_trusted:
   - localhost
   - 127.0.0.0/8
 bind_forwarders: []
-bind_namedca_file: "{{bind_zones_dir}}/named.ca"
-bind_zones: [] 
+bind_namedca_file: "{{ bind_zones_dir }}/named.ca"
+bind_zones: []
 # - { name: zone.ru, type: forward, forwarders: ['192.168.1.11','192.168.1.12']}

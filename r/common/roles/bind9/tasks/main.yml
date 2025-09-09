@@ -39,15 +39,6 @@
       };
   notify: Restart bind
 
-- name: "{{ bind_zoned_dir }}/default-zones.conf"
-  ansible.builtin.copy:
-    dest: "{{ bind_zoned_dir }}/default-zones.conf"
-    owner: "{{ bind_user }}"
-    group: "{{ bind_group }}"
-    mode: "0640"
-    content: "{{ bind_default_zones }}"
-  notify: Restart bind
-
 - name: "{{ bind_confd_dir }}"
   ansible.builtin.copy:
     dest: "{{ bind_confd_dir }}/{{ item.name }}.conf"
@@ -70,16 +61,25 @@
   when: bind_optiond_files != []
   notify: Restart bind
 
-- name: "{{ bind_zoned_dir }}"
+- name: "{{ bind_defaultview_dir }}/default-zones.conf"
+  ansible.builtin.copy:
+    dest: "{{ bind_defaultview_dir }}/default-zones.conf"
+    owner: "{{ bind_user }}"
+    group: "{{ bind_group }}"
+    mode: "0640"
+    content: "{{ bind_default_zones }}"
+  notify: Restart bind
+
+- name: "copy zones config"
   ansible.builtin.template:
     src: zone.conf
-    dest: "{{ zone.conf_file | default(bind_zoned_dir + '/' + zone.name + '.conf') }}"
+    dest: "{{ zone.conf_file | default(bind_defaultview_dir + '/zone-' + zone.name + '.conf') }}"
     owner: "{{ bind_user }}"
     group: "{{ bind_group }}"
     mode: "0644"
   loop: "{{ bind_zones }}"
   loop_control:
-    label: "{{ zone.name }}"
+    label: "{{ zone.conf_file | default(bind_defaultview_dir + '/zone-' + zone.name + '.conf') }}"
     loop_var: zone
   when: 
     - bind_zones is defined
@@ -95,7 +95,7 @@
     content: "{{ zone.db }}"
   loop: "{{ bind_zones }}"
   loop_control:
-    label: "{{ zone.name }}"
+    label: "{{ zone.db_file | default(bind_db_dir + '/' + zone.name) }}"
     loop_var: zone
   when: zone.db is defined
   notify: Restart bind

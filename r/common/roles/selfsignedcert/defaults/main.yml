@@ -12,3 +12,5 @@ openssl_createsscert_san:
   - "IP:{{ ansible_default_ipv4.address }}"
 openssl_owner: root
 openssl_group: root
+openssl_fetch_crt: false
+openssl_fetch_csr: false

@@ -5,15 +5,16 @@
   ansible.builtin.include_tasks:
     file: "{{ ansible_distribution }}.yml"
 
-- name: create dirs
+- name: Create dirs
   ansible.builtin.file:
     state: directory
     path: "{{ item.path }}"
     owner: "{{ item.owner | default(openssl_owner) }}"
     group: "{{ item.group | default(openssl_group) }}"
-    mode: "{{ item.mode | default('0755')}}"
-  loop: 
+    mode: "{{ item.mode | default('0755') }}"
+  loop:
     - path: "{{ openssl_key_dir }}"
+      mode: '0700'
     - path: "{{ openssl_cert_dir }}"
 
 - name: Create key {{ openssl_createsscert_key_path }}
@@ -34,8 +35,8 @@
     subject_alt_name: "{{ openssl_createsscert_san }}"
   register: openssl_createsscert_csr_result
   changed_when: false
-  
-- name: Create crt {{ openssl_createsscert_crt_path | basename }}
+
+- name: Create crt
   community.crypto.x509_certificate:
     path: "{{ openssl_createsscert_crt_path }}"
     csr_content: "{{ openssl_createsscert_csr_result.csr }}"
@@ -43,16 +44,23 @@
     provider: selfsigned
   when: openssl_create_csronly is false
 
-- name: Fetch crt {{ openssl_createsscert_crt_path | basename }}
+- name: Fetch crt and csr
+  ansible.builtin.set_fact:
+    openssl_fetch_crt: false
+    openssl_fetch_csr: true
+  when: openssl_create_csronly
+
+- name: Fetch crt
   ansible.builtin.fetch:
     src: "{{ openssl_createsscert_crt_path }}"
     flat: true
     dest: files/
-  when: openssl_create_csronly is false
+  when: openssl_fetch_crt
 
-- name: Fetch {{ ansible_nodename }}.csr 
-  local_action: 
-    module: ansible.builtin.copy 
+- name: Fetch csr
+  delegate_to: localhost
+  ansible.builtin.copy:
+    mode: '0755'
     content: "{{ openssl_createsscert_csr_result.csr }}"
     dest: "files/{{ ansible_nodename }}.csr"
-  when: openssl_create_csronly is true
+  when: openssl_fetch_csr

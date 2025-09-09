@@ -1,0 +1,4 @@
+- name: install packages
+  community.general.pkgng:
+    name: "{{ openssl_packages }}"
+    state: present

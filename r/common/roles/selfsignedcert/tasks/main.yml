@@ -9,8 +9,8 @@
   ansible.builtin.file:
     state: directory
     path: "{{ item.path }}"
-    owner: "{{ item.owner | default('root') }}"
-    group: "{{ item.group | default('root')}}"
+    owner: "{{ item.owner | default(openssl_owner) }}"
+    group: "{{ item.group | default(openssl_group) }}"
     mode: "{{ item.mode | default('0755')}}"
   loop: 
     - path: "{{ openssl_key_dir }}"
@@ -19,8 +19,8 @@
 - name: Create key {{ openssl_createsscert_key_path }}
   community.crypto.openssl_privatekey:
     force: false
-    owner: root
-    group: root
+    owner: "{{ openssl_owner }}"
+    group: "{{ openssl_group }}"
     mode: '0600'
     path: "{{ openssl_createsscert_key_path }}"
     size: "{{ openssl_createsscert_key_size }}"

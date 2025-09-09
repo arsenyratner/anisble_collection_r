@@ -10,3 +10,5 @@ openssl_createsscert_san:
   - "DNS:{{ ansible_hostname }}"
   - "DNS:{{ ansible_nodename }}"
   - "IP:{{ ansible_default_ipv4.address }}"
+openssl_owner: root
+openssl_group: root

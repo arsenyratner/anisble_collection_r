@@ -1,0 +1,56 @@
+- name: Install packages
+  community.general.pkgng:
+    name: "{{ poudriere_packages }}"
+    state: present
+
+- name: Create dirs
+  ansible.builtin.file:
+    state: directory
+    path: "{{ item.dir }}"
+    owner: "{{ item.owner | default(poudriere_owner) }}"
+    group: "{{ item.group | default(poudriere_group) }}"
+    mode: "{{ item.mode | default(poudriere_mode_dir) }}"
+  loop: "{{ poudriere_dirs }}"
+  loop_control:
+    label: "{{ item.dir }}"
+  when: poudriere_dirs != []
+
+- name: Create jails
+  ansible.builtin.command: 
+    cmd: poudriere jail -c -j {{ item.jailname }} -v {{ item.jailrelease }}
+    creates: /usr/local/poudriere/jails/{{ item.jailname }}
+  loop: "{{ poudrier_jails }}"
+  loop_control:
+    label: "{{ item.jailrelease }}:/usr/local/poudriere/jails/{{ item.jailname }}"
+  when: poudrier_jails != []
+
+- name: Create ports tree
+  ansible.builtin.command:
+    cmd: poudriere ports -c -p {{ item.treename }} 
+    creates: /usr/local/poudriere/ports/{{ item.treename }}
+  loop: "{{ poudrier_portstrees }}"
+  loop_control:
+    label: "{{ item.treename }}:/usr/local/poudriere/ports/{{ item.treename }}"
+  when: poudrier_portstrees != []
+
+- name: Create ports packagelist
+  ansible.builtin.copy:
+    dest: "{{ poudriere_confd_dir }}/packages-{{ item.treename }}"
+    content: "{{ item.packagelist }}"
+    owner: "{{ item.owner | default(poudriere_owner) }}"
+    group: "{{ item.group | default(poudriere_group) }}"
+    mode: "{{ item.mode | default(poudriere_mode) }}"
+  loop: "{{ poudrier_portstrees }}"
+  loop_control:
+    label: "{{ item.treename }}:{{ poudriere_confd_dir }}/packages-{{ item.treename }}"
+  when: poudrier_portstrees != []
+
+# - name: "{{ poudriere_conf_file }}"
+#   tags: poudriere_conf_file
+#   ansible.builtin.template:
+#     src: "{{ poudriere_conf_template }}"
+#     dest: "{{ poudriere_conf_file }}"
+#     owner: "{{ poudriere_owner }}"
+#     group: "{{ poudriere_group }}"
+#     mode: "{{ poudriere_mode }}"
+#     backup: true

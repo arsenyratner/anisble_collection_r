@@ -1,0 +1,414 @@
+ansible_user: ansible
+
+gateway_identity: "{{ inventory_hostname }}" # inventory_hostname_short
+
+gateway_default_handle_absent_entries: "remove"
+gateway_default_handle_entries_content: "remove_as_much_as_possible"
+gateway_default_ensure_order: true
+
+gateway_dns_servers: 
+  - 77.88.8.1
+  - 8.8.8.8
+  - 1.1.1.1
+
+gateway_wan1:
+  default-name: ether5
+  ifname: ether5-WAN-mts
+  connection-mark: mts
+  routing-mark: mts
+
+gateway_config_add:
+  bond: []
+  bridge:
+    - path: interface bridge
+      data:
+        - name: bridge1
+    - path: interface bridge port
+      data:
+          - bridge: bridge1
+            interface: ether1
+          - bridge: bridge1
+            interface: ether2
+          - bridge: bridge1
+            interface: ether3
+          - bridge: bridge1
+            interface: ether4
+  vlan:
+    - path: interface vlan
+      data:
+        - vlan-id: 11
+          name: vlan11
+          interface: bridge1
+        - vlan-id: 101
+          name: vlan101
+          interface: bridge1
+  wan1:
+    - path: interface ethernet
+      handle_entries_content: ignore
+      handle_absent_entries: ignore
+      ensure_order: false
+      data:
+        - default-name: "{{ gateway_wan1.default-name }}"
+          name: "{{ gateway_wan1.ifname }}"
+    - path: ip dhcp-client
+      data:
+        - interface: "{{ gateway_wan1.ifname }}"
+          default-route-distance: 10
+          disabled: true
+    - path: interface list member
+      handle_entries_content: ignore
+      handle_absent_entries: ignore
+      ensure_order: false
+      data: 
+        - interface: "{{ gateway_wan1.ifname }}"
+          list: WAN
+    - path: ip firewall mangle
+      handle_entries_content: ignore
+      handle_absent_entries: ignore
+      ensure_order: false
+      data: 
+        - { chain: 'multiwan_pre', action: 'mark-connection', log: false, passthrough: false, connection-mark: 'no-mark', in-interface: '{{ gateway_wan1.ifname }}', new-connection-mark: '{{ gateway_wan1.connection-mark }}' }
+        - { chain: 'multiwan_pre', action: 'mark-routing', log: false, passthrough: false, connection-mark: '{{ gateway_wan1.connection-mark }}', in-interface: '!{{ gateway_wan1.ifname }}', new-routing-mark: '{{ gateway_wan1.routing-mark }}' }
+        - { chain: 'multiwan_out', action: 'mark-routing', log: false, passthrough: false, connection-mark: '{{ gateway_wan1.connection-mark }}', new-routing-mark: '{{ gateway_wan1.routing-mark }}' }
+  lan:
+    - path: interface list member
+      handle_entries_content: ignore
+      handle_absent_entries: ignore
+      ensure_order: false
+      data: 
+        - interface: bridge1
+          list: LAN
+        - interface: vlan101
+          list: LAN
+        - interface: vlan11
+          list: LAN
+  manage:
+    - path: interface list member
+      handle_entries_content: ignore
+      handle_absent_entries: ignore
+      ensure_order: false
+      data: 
+        - interface: bridge1
+          list: MANAGE
+  dns:
+    - path: ip dns
+      data:
+        - allow-remote-requests: true
+          servers: "{{ gateway_dns_servers | join(',') }}"
+    - path: ip dns forwarders
+      data:
+        - name: "ad.ratners.ru"
+          dns-servers: "11.11.11.11,12.12.12.12"
+        - name: "ald.ratners.ru"
+          dns-servers: "22.11.11.11,33.12.12.12"
+    - path: ip dns static
+      data:
+        - { name: 'r-fbsd1.r.ratners.ru', type: 'A', address: '192.168.126.6' }
+        - { name: 'r-gw1.r.ratners.ru', type: 'A', address: '192.168.126.1' }
+        - { name: 'r-gw2-zv.r.ratners.ru', type: 'A', address: '192.168.135.1' }
+        - { name: 'r-phpipam1.r.ratners.ru', type: 'A', address: '192.168.126.2' }
+        - { name: 'r-pr1.r.ratners.ru', type: 'A', address: '192.168.126.7' }
+        - { name: 'r-prx2.r.ratners.ru', type: 'A', address: '192.168.126.51' }
+        - { name: 'r-pve1-idrac.r.ratners.ru', type: 'A', address: '192.168.126.9' }
+        - { name: 'r-pve1.r.ratners.ru', type: 'A', address: '192.168.126.10' }
+        - { name: 'r-vscode1.r.ratners.ru', type: 'A', address: '192.168.126.4' }
+        - { name: 'router.lan', type: 'A', address: '192.168.126.1' }
+        - { name: 'aptly.r.ratners.ru', type: 'CNAME', cname: 'r-pve1.r.ratners.ru' }
+        - { name: 'ipam.r.ratners.ru', type: 'CNAME', cname: 'r-phpipam1.r.ratners.ru' }
+        - { name: 'repo.r.ratners.ru', type: 'CNAME', cname: 'r-pve1.r.ratners.ru' }
+        - { name: 'ssprx.r.ratners.ru', type: 'CNAME', cname: 'r-pve1.r.ratners.ru' }
+        - { name: '126.168.192.in-addr.arpa', type: 'FWD', disabled: true, forward-to: '192.168.126.2' }
+        - { name: 'r.ratners.ru', type: 'FWD', disabled: true, forward-to: '192.168.126.3' }
+        - { name: 'r.ratners.ru', type: 'FWD', disabled: true, forward-to: '192.168.126.2' }
+        - { type: 'FWD', disabled: true, forward-to: '192.168.126.3', regexp: '.*\.r\.ratners\.ru$' }
+        - { type: 'FWD', disabled: true, forward-to: '192.168.126.2', regexp: '.*\.r\.ratners\.ru$' }
+        - { type: 'FWD', disabled: true, forward-to: '192.168.126.2', regexp: '.*\.126\.168\.192\.in-addr\.arpa$' }
+
+gateway_config_dhcp:
+  pool:
+      - name: dhcp
+        ranges: 192.168.126.64/26
+      - name: vlan101
+        ranges: 10.10.101.128/26
+  option:
+      - { code: 67, name: grub_67_uefi, value: "'bootx64.efi'" }
+      - { code: 67, name: grub_67_bios, value: "'booti386'" }
+      - { code: 66, name: grub_66, value: "'192.168.126.10'" }
+      - { code: 6, name: 6_dns server, value: "'192.168.126.56'" }
+      - { code: 119, name: 119_domainsearch, value: "'r.ratners.ru''ratners.ru'" }
+      - { code: 15, name: 15_domainname, value: "'alt.ratners.ru'" }
+      - { code: 44, name: 44_netbiossrv, value: "'192.168.126.3''192.168.126.2'" }
+      - { code: 17, name: freebsd_17, value: "'/srv/tftp/freebsd/mfs'" }
+  optionset:
+      - name: grub_bios
+        options: 'grub_67_uefi,grub_66'
+  server:
+      - address-pool: vlan101
+        bootp-support: dynamic
+        interface: vlan101
+        lease-time: 30m
+        name: vlan101
+        disabled: true
+      - address-pool: dhcp
+        bootp-support: dynamic
+        interface: bridge1
+        name: LANdhcp
+        disabled: true
+  network:
+      - address: 10.10.101.0/24
+        dns-server: 10.10.101.254
+        domain: r.ratners.ru
+        gateway: 10.10.101.254
+        netmask: 24
+        next-server: 192.168.126.10
+        ntp-server: 10.10.101.254
+      - address: 192.168.126.0/24
+        comment: defconf
+        dhcp-option-set: grub_bios
+        dns-server: 192.168.126.1
+        domain: r.ratners.ru
+        gateway: 192.168.126.1
+        netmask: 24
+        next-server: 192.168.126.10
+        ntp-server: 192.168.126.1
+        wins-server: 192.168.126.1
+  lease:
+      - { address: '10.10.101.51', mac-address: 'bc:24:11:58:11:51', server: 'vlan101' }
+      - { address: '10.10.101.52', mac-address: 'bc:24:11:58:11:52', server: 'vlan101' }
+      - { address: '10.10.101.53', mac-address: 'bc:24:11:58:11:53', server: 'vlan101' }
+      - { address: '10.10.101.54', mac-address: 'bc:24:11:58:11:54', server: 'vlan101' }
+      - { address: '192.168.126.1', mac-address: '74:4d:28:9d:e8:b8', server: 'LANdhcp', comment: 'r-gw1' }
+      - { address: '192.168.126.2', mac-address: 'bc:24:11:2c:6f:47', server: 'LANdhcp', comment: 'r-phpipam1' }
+      - { address: '192.168.126.3', mac-address: '00:00:00:00:00:03', server: 'LANdhcp', comment: 'r-ns1' }
+      - { address: '192.168.126.4', mac-address: '00:15:5d:3d:ea:59', server: 'LANdhcp', comment: 'r-vscode1' }
+      - { address: '192.168.126.5', mac-address: '18:c0:4d:51:74:67', server: 'LANdhcp', address-lists: 'internet_allow', comment: 'appc-pc' }
+      - { address: '192.168.126.6', mac-address: '00:00:00:00:00:06', server: 'LANdhcp', comment: 'reserved' }
+      - { address: '192.168.126.7', mac-address: '3c:d9:2b:0d:ea:a1', server: 'LANdhcp', comment: 'r-pr1' }
+      - { address: '192.168.126.8', mac-address: '3c:08:f6:8d:c3:93', server: 'LANdhcp' }
+      - { address: '192.168.126.9', mac-address: 'e0:db:55:02:c8:6e', server: 'LANdhcp', comment: 'r-pve1-idrac' }
+      - { address: '192.168.126.10', mac-address: 'e0:db:55:02:c8:6a', server: 'LANdhcp', address-lists: 'internet_allow', comment: 'r-pve1' }
+      - { address: '192.168.126.11', mac-address: '00:00:00:00:00:11', server: 'LANdhcp', address-lists: 'internet_allow', comment: 'w2tv wifi' }
+      - { address: '192.168.126.12', mac-address: '06:42:30:72:5a:4b', server: 'LANdhcp', address-lists: 'internet_allow', comment: 'w2tv' }
+      - { address: '192.168.126.13', mac-address: '00:0e:c6:57:d7:97', server: 'LANdhcp', address-lists: 'internet_allow', comment: 'mitv wire' }
+      - { address: '192.168.126.14', mac-address: 'e0:b6:55:eb:6a:e3', server: 'LANdhcp', address-lists: 'internet_allow', comment: 'mitv wifi' }
+      - { address: '192.168.126.15', mac-address: '04:cf:8c:73:f9:30', server: 'LANdhcp', comment: 'room 5 lamp' }
+      - { address: '192.168.126.16', mac-address: '04:cf:8c:73:f7:95', server: 'LANdhcp', comment: 'room 6 lamp' }
+      - { address: '192.168.126.17', mac-address: '7c:49:eb:b7:18:3b', server: 'LANdhcp', comment: 'room 7 lamp' }
+      - { address: '192.168.126.18', mac-address: '04:cf:8c:9a:fc:a6', server: 'LANdhcp', comment: 'room 8 lamp' }
+      - { address: '192.168.126.19', mac-address: '8c:88:2b:77:96:e6', server: 'LANdhcp', comment: 'room 8 ballu' }
+      - { address: '192.168.126.20', mac-address: '8c:88:2b:77:e0:b0', server: 'LANdhcp', comment: 'room 5 ballu' }
+      - { address: '192.168.126.21', mac-address: '8c:88:2b:77:c0:91', server: 'LANdhcp', comment: 'room 6 ballu' }
+      - { address: '192.168.126.22', mac-address: 'bc:24:11:f1:7e:1d', server: 'LANdhcp', comment: 'reserved' }
+      - { address: '192.168.126.23', mac-address: 'd0:ad:08:b4:10:34', server: 'LANdhcp', address-lists: 'internet_allow', comment: 'a hp aratner-new' }
+      - { address: '192.168.126.24', mac-address: 'f0:20:ff:85:7a:cd', server: 'LANdhcp', address-lists: 'internet_allow', comment: 'a hp wifi aratner-new' }
+      - { address: '192.168.126.25', mac-address: 'fc:a9:f5:3d:2c:93', server: 'LANdhcp', address-lists: 'internet_allow', comment: 'appc phone' }
+      - { address: '192.168.126.26', mac-address: '00:e0:4d:6c:03:b5', server: 'LANdhcp', address-lists: 'internet_allow', comment: 'appc typeC eth' }
+      - { address: '192.168.126.27', mac-address: 'c0:a5:e8:8f:bc:b8', server: 'LANdhcp', address-lists: 'internet_allow', comment: 'p625 wifi' }
+      - { address: '192.168.126.28', mac-address: 'b0:4f:13:d2:e6:cf', server: 'LANdhcp', address-lists: 'internet_allow', comment: 'dell Monitor Dock' }
+      - { address: '192.168.126.29', mac-address: '00:00:00:00:00:29', server: 'LANdhcp', address-lists: 'internet_allow', comment: 'reserved' }
+      - { address: '192.168.126.30', mac-address: 'e4:84:d3:f8:2b:59', server: 'LANdhcp', address-lists: 'internet_allow', comment: 't phone' }
+      - { address: '192.168.126.31', mac-address: '60:f2:62:ba:0b:21', server: 'LANdhcp', address-lists: 'internet_allow', comment: 'g GWWN3Z2 wifi' }
+      - { address: '192.168.126.32', mac-address: 'c0:3e:ba:75:64:ea', server: 'LANdhcp', address-lists: 'internet_allow', comment: 'g GWWN3Z2 eth0' }
+      - { address: '192.168.126.33', mac-address: 'c0:3e:ba:bc:f7:5b', server: 'LANdhcp', address-lists: 'internet_allow', comment: 'g GWWN3Z2 eth1dell' }
+      - { address: '192.168.126.34', mac-address: '60:f2:62:bb:5e:63', server: 'LANdhcp', address-lists: 'internet_allow', comment: 'g 3YWN3Z2 wifi' }
+      - { address: '192.168.126.35', mac-address: '34:48:ed:03:7e:16', server: 'LANdhcp', address-lists: 'internet_allow', comment: 'g 3YWN3Z2 eth0' }
+      - { address: '192.168.126.36', mac-address: '34:48:ed:79:72:5b', server: 'LANdhcp', address-lists: 'internet_allow', comment: 'g 3YWN3Z2 eth1dell' }
+      - { address: '192.168.126.37', mac-address: 'e8:88:43:88:7a:10', server: 'LANdhcp', address-lists: 'internet_allow', comment: 'g phone' }
+      - { address: '192.168.126.38', mac-address: 'c8:ff:bf:0f:59:ba', server: 'LANdhcp', address-lists: 'internet_allow', comment: 'd-pc ethR' }
+      - { address: '192.168.126.39', mac-address: 'c8:ff:bf:0f:59:bb', server: 'LANdhcp', address-lists: 'internet_allow', comment: 'd pc ethL' }
+      - { address: '192.168.126.40', mac-address: '8a:f4:da:a0:5b:b8', server: 'LANdhcp', address-lists: 'internet_allow', comment: 'd pc wifi' }
+      - { address: '192.168.126.41', mac-address: 'a4:4c:c8:9c:c0:1e', server: 'LANdhcp', address-lists: 'internet_allow', comment: 'd nb eth1dell' }
+      - { address: '192.168.126.42', mac-address: 'b8:3b:cc:c9:d3:c6', server: 'LANdhcp', address-lists: 'internet_allow', comment: 'd phone' }
+      - { address: '192.168.126.43', mac-address: '00:00:00:00:00:43', server: 'LANdhcp', comment: 'reserved' }
+      - { address: '192.168.126.44', mac-address: '00:00:00:00:00:44', server: 'LANdhcp', comment: 'reserved' }
+      - { address: '192.168.126.45', mac-address: '60:ab:67:e6:a6:73', server: 'LANdhcp', address-lists: 'internet_allow', comment: 'y phone' }
+      - { address: '192.168.126.46', mac-address: '04:10:6b:ce:fe:aa', server: 'LANdhcp', address-lists: 'internet_allow', comment: 'y tab' }
+      - { address: '192.168.126.47', mac-address: '00:00:00:00:00:47', server: 'LANdhcp', comment: 'reserved' }
+      - { address: '192.168.126.48', mac-address: '00:00:00:00:00:48', server: 'LANdhcp', comment: 'reserved' }
+      - { address: '192.168.126.49', mac-address: '00:08:22:b6:42:66', server: 'LANdhcp', address-lists: 'internet_allow', comment: 'sasha tab' }
+      - { address: '192.168.126.50', mac-address: '00:08:22:8e:0b:93', server: 'LANdhcp', address-lists: 'internet_allow', comment: 'sasha tab' }
+      - { address: '192.168.126.51', mac-address: 'bc:24:11:ab:4b:ce', server: 'LANdhcp', comment: 'r-prx2' }
+      - { address: '192.168.126.52', mac-address: 'bc:24:11:27:f4:ec', server: 'LANdhcp', comment: 'r-prx2' }
+      - { address: '192.168.126.254', mac-address: '78:81:02:95:d1:70', server: 'LANdhcp', comment: 'RV6699' }
+
+gateway_config_vpn:
+  pool:
+      - name: vpnpool
+        ranges: 192.168.128.128/26
+
+gateway_config_routing_table:
+      - name: "mts"
+        fib: ""
+
+gateway_config_ip_address:
+      - address: 192.168.126.254/24
+        interface: bridge1
+      - address: 10.10.11.1/24
+        interface: vlan11
+      - address: 10.10.101.1/24
+        interface: vlan101
+
+
+gateway_config_iproute: []
+
+gateway_config_ipfirewall_list:
+      - { list: 'trusted_ip', address: 'r-prx3.ratners.ru' }
+      - { list: 'trusted_ip', address: '127.0.0.1' }
+      - { list: 'trusted_ip', address: '91.103.64.0/21', comment: 'Kaspersky' }
+      - { list: 'trusted_ip', address: '10.10.101.0/24' }
+      - { list: 'trusted_ip', address: '192.168.125.0/24', comment: 'tunels' }
+      - { list: 'trusted_ip', address: '192.168.126.0/24', comment: 'koptevo' }
+      - { list: 'trusted_ip', address: '192.168.135.0/24', comment: 'zverkovo' }
+      - { list: 'localnet', address: '192.168.126.0/24' }
+      - { list: 'wanip', address: '1.1.1.1' }
+      - { list: 'private_ip_RFC1918', address: '10.0.0.0/8' }
+      - { list: 'private_ip_RFC1918', address: '172.16.0.0/12' }
+      - { list: 'private_ip_RFC1918', address: '192.168.0.0/16' }
+      - { list: 'internet_allow', address: '192.168.126.5' }
+      - { list: 'internet_allow', address: '192.168.126.10' }
+      - { list: 'internet_dst_white_list', address: '8.8.8.8' }
+      - { list: 'internet_dst_white_list', address: '8.8.4.4' }
+      - { list: 'internet_dst_white_list', address: 'uchebnik.mos.ru' }
+      - { list: 'internet_dst_white_list', address: 'cloud.dit.mos.ru' }
+      - { list: 'internet_dst_white_list', address: '77.88.21.36', comment: 'ya' }
+      - { list: 'internet_dst_white_list', address: 'school.mos.ru' }
+      - { list: 'internet_dst_white_list', address: 'login.mos.ru' }
+      - { list: 'internet_dst_white_list', address: '212.11.154.0-212.11.157.255', comment: 'mos.ru' }
+      - { list: 'internet_dst_white_list', address: '77.238.96.0/21', comment: 'mos.ru' }
+      - { list: 'internet_dst_white_list', address: '212.11.151.0/24', comment: 'dit code' }
+      - { list: 'internet_dst_white_list', address: '94.79.51.0/24', comment: 'mos.ru' }
+
+gateway_config_ipfirewallfilter_default:
+      - { chain: 'forward', action: 'jump', comment: 'jump to kid-control rules', jump-target: 'kid-control' }
+      - { chain: 'forward', action: 'drop', comment: 'drop invalid', connection-state: 'invalid' }
+      - { chain: 'forward', action: 'drop', comment: 'internet_deny', src-address-list: 'internet_deny', out-interface-list: 'WAN' }
+      - { chain: 'forward', action: 'fasttrack-connection', hw-offload: true, comment: 'E,R', connection-state: 'established,related', connection-bytes: '10240-0' }
+      - { chain: 'forward', action: 'accept', comment: 'E,R,U', connection-state: 'established,related,untracked' }
+      - { chain: 'forward', action: 'accept', comment: 'DNATed', connection-state: 'new', connection-nat-state: 'dstnat' }
+      - { chain: 'forward', action: 'jump', jump-target: 'allowed_fwd' }
+      - { chain: 'forward', action: 'drop' }
+      - { chain: 'input', action: 'accept', comment: 'E,R', connection-state: 'established,related' }
+      - { chain: 'input', action: 'drop', comment: 'drop invalid', connection-state: 'invalid' }
+      - { chain: 'input', action: 'drop', comment: 'drop private ip range', src-address-list: 'private_ip_RFC1918', in-interface-list: 'WAN' }
+      - { chain: 'input', action: 'accept', comment: 'manage', in-interface-list: 'MANAGE', dst-port: '22,80,443,8291,8728,8729', protocol: 'tcp' }
+      - { chain: 'input', action: 'jump', comment: 'allowed_in', jump-target: 'allowed_in' }
+      - { chain: 'input', action: 'drop', in-interface-list: 'WAN' }
+
+gateway_config_ipfirewallfilter_allowed_in:
+      - { chain: 'allowed_in', action: 'accept', disabled: true, comment: 'letsencrypt', dst-port: '80', protocol: 'tcp' }
+      - { chain: 'allowed_in', action: 'accept', src-address-list: 'trusted_ip', connection-state: 'new' }
+      - { chain: 'allowed_in', action: 'accept', in-interface-list: 'LAN', connection-state: 'new' }
+      - { chain: 'allowed_in', action: 'accept', protocol: 'icmp' }
+      - { chain: 'allowed_in', action: 'accept', comment: 'WG', dst-port: '5060,12321', protocol: 'udp' }
+      - { chain: 'allowed_in', action: 'accept', comment: 'l2tp, ipsec, ikev2', dst-port: '500,1701,4500', protocol: 'udp' }
+      - { chain: 'allowed_in', action: 'accept', comment: 'sstp', dst-port: '10443', protocol: 'tcp' }
+      - { chain: 'allowed_in', action: 'accept', in-interface-list: '!WAN', dst-port: '53', protocol: 'tcp' }
+      - { chain: 'allowed_in', action: 'accept', in-interface-list: '!WAN', dst-port: '53', protocol: 'udp' }
+
+gateway_config_ipfirewallfilter_allowed_fwd:
+      - { chain: 'allowed_fwd', action: 'accept', comment: 'in ipsec policy', ipsec-policy: 'in,ipsec' }
+      - { chain: 'allowed_fwd', action: 'accept', comment: 'out ipsec policy', ipsec-policy: 'out,ipsec' }
+      - { chain: 'allowed_fwd', action: 'accept', src-address-list: 'internet_dst_white_list' }
+      - { chain: 'allowed_fwd', action: 'accept', dst-address-list: 'internet_dst_white_list' }
+      - { chain: 'allowed_fwd', action: 'accept', src-address-list: 'trusted_ip', dst-address-list: 'trusted_ip' }
+      - { chain: 'allowed_fwd', action: 'accept', in-interface-list: 'LAN', out-interface-list: 'LAN' }
+      - { chain: 'allowed_fwd', action: 'accept', src-address-list: 'internet_allow', out-interface-list: 'WAN' }
+      - { chain: 'allowed_fwd', action: 'accept', disabled: true, comment: 'f6to20', src-address-list: 'internet_allow_f6to20', in-interface-list: '!WAN', time: '6h-20h,sun,mon,tue,wed,thu' }
+      - { chain: 'allowed_fwd', action: 'accept', disabled: true, comment: 'f6to20', src-address-list: 'internet_allow_f6to20', in-interface-list: '!WAN', time: '6h-20h30m,fri,sat' }
+
+gateway_config_ipfirewallmangle_default:
+      - { chain: 'prerouting', action: 'mark-packet', passthrough: true, comment: 'nat-loopback', dst-address-type: 'local', connection-state: 'new', in-interface-list: 'LAN', new-packet-mark: 'nat-loopback' }
+      - { chain: 'postrouting', action: 'mark-packet', passthrough: true, comment: 'nat-loopback', connection-state: 'new', new-packet-mark: 'nat-loopback', packet-mark: 'nat-loopback' }
+      - { chain: 'prerouting', action: 'jump', log: false, jump-target: 'multiwan_pre' }
+      - { chain: 'output', action: 'jump', log: false, jump-target: 'multiwan_out' }
+
+gateway_config_ipfirewallmangle_multiwan: []
+
+gateway_config_ipfirewallnat_default:
+      - { chain: 'srcnat', action: 'masquerade', comment: 'nat-loopback', log-prefix: 'nat-loopback', packet-mark: 'nat-loopback' }
+      - { chain: 'srcnat', action: 'masquerade', out-interface-list: 'WAN' }
+
+gateway_config_ipfirewallnat_dnat:
+      - { chain: 'dstnat', action: 'dst-nat', dst-port: '80', protocol: 'tcp', dst-address-list: 'wanip', to-addresses: '192.168.126.10', comment: 'nginx reverse proxy' }
+      - { chain: 'dstnat', action: 'dst-nat', dst-port: '443', protocol: 'tcp', dst-address-list: 'wanip', to-addresses: '192.168.126.10', comment: 'nginx reverse proxy' }
+      - { chain: 'dstnat', action: 'dst-nat', dst-port: '3128', protocol: 'tcp', dst-address-list: 'wanip', to-addresses: '192.168.126.10', comment: 'spiceproxy' }
+
+gateway_config:
+  - path: system identity
+    data:
+      - name: "{{ gateway_identity }}"
+#   - path: interface list
+#     data:
+#       - name: MANAGE
+#       - name: LAN
+#       - name: WAN
+#   - path: routing table
+#     data: "{{ gateway_config_routing_table | default([]) }}"
+#   - path: ip address
+#     handle_absent_entries: ignore
+#     handle_entries_content: ignore
+#     ensure_order: false
+#     data: "{{ gateway_config_ip_address | default([]) }}"
+#   - path: ip dhcp-client
+#     data: "{{ gateway_config_dhcpclient | default([]) }}"
+#   - path: ip route
+#     data: "{{ gateway_config_iproute | default([]) }}"
+#   - path: ip pool
+#     handle_absent_entries: remove
+#     handle_entries_content: remove
+#     ensure_order: false
+#     data: >-
+#       {{
+#         gateway_config_dhcp.pool +
+#         gateway_config_vpn.pool | default([]) 
+#       }}
+#   - path: ip dhcp-server option
+#     data: "{{ gateway_config_dhcp.option | default([]) }}"
+#   - path: ip dhcp-server option sets
+#     data: "{{ gateway_config_dhcp.optionset | default([]) }}"
+#   - path: ip dhcp-server
+#     data: "{{ gateway_config_dhcp.server | default([]) }}"
+#   - path: ip dhcp-server network
+#     data: "{{ gateway_config_dhcp.network | default([]) }}"
+#   - path: ip dhcp-server lease
+#     data: "{{ gateway_config_dhcp.lease | default([]) }}"
+#   - path: ip dns
+#     data: "{{ gateway_config_dns.server | default([]) }}"
+#   - path: ip dns forwarders
+#     data: "{{ gateway_config_dns.forwarders | default([]) }}"
+#   - path: ip dns static
+#     data: "{{ gateway_config_dns.static | default([]) }}"
+#   - path: ip firewall address-list
+#     ensure_order: false
+#     data: "{{ gateway_config_ipfirewall_list | default([]) }}"
+#   # - path: ip firewall connection tracking
+#   #   data: []
+#   - path: ip firewall filter
+#     data: >-
+#       {{
+#         gateway_config_ipfirewallfilter_default +
+#         gateway_config_ipfirewallfilter_allowed_in +
+#         gateway_config_ipfirewallfilter_allowed_fwd | default([]) 
+#       }}
+#   # - path: ip firewall layer7-protocol
+#   #   data: []
+#   - path: ip firewall mangle
+#     data: "{{ 
+#         gateway_config_ipfirewallmangle_default +
+#         gateway_config_ipfirewallmangle_multiwan
+#       | default([]) }}"
+#   - path: ip firewall nat
+#     data: "{{
+#       gateway_config_ipfirewallnat_default +
+#       gateway_config_ipfirewallnat_dnat
+#       | default([]) }}"
+#   - path: "ip firewall raw"
+#     data: "{{ gateway_config_ipfirewallraw_default | default([]) }}"
+#   # - path: "ip firewall service-port"
+#   #   data: []
+#   - path: "system ntp client"
+#     data: "{{ gateway_config_systemntpclient.client | default([]) }}"
+#   - path: "system ntp client servers"
+#     data: "{{ gateway_systemntpclient.servers | default([])  }}"
+#   - path: "system ntp server"
+#     data: "{{ gateway_config_systemntpserver | default([]) }}"

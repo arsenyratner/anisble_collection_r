@@ -14,7 +14,6 @@
     mode: "{{ item.mode | default('0755') }}"
   loop:
     - path: "{{ openssl_key_dir }}"
-      mode: '0700'
     - path: "{{ openssl_cert_dir }}"
 
 - name: Create key {{ openssl_createsscert_key_path }}

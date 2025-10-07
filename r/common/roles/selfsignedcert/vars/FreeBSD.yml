@@ -1,7 +1,7 @@
 openssl_packages:
   - openssl
   - py311-cryptography
-openssl_key_dir: /etc/ssl/private
-openssl_cert_dir: /etc/ssl/certs
+openssl_key_dir: /usr/local/openssl/private
+openssl_cert_dir: /usr/local/openssl/certs
 openssl_owner: root
 openssl_group: wheel

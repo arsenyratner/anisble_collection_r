@@ -1,0 +1,141 @@
+
+gateway_identity: "{{ inventory_hostname }}" # inventory_hostname_short
+
+gateway_default_handle_absent_entries: "remove"
+gateway_default_handle_entries_content: "remove_as_much_as_possible"
+gateway_default_ensure_order: true
+gateway_timezone: Europe/Moscow
+gateway_dns_servers: []
+
+gateway_ntp_servers: []
+
+gateway_config_manage: []
+
+gateway_config_wan1: []
+gateway_config_wan2: []
+
+gateway_config_lan1: []
+gateway_config_lan2: []
+gateway_config_lan3: []
+gateway_config_lan4: []
+gateway_config_lan5: []
+gateway_config_lan6: []
+gateway_config_lan7: []
+gateway_config_lan8: []
+gateway_config_lan9: []
+
+gateway_config_vpn1: []
+gateway_config_vpn2: []
+gateway_config_vpn3: []
+gateway_config_vpn4: []
+gateway_config_vpn5: []
+gateway_config_vpn6: []
+gateway_config_vpn7: []
+gateway_config_vpn8: []
+gateway_config_vpn9: []
+
+gateway_config_dmz1: []
+
+gateway_custom_config: >-
+  {{ 
+    gateway_config_manage +
+    gateway_config_lan1 +
+    gateway_config_lan2 +
+    gateway_config_lan3 +
+    gateway_config_lan4 +
+    gateway_config_lan5 +
+    gateway_config_lan6 +
+    gateway_config_lan7 +
+    gateway_config_lan8 +
+    gateway_config_lan9 +
+    gateway_config_wan1 +
+    gateway_config_wan2 +
+    gateway_config_vpn1 +
+    gateway_config_vpn2 +
+    gateway_config_vpn3 +
+    gateway_config_vpn4 +
+    gateway_config_vpn5 +
+    gateway_config_vpn6 +
+    gateway_config_vpn7 +
+    gateway_config_vpn8 +
+    gateway_config_vpn9 +
+    gateway_config_dmz1
+  }}
+
+gateway_config_ipfirewall_list: []
+
+gateway_config_ipfirewallnat_dnat:
+      - { chain: 'dstnat', action: 'dst-nat', dst-port: '80', protocol: 'tcp', dst-address-list: 'wanip', to-addresses: '192.168.126.10', comment: 'nginx reverse proxy' }
+      - { chain: 'dstnat', action: 'dst-nat', dst-port: '443', protocol: 'tcp', dst-address-list: 'wanip', to-addresses: '192.168.126.10', comment: 'nginx reverse proxy' }
+      - { chain: 'dstnat', action: 'dst-nat', dst-port: '3128', protocol: 'tcp', dst-address-list: 'wanip', to-addresses: '192.168.126.10', comment: 'spiceproxy' }
+
+gateway_config:
+  - path: system identity
+    data:
+      - name: "{{ gateway_identity }}"
+  - path: interface list
+    data:
+      - name: MANAGE
+      - name: LAN
+      - name: WAN
+  - path: ip firewall filter
+    data:
+      - { chain: 'forward', action: 'jump', comment: 'jump to kid-control rules', jump-target: 'kid-control' }
+      - { chain: 'forward', action: 'drop', comment: 'drop invalid', connection-state: 'invalid' }
+      - { chain: 'forward', action: 'drop', comment: 'internet_deny', src-address-list: 'internet_deny', out-interface-list: 'WAN' }
+      - { chain: 'forward', action: 'fasttrack-connection', hw-offload: true, comment: 'E,R', connection-state: 'established,related', connection-bytes: '10240-0' }
+      - { chain: 'forward', action: 'accept', connection-state: 'established,related,untracked' }
+      - { chain: 'forward', action: 'accept', connection-state: 'new', connection-nat-state: 'dstnat' }
+      - { chain: 'forward', action: 'jump', jump-target: 'allowed_fwd' }
+      - { chain: 'forward', action: 'drop' }
+      - { chain: 'input', action: 'accept', comment: 'E,R', connection-state: 'established,related' }
+      - { chain: 'input', action: 'drop', comment: 'drop invalid', connection-state: 'invalid' }
+      - { chain: 'input', action: 'drop', comment: 'drop private ip range', src-address-list: 'private_ip_RFC1918', in-interface-list: 'WAN' }
+      - { chain: 'input', action: 'accept', comment: 'manage', in-interface-list: 'MANAGE', dst-port: '22,80,443,8291,8728,8729', protocol: 'tcp' }
+      - { chain: 'input', action: 'jump', comment: 'allowed_in', jump-target: 'allowed_in' }
+      - { chain: 'input', action: 'drop', in-interface-list: 'WAN' }
+      - { chain: 'allowed_in', action: 'accept', disabled: true, comment: 'letsencrypt', dst-port: '80', protocol: 'tcp' }
+      - { chain: 'allowed_in', action: 'accept', src-address-list: 'trusted_ip', connection-state: 'new' }
+      - { chain: 'allowed_in', action: 'accept', in-interface-list: 'LAN', connection-state: 'new' }
+      - { chain: 'allowed_in', action: 'accept', protocol: 'icmp' }
+      - { chain: 'allowed_fwd', action: 'accept', src-address-list: 'internet_dst_white_list' }
+      - { chain: 'allowed_fwd', action: 'accept', dst-address-list: 'internet_dst_white_list' }
+      - { chain: 'allowed_fwd', action: 'accept', src-address-list: 'trusted_ip', dst-address-list: 'trusted_ip' }
+      - { chain: 'allowed_fwd', action: 'accept', in-interface-list: 'LAN', out-interface-list: 'LAN' }
+      - { chain: 'allowed_fwd', action: 'accept', src-address-list: 'internet_allow', out-interface-list: 'WAN' }
+      - { chain: 'allowed_fwd', action: 'accept', disabled: true, src-address-list: 'internet_allow_f6to20', in-interface-list: '!WAN', time: '6h-20h,sun,mon,tue,wed,thu' }
+      - { chain: 'allowed_fwd', action: 'accept', disabled: true, src-address-list: 'internet_allow_f6to20', in-interface-list: '!WAN', time: '6h-20h30m,fri,sat' }
+  - path: ip firewall mangle
+    data:
+      - { chain: 'prerouting', action: 'mark-packet', passthrough: true, comment: 'nat-loopback', dst-address-type: 'local', connection-state: 'new', in-interface-list: 'LAN', new-packet-mark: 'nat-loopback' }
+      - { chain: 'postrouting', action: 'mark-packet', passthrough: true, comment: 'nat-loopback', connection-state: 'new', new-packet-mark: 'nat-loopback', packet-mark: 'nat-loopback' }
+      - { chain: 'prerouting', action: 'jump', log: false, jump-target: 'multiwan_pre' }
+      - { chain: 'output', action: 'jump', log: false, jump-target: 'multiwan_out' }
+  - path: ip firewall nat
+    data:
+      - { chain: 'srcnat', action: 'masquerade', comment: 'nat-loopback', log-prefix: 'nat-loopback', packet-mark: 'nat-loopback' }
+      - { chain: 'srcnat', action: 'masquerade', out-interface-list: 'WAN' }
+  - path: "ip firewall raw"
+    data:
+      - {'chain': 'prerouting', 'action': 'drop', 'src-address-list': 'src_blacklist'}
+  - path: system clock
+    data:
+      - {'time-zone-name': '{{ gateway_timezone }}'}
+  - path: system ntp client
+    data:
+      - {'enabled': true }
+  - path: system ntp client servers
+    data:
+      - {'address': 'time.windows.com'}
+      - {'address': 'time.google.com'}
+      - {'address': 'time.cloudflare.com'}
+      - {'address': 'ntp1.vniiftri.ru'}
+  - path: system ntp server
+    data:
+      - {'enabled': true }
+  - path: tool mac-server
+    data:
+      - {'allowed-interface-list': 'MANAGE'}
+  - path: tool mac-server mac-winbox
+    data:
+      - {'allowed-interface-list': 'MANAGE'}

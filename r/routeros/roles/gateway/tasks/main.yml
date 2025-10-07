@@ -1,0 +1,70 @@
+# - name: gateway config default
+#   ansible.builtin.set_fact:
+#     gateway_config: "{{ gateway_config + gateway_config_default }}"
+
+# - name: interface bridge
+#   ansible.builtin.set_fact:
+#     tmp_data: >-
+#       {{
+#         tmp_data + [
+#           tmp_data |
+#           ansible.builtin.combine({
+#             'name': item.name
+#           })
+#         ]
+#       }}
+#   loop: "{{ bridges }}"
+
+# - name: add interface bridge to config
+#   ansible.builtin.set_fact:
+#     gateway_config: "{{ gateway_config + [gateway_interface_bridge] }}"
+
+# - name: interface bridge port
+#   ansible.builtin.set_fact:
+#     tmp_data: >-
+#       {{ tmp_data + [
+#         tmp_data |
+#         ansible.builtin.combine({
+#           'interface': item.1,
+#           'bridge': item.0.name
+#         })
+#       ] }}
+#   loop: "{{ bridges | subelements('interfaces', skip_missing=True) }}"
+#   loop_control:
+#     label: "{{ item.0.name }}"
+
+# - name: add interface bridge port to config
+#   ansible.builtin.set_fact:
+#     gateway_config: "{{ gateway_config + [gateway_interface_bridge_port] }}"
+
+# - name: debug
+#   ansible.builtin.debug:
+#     var: gateway_config
+
+- name: gateway default config
+  delegate_to: localhost
+  community.routeros.api_modify:
+    path: "{{ api_modify.path }}"
+    handle_absent_entries: "{{ api_modify.handle_absent_entries | default(gateway_default_handle_absent_entries) }}"
+    handle_entries_content: "{{ api_modify.handle_entries_content | default(gateway_default_handle_entries_content) }}"
+    ensure_order: "{{ api_modify.ensure_order | default(gateway_default_ensure_order) }}"
+    data: "{{ api_modify.data }}"
+  loop: "{{ gateway_config }}"
+  loop_control:
+    loop_var: api_modify
+    label: "{{ api_modify.path }}"
+  when: api_modify.data != []
+
+- name: gateway custom config
+  delegate_to: localhost
+  community.routeros.api_modify:
+    path: "{{ api_modify.path }}"
+    handle_absent_entries: "{{ api_modify.handle_absent_entries | default('ignore') }}"
+    handle_entries_content: "{{ api_modify.handle_entries_content | default('ignore') }}"
+    ensure_order: "{{ api_modify.ensure_order | default(false) }}"
+    data: "{{ api_modify.data }}"
+  loop: "{{ gateway_custom_config }}"
+  loop_control:
+    loop_var: api_modify
+    label: "{{ api_modify.path }}"
+  when: api_modify.data != []

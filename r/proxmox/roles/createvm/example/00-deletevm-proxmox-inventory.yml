@@ -1,0 +1,19 @@
+---
+- name: Delete VM
+  hosts: createvm
+  become: false
+  gather_facts: false
+  tasks:
+    - name: Delete VM
+      community.general.proxmox_kvm:
+        state: absent
+        force: true
+        api_user: "{{ createvm_api_user }}"
+        api_password: "{{ createvm_api_password }}"
+        api_token_id: "{{ createvm_api_token_id }}"
+        api_token_secret: "{{ createvm_api_token_secret }}"
+        api_host: "{{ createvm_api_host }}"
+        name: "{{ inventory_hostname }}"
+        node: "{{ createvm_node }}"
+      failed_when: false
+      delegate_to: localhost

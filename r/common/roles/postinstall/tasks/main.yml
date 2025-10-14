@@ -7,15 +7,10 @@
 
 - name: Set fqdn
   ansible.builtin.hostname:
-    name: "{{ postinstall_hostname }}.{{ postinstall_domainname }}"
     use: systemd
-  when: postinstall_domainname != ""
-
-- name: Set short name
-  ansible.builtin.hostname:
-    name: "{{ postinstall_hostname }}"
-    use: systemd
-  when: postinstall_domainname == ""
+    name: |-
+      {% if postinstall_domainname != "" %}{{ postinstall_hostname }}.{{ postinstall_domainname }}
+      {% elif postinstall_domainname == "" %}{{ postinstall_hostname }}{% endif %}
 
 - name: Populate service facts
   ansible.builtin.service_facts:

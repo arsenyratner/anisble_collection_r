@@ -43,10 +43,10 @@ createvm_cipassword: "{{ ansible_password }}"
 createvm_sshkeys: "{{ ansible_ssh_public_key }}"
 # ip 
 createvm_ipconfig0: "ip=dhcp"
-# createvm_ipv4_address: "{{ ansible_host }}"
-# createvm_ipv4_mask: "24" # site_ variables
-# createvm_ipv4_gateway: "" # site_ variables
-# createvm_nameservers: []
-# createvm_searchdomains: []
+# createvm_ipconfig0: >-
+#   ip={{ ansible_host }}/{{ subnet_mask }},
+#   gw={{ subnet_gateway }}
+createvm_nameservers: []
+createvm_searchdomains: []
 # tags 
 createvm_tags: []

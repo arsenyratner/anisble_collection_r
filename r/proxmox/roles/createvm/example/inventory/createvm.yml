@@ -1,0 +1,29 @@
+createvm:
+  vars:
+    createvm_api_user: "root@pam"
+    createvm_api_password: "{{ vault.proxmox_api_password }}"
+    createvm_api_token_id: ""
+    createvm_api_token_secret: ""
+    createvm_api_host: "r-pve1.r.ratners.ru"
+    createvm_full: false
+    createvm_node: "r-pve1"
+    createvm_start: false
+    createvm_tags: ["{{ project.name }}"]
+    createvm_nameservers:
+      - 192.168.126.1
+    createvm_searchdomains:
+      - r.ratners.ru
+    # RAM
+    createvm_balloon: 512 # MB 0 = disable balooning
+    createvm_memory: 2048 # MB
+    # CPU
+    createvm_cores: 4
+    createvm_cpu: host
+    createvm_sockets: 1
+    # DISK
+    createvm_disk: scsi0 # надо указывать тип который в шаблоне
+    createvm_size: 30 # GB
+    createvm_storage: "local-zfs"
+    # NET
+  hosts:
+    r-prx2.r.ratners.ru: { createvm_clone: tmp-u2404, createvm_mac: BC:24:11:AB:4B:CE, createvm_size: 31 }

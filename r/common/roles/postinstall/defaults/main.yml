@@ -1,8 +1,12 @@
 postinstall_domainname: ""
-postinstall_hostname: "{{ inventory_hostname_short }}"
-postinstall_packages:
-  - mc
+postinstall_hostname: "{{ inventory_hostname }}"
 postinstall_updatepackages: false
-# postinstall_selinux: disabled
+postinstall_selinux: disabled
 postinstall_serivces_disabled: []
 postinstall_serivces_masked: []
+postinstall_timezone: "Europe/Moscow"
+postinstall_reboot_auto: false
+postinstall_reboot_force: false
+postinstall_update: false
+postinstall_packages:
+  - mc

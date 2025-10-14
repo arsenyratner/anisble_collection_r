@@ -7,7 +7,11 @@ gateway_default_ensure_order: true
 gateway_timezone: Europe/Moscow
 gateway_dns_servers: []
 
-gateway_ntp_servers: []
+gateway_ntp_servers: 
+  - 'time.windows.com'
+  - 'time.google.com'
+  - 'time.cloudflare.com'
+  - 'ntp1.vniiftri.ru'
 
 gateway_config_manage: []
 
@@ -64,11 +68,6 @@ gateway_custom_config: >-
 
 gateway_config_ipfirewall_list: []
 
-gateway_config_ipfirewallnat_dnat:
-      - { chain: 'dstnat', action: 'dst-nat', dst-port: '80', protocol: 'tcp', dst-address-list: 'wanip', to-addresses: '192.168.126.10', comment: 'nginx reverse proxy' }
-      - { chain: 'dstnat', action: 'dst-nat', dst-port: '443', protocol: 'tcp', dst-address-list: 'wanip', to-addresses: '192.168.126.10', comment: 'nginx reverse proxy' }
-      - { chain: 'dstnat', action: 'dst-nat', dst-port: '3128', protocol: 'tcp', dst-address-list: 'wanip', to-addresses: '192.168.126.10', comment: 'spiceproxy' }
-
 gateway_config:
   - path: system identity
     data:
@@ -91,7 +90,7 @@ gateway_config:
       - { chain: 'input', action: 'accept', comment: 'E,R', connection-state: 'established,related' }
       - { chain: 'input', action: 'drop', comment: 'drop invalid', connection-state: 'invalid' }
       - { chain: 'input', action: 'drop', comment: 'drop private ip range', src-address-list: 'private_ip_RFC1918', in-interface-list: 'WAN' }
-      - { chain: 'input', action: 'accept', comment: 'manage', in-interface-list: 'MANAGE', dst-port: '22,80,443,8291,8728,8729', protocol: 'tcp' }
+      - { chain: 'input', action: 'accept', in-interface-list: 'MANAGE', dst-port: '22,80,443,8291,8728,8729', protocol: 'tcp' }
       - { chain: 'input', action: 'jump', comment: 'allowed_in', jump-target: 'allowed_in' }
       - { chain: 'input', action: 'drop', in-interface-list: 'WAN' }
       - { chain: 'allowed_in', action: 'accept', disabled: true, comment: 'letsencrypt', dst-port: '80', protocol: 'tcp' }
@@ -118,18 +117,18 @@ gateway_config:
   - path: "ip firewall raw"
     data:
       - {'chain': 'prerouting', 'action': 'drop', 'src-address-list': 'src_blacklist'}
+  - path: "ip firewall address-list"
+    data:
+      - { list: 'private_ip_RFC1918', address: '10.0.0.0/8' }
+      - { list: 'private_ip_RFC1918', address: '172.16.0.0/12' }
+      - { list: 'private_ip_RFC1918', address: '192.168.0.0/16' }
   - path: system clock
     data:
       - {'time-zone-name': '{{ gateway_timezone }}'}
   - path: system ntp client
     data:
-      - {'enabled': true }
-  - path: system ntp client servers
-    data:
-      - {'address': 'time.windows.com'}
-      - {'address': 'time.google.com'}
-      - {'address': 'time.cloudflare.com'}
-      - {'address': 'ntp1.vniiftri.ru'}
+      - enabled: true
+        servers: "{{ gateway_ntp_servers | join(',') }}"
   - path: system ntp server
     data:
       - {'enabled': true }

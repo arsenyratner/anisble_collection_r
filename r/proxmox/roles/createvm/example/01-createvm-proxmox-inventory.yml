@@ -1,0 +1,12 @@
+---
+- name: Create VMs
+  serial: 1
+  hosts: createvm
+  become: false
+  gather_facts: false
+  tasks:
+    - name: Create VM
+      ansible.builtin.include_role:
+        name: r.proxmox.createvm
+        apply:
+          delegate_to: localhost

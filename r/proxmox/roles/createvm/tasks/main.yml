@@ -1,6 +1,6 @@
 - name: Full clone
   # async: 0
-  community.general.proxmox_kvm:
+  community.proxmox.proxmox_kvm:
     timeout: 90
     full: true
     state: present
@@ -20,7 +20,7 @@
 
 - name: Linked clone 
   # async: 0
-  community.general.proxmox_kvm:
+  community.proxmox.proxmox_kvm:
     timeout: 90
     full: false
     agent: true
@@ -99,7 +99,7 @@
     - createvm_mac is undefined or createvm_mac == omit or createvm_mac == ""
 
 - name: Set CPU, memory
-  community.general.proxmox_kvm:
+  community.proxmox.proxmox_kvm:
     update: true
     api_user: "{{ createvm_api_user }}"
     api_password: "{{ createvm_api_password }}"
@@ -117,7 +117,7 @@
 # - debug: "var=result"
 
 - name: Set cloud-init
-  community.general.proxmox_kvm:
+  community.proxmox.proxmox_kvm:
     update: true
     api_user: "{{ createvm_api_user }}"
     api_password: "{{ createvm_api_password }}"
@@ -139,7 +139,7 @@
 # - pause: 
 
 - name: Set tags 
-  community.general.proxmox_kvm:
+  community.proxmox.proxmox_kvm:
     update: true
     api_user: "{{ createvm_api_user }}"
     api_password: "{{ createvm_api_password }}"
@@ -152,7 +152,7 @@
   when: createvm_tags != []
 
 - name: Start VM 
-  community.general.proxmox_kvm:
+  community.proxmox.proxmox_kvm:
     state: started
     api_user: "{{ createvm_api_user }}"
     api_password: "{{ createvm_api_password }}"

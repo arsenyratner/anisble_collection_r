@@ -6,7 +6,7 @@
   gather_facts: false
   tasks:
     - name: Start VM
-      community.general.proxmox_kvm:
+      community.proxmox.proxmox_kvm:
         state: started
         force: true
         api_user: "{{ createvm_api_user }}"

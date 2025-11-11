@@ -1,0 +1,484 @@
+- name: Create new container with minimal options
+  community.proxmox.proxmox:
+    vmid: 100
+    node: uk-mc02
+    api_user: root@pam
+    api_password: 1q2w3e
+    api_host: node1
+    password: 123456
+    hostname: example.org
+    ostemplate: 'local:vztmpl/ubuntu-14.04-x86_64.tar.gz'
+
+- name: Create new container with minimal options specifying disk storage location and size
+  community.proxmox.proxmox:
+    vmid: 100
+    node: uk-mc02
+    api_user: root@pam
+    api_password: 1q2w3e
+    api_host: node1
+    password: 123456
+    hostname: example.org
+    ostemplate: 'local:vztmpl/ubuntu-14.04-x86_64.tar.gz'
+    disk: 'local-lvm:20'
+
+- name: Create new container with minimal options specifying disk storage location and size via disk_volume
+  community.proxmox.proxmox:
+    vmid: 100
+    node: uk-mc02
+    api_user: root@pam
+    api_password: 1q2w3e
+    api_host: node1
+    password: 123456
+    hostname: example.org
+    ostemplate: 'local:vztmpl/ubuntu-14.04-x86_64.tar.gz'
+    disk_volume:
+      storage: local
+      size: 20
+
+- name: Create new container with hookscript and description
+  community.proxmox.proxmox:
+    vmid: 100
+    node: uk-mc02
+    api_user: root@pam
+    api_password: 1q2w3e
+    api_host: node1
+    password: 123456
+    hostname: example.org
+    ostemplate: 'local:vztmpl/ubuntu-14.04-x86_64.tar.gz'
+    hookscript: 'local:snippets/vm_hook.sh'
+    description: created with ansible
+
+- name: Create new container automatically selecting the next available vmid.
+  community.proxmox.proxmox:
+    node: 'uk-mc02'
+    api_user: 'root@pam'
+    api_password: '1q2w3e'
+    api_host: 'node1'
+    password: '123456'
+    hostname: 'example.org'
+    ostemplate: 'local:vztmpl/ubuntu-14.04-x86_64.tar.gz'
+
+- name: Create new container with minimal options with force(it will rewrite existing container)
+  community.proxmox.proxmox:
+    vmid: 100
+    node: uk-mc02
+    api_user: root@pam
+    api_password: 1q2w3e
+    api_host: node1
+    password: 123456
+    hostname: example.org
+    ostemplate: 'local:vztmpl/ubuntu-14.04-x86_64.tar.gz'
+    force: true
+
+- name: Create new container with minimal options use environment PROXMOX_PASSWORD variable(you should export it before)
+  community.proxmox.proxmox:
+    vmid: 100
+    node: uk-mc02
+    api_user: root@pam
+    api_host: node1
+    password: 123456
+    hostname: example.org
+    ostemplate: 'local:vztmpl/ubuntu-14.04-x86_64.tar.gz'
+
+- name: Create new container with minimal options defining network interface with dhcp
+  community.proxmox.proxmox:
+    vmid: 100
+    node: uk-mc02
+    api_user: root@pam
+    api_password: 1q2w3e
+    api_host: node1
+    password: 123456
+    hostname: example.org
+    ostemplate: 'local:vztmpl/ubuntu-14.04-x86_64.tar.gz'
+    netif:
+      net0: "name=eth0,ip=dhcp,ip6=dhcp,bridge=vmbr0"
+
+- name: Create new container with minimal options defining network interface with static ip
+  community.proxmox.proxmox:
+    vmid: 100
+    node: uk-mc02
+    api_user: root@pam
+    api_password: 1q2w3e
+    api_host: node1
+    password: 123456
+    hostname: example.org
+    ostemplate: 'local:vztmpl/ubuntu-14.04-x86_64.tar.gz'
+    netif:
+      net0: "name=eth0,gw=192.168.0.1,ip=192.168.0.2/24,bridge=vmbr0"
+
+- name: Create new container with more options defining network interface with static ip4 and ip6 with vlan-tag and mtu
+  community.proxmox.proxmox:
+    vmid: 100
+    node: uk-mc02
+    api_user: root@pam
+    api_password: 1q2w3e
+    api_host: node1
+    password: 123456
+    hostname: example.org
+    ostemplate: 'local:vztmpl/ubuntu-14.04-x86_64.tar.gz'
+    netif:
+      net0: "name=eth0,gw=192.168.0.1,ip=192.168.0.2/24,ip6=fe80::1227/64,gw6=fe80::1,bridge=vmbr0,firewall=1,tag=934,mtu=1500"
+
+- name: Create new container with minimal options defining a mount with 8GB
+  community.proxmox.proxmox:
+    vmid: 100
+    node: uk-mc02
+    api_user: root@pam
+    api_password: 1q2w3e
+    api_host: node1
+    password: 123456
+    hostname: example.org
+    ostemplate: 'local:vztmpl/ubuntu-14.04-x86_64.tar.gz'
+    mounts:
+      mp0: "local:8,mp=/mnt/test/"
+
+- name: Create new container with minimal options defining a mount with 8GB using mount_volumes
+  community.proxmox.proxmox:
+    vmid: 100
+    node: uk-mc02
+    api_user: root@pam
+    api_password: 1q2w3e
+    api_host: node1
+    password: 123456
+    hostname: example.org
+    ostemplate: 'local:vztmpl/ubuntu-14.04-x86_64.tar.gz'
+    mount_volumes:
+      - id: mp0
+        storage: local
+        size: 8
+        mountpoint: /mnt/test
+
+- name: Create new container with minimal options defining a cpu core limit
+  community.proxmox.proxmox:
+    vmid: 100
+    node: uk-mc02
+    api_user: root@pam
+    api_password: 1q2w3e
+    api_host: node1
+    password: 123456
+    hostname: example.org
+    ostemplate: 'local:vztmpl/ubuntu-14.04-x86_64.tar.gz'
+    cores: 2
+
+- name: Create new container with minimal options and same timezone as proxmox host
+  community.proxmox.proxmox:
+    vmid: 100
+    node: uk-mc02
+    api_user: root@pam
+    api_password: 1q2w3e
+    api_host: node1
+    password: 123456
+    hostname: example.org
+    ostemplate: 'local:vztmpl/ubuntu-14.04-x86_64.tar.gz'
+    timezone: host
+
+- name: Create a new container with nesting enabled and allows the use of CIFS/NFS inside the container.
+  community.proxmox.proxmox:
+    vmid: 100
+    node: uk-mc02
+    api_user: root@pam
+    api_password: 1q2w3e
+    api_host: node1
+    password: 123456
+    hostname: example.org
+    ostemplate: 'local:vztmpl/ubuntu-14.04-x86_64.tar.gz'
+    features:
+      - nesting=1
+      - mount=cifs,nfs
+
+- name: >
+    Create a linked clone of the template container with id 100. The newly created container with be a
+    linked clone, because no storage parameter is defined
+  community.proxmox.proxmox:
+    vmid: 201
+    node: uk-mc02
+    api_user: root@pam
+    api_password: 1q2w3e
+    api_host: node1
+    clone: 100
+    hostname: clone.example.org
+
+- name: Create a full clone of the container with id 100
+  community.proxmox.proxmox:
+    vmid: 201
+    node: uk-mc02
+    api_user: root@pam
+    api_password: 1q2w3e
+    api_host: node1
+    clone: 100
+    hostname: clone.example.org
+    storage: local
+
+- name: Update container configuration
+  community.proxmox.proxmox:
+    vmid: 100
+    node: uk-mc02
+    api_user: root@pam
+    api_password: 1q2w3e
+    api_host: node1
+    netif:
+      net0: "name=eth0,gw=192.168.0.1,ip=192.168.0.3/24,bridge=vmbr0"
+    update: true
+
+- name: Start container
+  community.proxmox.proxmox:
+    vmid: 100
+    api_user: root@pam
+    api_password: 1q2w3e
+    api_host: node1
+    state: started
+
+- name: >
+    Start container with mount. You should enter a 90-second timeout because servers
+    with additional disks take longer to boot
+  community.proxmox.proxmox:
+    vmid: 100
+    api_user: root@pam
+    api_password: 1q2w3e
+    api_host: node1
+    state: started
+    timeout: 90
+
+- name: Stop container
+  community.proxmox.proxmox:
+    vmid: 100
+    api_user: root@pam
+    api_password: 1q2w3e
+    api_host: node1
+    state: stopped
+
+- name: Stop container with force
+  community.proxmox.proxmox:
+    vmid: 100
+    api_user: root@pam
+    api_password: 1q2w3e
+    api_host: node1
+    force: true
+    state: stopped
+
+- name: Restart container(stopped or mounted container you can't restart)
+  community.proxmox.proxmox:
+    vmid: 100
+    api_user: root@pam
+    api_password: 1q2w3e
+    api_host: node1
+    state: restarted
+
+- name: Convert container to template
+  community.proxmox.proxmox:
+    vmid: 100
+    api_user: root@pam
+    api_password: 1q2w3e
+    api_host: node1
+    state: template
+
+- name: Convert container to template (stop container if running)
+  community.proxmox.proxmox:
+    vmid: 100
+    api_user: root@pam
+    api_password: 1q2w3e
+    api_host: node1
+    state: template
+    force: true
+
+- name: Remove container
+  community.proxmox.proxmox:
+    vmid: 100
+    api_user: root@pam
+    api_password: 1q2w3e
+    api_host: node1
+    state: absent
+
+- name: >-
+    Create a new container automatically selecting the next available vmid
+    using a non-root API token
+  community.proxmox.proxmox:
+    node: 'uk-mc02'
+    api_token_id: 'svc-tkn'
+    api_token_secret: '81c09a2a-0359-4ba1-8153-8cb3cd02509b'
+    api_user: 'remoteapiuser@pam'
+    api_host: 'node1'
+    password: '123456'
+    hostname: 'example.org'
+    ostemplate: 'local:vztmpl/ubuntu-14.04-x86_64.tar.gz'
+
+- name: >-
+    Create a new container automatically selecting the next available vmid
+    and providing a public key for the root account the Ansible host can use
+    to connect to the new container
+  community.proxmox.proxmox:
+    node: 'uk-mc02'
+    api_user: 'root@pam'
+    api_password: '1q2w3e'
+    api_host: 'node1'
+    password: '123456'
+    hostname: 'example.org'
+    ostemplate: 'local:vztmpl/ubuntu-14.04-x86_64.tar.gz'
+    pubkey: 'ssh-ed25519 AAAAC3NzaC1...hBWA ansibleuser@ansiblehost'
+
+
+- name: Full clone
+  # async: 0
+  community.proxmox.proxmox_kvm:
+    timeout: 90
+    full: true
+    state: present
+    agent: true
+    api_user: "{{ createlxc_api_user }}"
+    api_password: "{{ createlxc_api_password }}"
+    api_token_id: "{{ createlxc_api_password }}"
+    api_token_secret: "{{ createlxc_api_token_secret }}"
+    api_host: "{{ createlxc_api_host }}"
+    node: "{{ createlxc_node }}"
+    name: "{{ createlxc_name }}"
+    clone: "{{ createlxc_template }}"
+    storage: "{{ createlxc_storage }}"
+    format: "{{ createlxc_format }}"
+  when: createlxc_full is true
+  register: result_newvm
+
+- name: Linked clone 
+  # async: 0
+  community.proxmox.proxmox_kvm:
+    timeout: 90
+    full: false
+    agent: true
+    state: present
+    api_user: "{{ createlxc_api_user }}"
+    api_password: "{{ createlxc_api_password }}"
+    api_token_id: "{{ createlxc_api_password }}"
+    api_token_secret: "{{ createlxc_api_token_secret }}"
+    api_host: "{{ createlxc_api_host }}"
+    node: "{{ createlxc_node }}"
+    name: "{{ createlxc_name }}"
+    clone: "{{ createlxc_template }}"
+  when: createlxc_full is false
+  register: result_newvm
+
+- name: Get vm_info
+  community.general.proxmox_vm_info:
+    api_user: "{{ createlxc_api_user }}"
+    api_password: "{{ createlxc_api_password }}"
+    api_token_id: "{{ createlxc_api_password }}"
+    api_token_secret: "{{ createlxc_api_token_secret }}"
+    api_host: "{{ createlxc_api_host }}"
+    node: "{{ createlxc_node }}"
+    vmid: "{{ result_newvm.vmid }}"
+    config: current
+  register: vm_info
+  retries: 3
+  delay: 3
+  until: vm_info.failed is false
+
+- name: Resize disk
+  community.general.proxmox_disk:
+    state: resized
+    api_user: "{{ createlxc_api_user }}"
+    api_password: "{{ createlxc_api_password }}"
+    api_token_id: "{{ createlxc_api_password }}"
+    api_token_secret: "{{ createlxc_api_token_secret }}"
+    api_host: "{{ createlxc_api_host }}"
+    vmid: "{{ result_newvm.vmid }}"
+    disk: "{{ createlxc_disk }}"
+    size: "{{ createlxc_size }}G"
+  when: 
+    - createlxc_size is defined
+    - createlxc_size >= ((vm_info.proxmox_vms[0].maxdisk / (1024 * 1024 * 1024)) | int)
+
+- name: Set nic mac 
+  community.general.proxmox_nic:
+    api_user: "{{ createlxc_api_user }}"
+    api_password: "{{ createlxc_api_password }}"
+    api_token_id: "{{ createlxc_api_password }}"
+    api_token_secret: "{{ createlxc_api_token_secret }}"
+    api_host: "{{ createlxc_api_host }}"
+    vmid: "{{ result_newvm.vmid }}"
+    interface: "{{ createlxc_interface }}"
+    bridge: "{{ createlxc_bridge }}"
+    model: "{{ createlxc_model }}"
+    mtu: "{{ createlxc_mtu }}"
+    mac: "{{ createlxc_mac }}"
+  when: 
+    - createlxc_mac is defined
+    - createlxc_mac != ""
+
+- name: Set nic
+  community.general.proxmox_nic:
+    api_user: "{{ createlxc_api_user }}"
+    api_password: "{{ createlxc_api_password }}"
+    api_token_id: "{{ createlxc_api_password }}"
+    api_token_secret: "{{ createlxc_api_token_secret }}"
+    api_host: "{{ createlxc_api_host }}"
+    vmid: "{{ result_newvm.vmid }}"
+    interface: "{{ createlxc_interface }}"
+    bridge: "{{ createlxc_bridge }}"
+    model: "{{ createlxc_model }}"
+    mtu: "{{ createlxc_mtu }}"
+  when: 
+    - createlxc_mac is undefined or createlxc_mac == omit or createlxc_mac == ""
+
+- name: Set CPU, memory
+  community.proxmox.proxmox_kvm:
+    update: true
+    api_user: "{{ createlxc_api_user }}"
+    api_password: "{{ createlxc_api_password }}"
+    api_token_id: "{{ createlxc_api_password }}"
+    api_token_secret: "{{ createlxc_api_token_secret }}"
+    api_host: "{{ createlxc_api_host }}"
+    node: "{{ createlxc_node }}"
+    vmid: "{{ result_newvm.vmid }}"
+    cpu: "{{ createlxc_cpu | default('host') }}" # cputype=host,flags=
+    cores: "{{ createlxc_cores }}"
+    sockets: "{{ createlxc_sockets }}"
+    memory: "{{ createlxc_memory }}"
+    balloon: "{{ createlxc_balloon }}"
+  register: result
+# - debug: "var=result"
+
+- name: Set cloud-init
+  community.proxmox.proxmox_kvm:
+    update: true
+    api_user: "{{ createlxc_api_user }}"
+    api_password: "{{ createlxc_api_password }}"
+    api_token_id: "{{ createlxc_api_password }}"
+    api_token_secret: "{{ createlxc_api_token_secret }}"
+    api_host: "{{ createlxc_api_host }}"
+    vmid: "{{ result_newvm.vmid }}"
+    node: "{{ createlxc_node }}"
+    citype: "{{ createlxc_citype }}"
+    ciuser: "{{ createlxc_ciuser }}"
+    cipassword: "{{ createlxc_cipassword }}"
+    sshkeys: "{{ createlxc_sshkeys }}"
+    ipconfig: 
+      ipconfig0: '{{ createlxc_ipconfig0 }}'
+    nameservers: "{{ createlxc_nameservers }}"
+    searchdomains: "{{ createlxc_searchdomains }}"
+  register: result
+# - debug: "var=result"
+# - pause: 
+
+- name: Set tags 
+  community.proxmox.proxmox_kvm:
+    update: true
+    api_user: "{{ createlxc_api_user }}"
+    api_password: "{{ createlxc_api_password }}"
+    api_token_id: "{{ createlxc_api_password }}"
+    api_token_secret: "{{ createlxc_api_token_secret }}"
+    api_host: "{{ createlxc_api_host }}"
+    node: "{{ createlxc_node }}"
+    vmid: "{{ result_newvm.vmid }}"
+    tags: "{{ createlxc_tags }}"
+  when: createlxc_tags != []
+
+- name: Start VM 
+  community.proxmox.proxmox_kvm:
+    state: started
+    api_user: "{{ createlxc_api_user }}"
+    api_password: "{{ createlxc_api_password }}"
+    api_token_id: "{{ createlxc_api_password }}"
+    api_token_secret: "{{ createlxc_api_token_secret }}"
+    api_host: "{{ createlxc_api_host }}"
+    node: "{{ createlxc_node }}"
+    vmid: "{{ result_newvm.vmid }}"
+  when: createlxc_start is true
+  ignore_errors: true

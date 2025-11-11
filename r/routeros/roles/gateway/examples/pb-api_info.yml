@@ -309,7 +309,6 @@
         hostname: "{{ ansible_host }}"
         password: "{{ ansible_password }}"
         username: "{{ ansible_user }}"
-        tls: false
         handle_disabled: omit # exclamation null-value
         path: "{{ item }}"
       register: result
@@ -323,7 +322,7 @@
         owner: appc
         group: appc
         mode: '0600'
-        dest: gateway_config_current.yaml
+        dest: gateway_config_{{ inventory_hostname }}.yaml
         content: |
           gateway_config_current:
           {% for results_item in result.results %}
@@ -339,3 +338,20 @@
           {% endif %}
           {% endif %}
           {% endfor %}
+
+    - name: gather facts
+      community.routeros.api_facts:
+        hostname: "{{ ansible_host }}"
+        password: "{{ ansible_password }}"
+        username: "{{ ansible_user }}"
+        # gather_subset: all
+
+    - name: Print all host variables
+      delegate_to: localhost
+      ansible.builtin.copy:
+        owner: appc
+        group: appc
+        mode: '0600'
+        dest: gateway_hostvars_{{ inventory_hostname }}.yaml
+        content: |
+          {{ hostvars[inventory_hostname] | to_nice_yaml }}

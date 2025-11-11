@@ -5,7 +5,7 @@
   gather_facts: false
   tasks:
     - name: Delete VM
-      community.general.proxmox_kvm:
+      community.proxmox.proxmox_kvm:
         state: absent
         force: true
         api_user: "{{ createvm_api_user }}"

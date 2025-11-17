@@ -10,7 +10,7 @@ nginx_sites_available_dir: /etc/nginx/sites-available
 nginx_sites_enabled_dir: /etc/nginx/sites-enabled
 nginx_wellknown_dir: "{{ nginx_default_root }}/.well-known"
 nginx_default_root: ""
-nginx_default_ssl_listen: 127.0.0.3:443 ssl
+nginx_default_ssl_listen: 443 ssl
 
 nginx_dirs: 
   - "{{ nginx_conf_dir }}"

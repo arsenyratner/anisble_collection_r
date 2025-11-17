@@ -1,0 +1,30 @@
+- name: Check cert exists
+  ansible.builtin.stat:
+    path: "{{ certbot_etc_dir }}/live/{{ createcert.name }}/cert.pem"
+  register: certbot_cert_stat
+
+- name: Get cert info
+  community.crypto.x509_certificate_info:
+    path: "{{ certbot_etc_dir }}/live/{{ createcert.name }}/cert.pem"
+  register: createcert_info
+  ignore_errors: true
+  when: certbot_cert_stat.stat.exists
+
+- name: Check SAN
+  ansible.builtin.set_fact:
+    certbot_san_notfound: true
+  loop: "{{ createcert.domains }}"
+  when:
+    - certbot_cert_stat.stat.exists
+    - "('DNS:' + item) not in createcert_info.subject_alt_name"
+
+- name: Create certificate
+  # ansible.builtin.command: 
+  #     cmd: "{{ certbot_create_command }}"
+  ansible.builtin.debug:
+    msg: 
+      - "{{ certbot_create_command }}"
+      - "{{ certbot_renew_command }}"
+  when: 
+    - certbot_cert_stat.stat.exists is false or
+      certbot_san_notfound

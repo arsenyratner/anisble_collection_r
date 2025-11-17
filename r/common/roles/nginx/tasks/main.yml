@@ -1,9 +1,20 @@
 - name: Distribution specific variables
-  ansible.builtin.include_vars: "{{ ansible_distribution }}.yml"
+  ansible.builtin.include_vars: "{{ item }}"
+  with_first_found:
+    - "{{ ansible_distribution }}-{{ ansible_distribution_version }}.yml"
+    - "{{ ansible_distribution }}.yml"
+    - "{{ ansible_os_family }}.yml"
+  ignore_errors: true
+  failed_when: false
 
 - name: Distribution specific tasks
   ansible.builtin.include_tasks:
-    file: "{{ ansible_distribution }}.yml"
+    file: "{{ item }}"
+  with_first_found:
+    - "{{ ansible_distribution }}-{{ ansible_distribution_version }}.yml"
+    - "{{ ansible_distribution }}.yml"
+    - "{{ ansible_os_family }}.yml"
+  ignore_errors: true
 
 - name: create dirs
   ansible.builtin.file:
@@ -45,15 +56,6 @@
     loop_var: server
     label: "{{ server.filename | default(server.server_name) }}"
   when: (nginx_default_server + nginx_servers) != []
-
-# - name: Nginx snippets
-#   ansible.builtin.include_tasks:
-#     file: location.yml
-#   loop: "{{ nginx_location_files }}"
-#   loop_control:
-#     loop_var: location_file
-#     label: "{{ location_file.name }}"
-#   when: nginx_location_files != []
 
 - name: systemctl enable nginx
   ansible.builtin.systemd_service:

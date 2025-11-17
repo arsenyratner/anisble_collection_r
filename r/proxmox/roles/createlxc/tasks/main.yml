@@ -19,12 +19,13 @@
 - name: debug info
   ansible.builtin.debug:
     msg:
-      - "{{ lxcinfo.proxmox_vms[0].config.net0 }}"
-      - "{{ createlxc_netif }}"
-  when: createlxc_debug
+      - "{{ lxcinfo }}"
+  when: 
+    - createlxc_debug
 
 - name: create lxc
   community.proxmox.proxmox:
+    state: present
     api_host: "{{ createlxc_api_host }}"
     api_user: "{{ createlxc_api_user | default(omit) }}"
     api_password: "{{ createlxc_api_password | default(omit) }}"
@@ -42,14 +43,13 @@
     password: "{{ createlxc_password }}"
     pubkey: "{{ createlxc_pubkey }}"
     # cpu
-    cpus: "{{ createlxc_cpus }}"
+    cpus: "{{ createlxc_cpus | default(omit) }}"
+    cores: "{{ createlxc_cores | default(omit) }}"
     # memory
     memory: "{{ createlxc_memory }}"
     swap: "{{ createlxc_swap }}"
     # disk
     disk: "{{ createlxc_disk }}"
-    # network
-    # netif: "{{ createlxc_netif }}"
   register: createlxc_result
 
 - name: debug create
@@ -69,7 +69,7 @@
     pool: "{{ createlxc_pool | default(omit) }}"
     update: true
     # id,name
-    vmid: "{{ createlxc_vmid | default(omit) | int }}"
+    vmid: "{{ createlxc_result.vmid }}"
     hostname: "{{ createlxc_hostname }}"
     # network
     netif: "{{ createlxc_netif }}"
@@ -107,3 +107,13 @@
   when: 
     - createlxc_description != ""
     - createlxc_description != lxcinfo.proxmox_vms[0].config.description | default('') | trim 
+
+- name: state {{ createlxc_state }}
+  community.proxmox.proxmox:
+    api_host: "{{ createlxc_api_host }}"
+    api_user: "{{ createlxc_api_user | default(omit) }}"
+    api_password: "{{ createlxc_api_password | default(omit) }}"
+    api_token_id: "{{ createlxc_api_token_id | default(omit) }}"
+    api_token_secret: "{{ createlxc_api_token_secret | default(omit) }}"
+    vmid: "{{ createlxc_result.vmid }}"
+    state: "{{ createlxc_state | default('stopped') }}"

@@ -1,0 +1,6 @@
+- name: install packages
+  ansible.builtin.apt:
+    name: "{{ certbot_packages }}"
+    state: present
+    update_cache: true
+  when: certbot_packages != []

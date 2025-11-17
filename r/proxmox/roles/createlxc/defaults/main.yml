@@ -21,7 +21,7 @@ createlxc_pubkey: "{{ ansible_ssh_public_key }}"
 createlxc_startup: []
 # createlxc_clone_type: "" # linked | full 
 createlxc_unprivileged: true
-createlxc_state: present
+createlxc_state: started # 
 createlxc_force: false
 createlxc_update: true # state=present, force=false, clone=omit
 createlxc_onboot: false
@@ -142,6 +142,5 @@ createlxc_features:
 createlxc_hookscript: ""
 createlxc_timeout: 30
 createlxc_timezone: host
-
 # createlxc_purge: false # state=absent
 # createlxc_clone: "" # lxc id to clone

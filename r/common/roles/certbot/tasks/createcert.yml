@@ -12,19 +12,16 @@
 
 - name: Check SAN
   ansible.builtin.set_fact:
-    certbot_san_notfound: true
+    certbot_newsan_found: true
+    certbot_cmdline_suffix: "--expand"
   loop: "{{ createcert.domains }}"
   when:
     - certbot_cert_stat.stat.exists
     - "('DNS:' + item) not in createcert_info.subject_alt_name"
 
 - name: Create certificate
-  # ansible.builtin.command:
-  #     cmd: "{{ certbot_create_command }}"
-  ansible.builtin.debug:
-    msg:
-      - "{{ certbot_create_command }}"
-      - "{{ certbot_renew_command }}"
+  ansible.builtin.command:
+      cmd: "{{ certbot_create_command }}"
   when:
     - certbot_cert_stat.stat.exists is false or
-      certbot_san_notfound
+      certbot_newsan_found

@@ -12,6 +12,8 @@
       dest: "{{ server.root }}/index.html"
       content: |
         <h1>{{ server.server_name }}</h1>
+        <h1>{{ ansible_default_ipv4.address }}</h1>
+        <h1>{{ ansible_nodename }}</h1>
     changed_when: false 
   when: server.root is defined
 

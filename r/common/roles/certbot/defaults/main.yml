@@ -1,11 +1,12 @@
 certbot_packages:
   - certbot
 certbot_etc_dir: "/etc/letsencrypt"
-
+certbot_cmd_line_suffix: ""
 certbot_email: arsenyratner@gmail.com
 certbot_bin: /usr/bin/certbot
 certbot_subcommand: certonly
-certbot_san_notfound: false
+certbot_newsan_found: false
+certbot_cmdline_suffix: ""
 certbot_certificates:
   - name: "{{ ansible_nodename }}"
     domains:
@@ -27,9 +28,11 @@ certbot_create_command: >-
   --standalone
   --pre-hook "systemctl stop {{certbot_stopped_services | join(' ') }}"
   --post-hook "systemctl start {{ certbot_stopped_services | join(' ') }}"
+  --expand
   {% elif createcert.plugin | default(certbot_plugin) == "webroot" %}
   --webroot -w "{{ certbot_webroot_dir }}"
   --deploy-hook "systemctl reload {{ certbot_stopped_services | join(' ') }}"
+  --expand
   {% else %}
   --standalone
   --dry-run

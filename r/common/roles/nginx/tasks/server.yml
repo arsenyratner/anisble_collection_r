@@ -1,23 +1,27 @@
 # - debug: "var=server.server_name"
 # - debug: "var=server.redirect_to_https"
 
-- block:
-  - name: create server root
-    ansible.builtin.file:
-      state: directory
-      path: "{{ server.root }}"
+- name: create server root
+  ### block start
+  block:
+    - name: create server root
+      ansible.builtin.file:
+        state: directory
+        path: "{{ server.root }}"
 
-  - name: "{{ server.root }}/index.html"
-    ansible.builtin.copy:
-      dest: "{{ server.root }}/index.html"
-      content: |
-        <h1>{{ server.server_name }}</h1>
-        <h1>{{ ansible_default_ipv4.address }}</h1>
-        <h1>{{ ansible_nodename }}</h1>
-    changed_when: false 
+    - name: "{{ server.root }}/index.html"
+      ansible.builtin.copy:
+        dest: "{{ server.root }}/index.html"
+        content: |
+          <h1>{{ server.server_name }}</h1>
+          <h1>{{ ansible_default_ipv4.address }}</h1>
+          <h1>{{ ansible_nodename }}</h1>
+      changed_when: false 
+  ### block end
   when: server.root is defined
 
 - name: Check key and cert exists
+  ### block start
   block:
     - name: "{{ server.ssl.certificate }}"
       ansible.builtin.stat:
@@ -37,6 +41,7 @@
       ansible.builtin.set_fact:
         nginx_server_disable: false
       when: certificate_result.stat.exists | default(false) and key_result.stat.exists | default(false)
+  ### block end
   when: server.ssl is defined
 
 - name: "{{ nginx_sites_available_dir }}/{{ server.filename | default(server.server_name) }}"

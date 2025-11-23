@@ -1,0 +1,6 @@
+# remove_unmanaged_
+remove_unmanaged_targetdir: ""
+remove_unmanaged_keeplist: []
+remove_unmanaged_hidden: false
+remove_unmanaged_recurse: false
+remove_unmanaged_file_type: any

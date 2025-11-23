@@ -1,0 +1,36 @@
+- name: add snippets to managed list
+  ansible.builtin.set_fact:
+    nginx_managed_files: "{{ nginx_managed_files + [(nginx_snippet_dir + '/' + snippet.filename)] }}"
+  loop: "{{ nginx_snippets }}"
+  loop_control:
+    loop_var: snippet
+    label: "{{ snippet.filename }}"
+  when: nginx_snippets != []
+
+- name: add enabled site conf to managed list
+  ansible.builtin.set_fact:
+    nginx_managed_files: "{{ nginx_managed_files + [(nginx_sites_enabled_dir + '/' + server.linkname | default(server.server_name))] }}"
+  loop: "{{ nginx_default_server + nginx_servers }}"
+  loop_control:
+    loop_var: server
+    label: "{{ server.filename | default(server.server_name) }}"
+  when: (nginx_default_server + nginx_servers) != []
+
+- name: add available site conf to managed list
+  ansible.builtin.set_fact:
+    nginx_managed_files: "{{ nginx_managed_files + [(nginx_sites_available_dir + '/' + server.filename | default(server.server_name))] }}"
+  loop: "{{ nginx_default_server + nginx_servers }}"
+  loop_control:
+    loop_var: server
+    label: "{{ server.filename | default(server.server_name) }}"
+  when: (nginx_default_server + nginx_servers) != []
+
+- name: remove unmanaged files
+  vars:
+    remove_unmanaged_targetdir: "{{ nginx_item }}"
+    remove_unmanaged_keeplist: "{{ nginx_dirs + nginx_managed_files }}"
+  ansible.builtin.include_role:
+    name: r.common.remove_unmanaged
+  loop: "{{ nginx_managed_dirs }}"
+  loop_control:
+    loop_var: nginx_item

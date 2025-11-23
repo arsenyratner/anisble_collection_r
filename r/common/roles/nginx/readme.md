@@ -1,8 +1,28 @@
 # Описание роли
 
-* Создаёт скрипт синхронизации DEB реопзитория по списку в переменной: debmirror_repolist
-* Публикует locations с помощью nginx по списку из переменной: debmirror_nginx_locations
+* nginx
 
+
+```yaml
+server: 
+  server_name: ""
+  aliases: []
+  listens: []
+  ssl:
+    certificate: "" 
+    key: ""
+  access_log: ""
+  error_log: ""
+  root: ""
+  snippets: []
+  redirect_to_https: false
+  includes: ""
+  locations:
+    location: ""
+    alias: ""
+    options: |
+  otheroptions: |
+```
 ## TODO
 
 ## Пример использования

@@ -1,0 +1,20 @@
+- name: Find files in {{ remove_unmanaged_targetdir }}
+  ansible.builtin.find:
+    file_type: "{{ remove_unmanaged_file_type }}"
+    paths: "{{ remove_unmanaged_targetdir }}"
+    hidden: "{{ remove_unmanaged_hidden }}"
+    recurse: "{{ remove_unmanaged_recurse }}"
+  register: remove_unmanaged_foundfiles
+
+- name: Remove file in {{ remove_unmanaged_targetdir }}
+  ansible.builtin.file:
+    state: absent
+    path: "{{ remove_unmanaged_item.path }}"
+  loop: "{{ remove_unmanaged_foundfiles.files }}"
+  loop_control:
+    loop_var: remove_unmanaged_item
+    label: "{{ remove_unmanaged_item.path }}"
+  when: 
+    - remove_unmanaged_item.path not in remove_unmanaged_keeplist
+    # - remove_unmanaged_item.isreg or
+    #   remove_unmanaged_item.islnk

@@ -39,7 +39,7 @@
       <h1>{{ ansible_default_ipv4.address }}</h1>
   changed_when: false
 
-- name: disable "{{ nginx_sites_enabled_dir }}/default"
+- name: "{{ nginx_conf_dir }}/well-known.conf"
   ansible.builtin.copy:
     dest: "{{ nginx_conf_dir }}/well-known.conf"
     content: |
@@ -48,7 +48,11 @@
         allow all;
       }
 
-- name: Add nginx servers
+- name: remove unmanaged files
+  ansible.builtin.include_tasks:
+    file: remove_unmanaged.yml
+
+- name: add nginx servers
   ansible.builtin.include_tasks:
     file: server.yml
   loop: "{{ nginx_default_server + nginx_servers }}"
@@ -57,8 +61,22 @@
     label: "{{ server.filename | default(server.server_name) }}"
   when: (nginx_default_server + nginx_servers) != []
 
+- name: add nginx snippets
+  ansible.builtin.copy:
+    backup: true
+    owner: root
+    group: root
+    mode: '0644'
+    dest: "{{ nginx_snippet_dir }}/{{ snippet.filename }}"
+  loop: "{{ nginx_snippets }}"
+  loop_control:
+    loop_var: snippet
+    label: "{{ snippet.filename }}"
+  when: nginx_snippets != []
+  notify: Nginx restart
+
 - name: systemctl enable nginx
   ansible.builtin.systemd_service:
     name: nginx
-    enabled: true
+    enabled: "{{ nginx_service_enabled }}"
   notify: Nginx restart

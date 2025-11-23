@@ -3,6 +3,7 @@ nginx_pid_file: /run/nginx.pid
 nginx_conf_dir: /etc/nginx
 nginx_confd_dir: /etc/nginx/conf.d
 nginx_snippet_dir: ""
+nginx_snippet_defaultonly: false
 nginx_modules_available_dir: /etc/nginx/modules-available
 nginx_modules_enabled_dir: "" # nginx_modules_dir: /usr/share/nginx/modules
 nginx_log_dir: /var/log/nginx
@@ -10,7 +11,9 @@ nginx_sites_available_dir: /etc/nginx/sites-available
 nginx_sites_enabled_dir: /etc/nginx/sites-enabled
 nginx_wellknown_dir: "{{ nginx_default_root }}/.well-known"
 nginx_default_root: ""
-nginx_default_ssl_listen: 443 ssl
+nginx_default_ssl_listen: 443
+nginx_default_listen: 80
+nginx_service_enabled: true
 
 nginx_dirs: 
   - "{{ nginx_conf_dir }}"
@@ -23,15 +26,58 @@ nginx_dirs:
   - "{{ nginx_snippet_dir }}"
   - "{{ nginx_wellknown_dir }}"
 
-nginx_snippet_files: []
+nginx_snippets: []
+  # - filename:
+  #   content:  
 nginx_servers: []
 nginx_default_server:
   - server_name: _
     redirect_to_https: false
     filename: default
-    linkname: default
+    linkname: 00-default
     enabled: true
+    snippets: true
     listens: 
       - "80"
       - "[::]:80"
     root: "{{ nginx_default_root }}"
+
+nginx_managed_files:
+  - "{{ nginx_conf_file }}"
+  - "{{ nginx_conf_dir }}/well-known.conf"
+  - "{{ nginx_conf_dir }}/fastcgi.conf"
+  - "{{ nginx_conf_dir }}/proxy_params"
+  - "{{ nginx_conf_dir }}/mime.types"
+  - "{{ nginx_conf_dir }}/fastcgi_params"
+  - "{{ nginx_conf_dir }}/scgi_params"
+  - "{{ nginx_conf_dir }}/koi-win"
+  - "{{ nginx_conf_dir }}/koi-utf"
+  - "{{ nginx_conf_dir }}/uwsgi_params"
+  - "{{ nginx_conf_dir }}/win-utf"
+
+nginx_managed_dirs:
+  - "{{ nginx_conf_dir }}"
+  - "{{ nginx_snippet_dir }}"
+  - "{{ nginx_sites_available_dir }}"
+  - "{{ nginx_sites_enabled_dir }}"
+
+
+
+server: 
+  server_name: ""
+  aliases: []
+  listens: []
+  ssl:
+    certificate: "" 
+    key: ""
+  access_log: ""
+  error_log: ""
+  root: ""
+  snippets: []
+  redirect_to_https: false
+  includes:
+  locations:
+    location:
+    alias:
+    options:
+  otheroptions:

@@ -1,8 +1,0 @@
-- name: Install packages
-  ansible.builtin.dnf: 
-    name: "{{ nginx_packages }}"
-    state: present
-
-- name: Disable SELinux
-  ansible.posix.selinux:
-    state: disabled

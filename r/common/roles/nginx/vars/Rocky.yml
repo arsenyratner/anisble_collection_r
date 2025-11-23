@@ -1,9 +1,0 @@
-nginx_packages:
-  - epel-release
-  - nginx
-
-nginx_user: nginx
-nginx_modules_enabled_dir: /usr/share/nginx/modules
-nginx_default_root: /usr/share/nginx/html
-nginx_snippet_dir: /etc/nginx/default.d
-

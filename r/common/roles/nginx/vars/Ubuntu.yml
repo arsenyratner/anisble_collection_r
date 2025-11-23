@@ -1,6 +1,0 @@
-nginx_packages:
-  - nginx
-nginx_user: www-data
-nginx_modules_enabled_dir: /etc/nginx/modules-enabled
-nginx_default_root: /var/www/html
-nginx_snippet_dir: /etc/nginx/default.d

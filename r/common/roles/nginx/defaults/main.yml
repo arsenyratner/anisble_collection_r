@@ -5,7 +5,7 @@ nginx_confd_dir: /etc/nginx/conf.d
 nginx_snippet_dir: ""
 nginx_snippet_defaultonly: false
 nginx_modules_available_dir: /etc/nginx/modules-available
-nginx_modules_enabled_dir: "" # nginx_modules_dir: /usr/share/nginx/modules
+nginx_modules_enabled_dir: ""
 nginx_log_dir: /var/log/nginx
 nginx_sites_available_dir: /etc/nginx/sites-available
 nginx_sites_enabled_dir: /etc/nginx/sites-enabled
@@ -60,24 +60,3 @@ nginx_managed_dirs:
   - "{{ nginx_snippet_dir }}"
   - "{{ nginx_sites_available_dir }}"
   - "{{ nginx_sites_enabled_dir }}"
-
-
-
-server: 
-  server_name: ""
-  aliases: []
-  listens: []
-  ssl:
-    certificate: "" 
-    key: ""
-  access_log: ""
-  error_log: ""
-  root: ""
-  snippets: []
-  redirect_to_https: false
-  includes:
-  locations:
-    location:
-    alias:
-    options:
-  otheroptions:

@@ -68,6 +68,7 @@
     group: root
     mode: '0644'
     dest: "{{ nginx_snippet_dir }}/{{ snippet.filename }}"
+    content: "{{ snippet.content }}"
   loop: "{{ nginx_snippets }}"
   loop_control:
     loop_var: snippet

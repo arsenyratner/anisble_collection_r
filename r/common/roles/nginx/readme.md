@@ -88,6 +88,7 @@ nginx_servers: []
       alias: ""
       options: ""
     otheroptions: ""
+    beforeoptions: ""
 ```
 ## TODO
 

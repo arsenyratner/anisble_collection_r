@@ -6,6 +6,8 @@
 ```yaml
 server: 
   server_name: ""
+  filename: ""
+  linkname: ""
   aliases: []
   listens: []
   ssl:

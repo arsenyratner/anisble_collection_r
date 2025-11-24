@@ -1,9 +1,0 @@
-# - name: Disable SELinux
-#   ansible.builtin.selinux:
-#     state: disabled
-
-- name: Install bind
-  ansible.builtin.dnf:
-    name: "{{ bind_packages }}"
-    state: present
-    update_cache: yes

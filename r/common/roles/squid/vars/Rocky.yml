@@ -1,6 +1,0 @@
-squid_packages:
-  - epel-release
-  - squid
-
-squid_user: proxy
-squid_group: proxy

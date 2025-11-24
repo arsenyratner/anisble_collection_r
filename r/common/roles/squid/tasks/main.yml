@@ -1,9 +1,20 @@
 - name: Distribution specific variables
-  ansible.builtin.include_vars: "{{ ansible_distribution }}.yml"
+  ansible.builtin.include_vars: "{{ item }}"
+  with_first_found:
+    - "_{{ ansible_distribution | lower }}-{{ ansible_distribution_version | lower }}.yml"
+    - "_{{ ansible_distribution | lower }}.yml"
+    - "_{{ ansible_os_family | lower }}.yml"
+  ignore_errors: true
+  failed_when: false
 
 - name: Distribution specific tasks
   ansible.builtin.include_tasks:
-    file: "{{ ansible_distribution }}.yml"
+    file: "{{ item }}"
+  with_first_found:
+    - "_{{ ansible_distribution | lower }}-{{ ansible_distribution_version | lower }}.yml"
+    - "_{{ ansible_distribution | lower }}.yml"
+    - "_{{ ansible_os_family | lower }}.yml"
+  ignore_errors: true
 
 - name: create dirs
   ansible.builtin.file:

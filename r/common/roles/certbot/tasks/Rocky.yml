@@ -1,5 +1,0 @@
-- name: install packages
-  ansible.builtin.dnf:
-    name: "{{ certbot_packages }}"
-    state: present
-  when: certbot_packages != []

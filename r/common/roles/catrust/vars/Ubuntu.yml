@@ -1,2 +1,0 @@
-catrust_cacert_dir: "/usr/local/share/ca-certificates/"
-catrust_update_cmd: update-ca-certificates

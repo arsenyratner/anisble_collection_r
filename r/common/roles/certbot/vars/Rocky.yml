@@ -1,3 +1,0 @@
-certbot_packages:
-  - certbot
-certbot_webroot_dir: "/usr/share/nginx/html"

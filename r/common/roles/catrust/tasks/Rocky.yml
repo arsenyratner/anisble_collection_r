@@ -1,5 +1,0 @@
-- name: install packages
-  ansible.builtin.dnf:
-    name: "{{ catrust_packages }}"
-    state: present
-  when: catrust_packages != []

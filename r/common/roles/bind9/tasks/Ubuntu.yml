@@ -1,4 +1,0 @@
-- name: Install bind
-  ansible.builtin.apt:
-    name: "{{ bind_packages }}"
-    state: present

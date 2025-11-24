@@ -9,3 +9,8 @@ haproxy_confd_files: []
 haproxy_dirs:
   - "{{ haproxy_confd_dir }}"
 haproxy_systemd_dropin: []
+
+haproxy_managed_dirs:
+  - "{{ haproxy_conf }}"
+  - "{{ haproxy_confd_dir }}"
+haproxy_managed_files: []

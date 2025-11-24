@@ -1,0 +1,21 @@
+- name: add confd files to managed list
+  ansible.builtin.set_fact:
+    haproxy_managed_files: "{{ 
+        haproxy_managed_files + 
+        [(haproxy_confd_dir + '/' + file.name)] 
+      }}"
+  loop: "{{ haproxy_confd_files }}"
+  loop_control:
+    loop_var: file
+    label: "{{ file.name }}"
+  when: haproxy_confd_files != []
+
+- name: remove unmanaged files
+  vars:
+    remove_unmanaged_targetdir: "{{ haproxy_item }}"
+    remove_unmanaged_keeplist: "{{ haproxy_dirs + haproxy_managed_files }}"
+  ansible.builtin.include_role:
+    name: r.common.remove_unmanaged
+  loop: "{{ haproxy_managed_dirs }}"
+  loop_control:
+    loop_var: haproxy_item

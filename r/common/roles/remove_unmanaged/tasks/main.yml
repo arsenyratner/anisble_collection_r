@@ -14,7 +14,5 @@
   loop_control:
     loop_var: remove_unmanaged_item
     label: "{{ remove_unmanaged_item.path }}"
-  when: 
+  when:
     - remove_unmanaged_item.path not in remove_unmanaged_keeplist
-    # - remove_unmanaged_item.isreg or
-    #   remove_unmanaged_item.islnk

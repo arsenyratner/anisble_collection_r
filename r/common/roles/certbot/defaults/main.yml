@@ -7,10 +7,10 @@ certbot_bin: /usr/bin/certbot
 certbot_subcommand: certonly
 certbot_newsan_found: false
 certbot_cmdline_suffix: ""
-certbot_certificates:
-  - name: "{{ ansible_nodename }}"
-    domains:
-      - "{{ ansible_nodename }}"
+certbot_certificates: []
+  # - name: "{{ inventory_hostname }}"
+  #   domains:
+  #     - one.more.name.com
 ## standalone
 certbot_plugin: standalone
 certbot_stopped_services:
@@ -23,7 +23,7 @@ certbot_webroot_dir: "/var/www/html"
 certbot_create_command: >-
   {{ certbot_bin }} {{ certbot_subcommand }} --agree-tos -n
   --email {{ createcert.email | default(certbot_email) }}
-  -d {{ createcert.domains | join(',') }}
+  -d {{ createcert.name + ',' + (createcert.domains | default([]) | join(',') ) }}
   {% if createcert.plugin | default(certbot_plugin) == "standalone" %}
   --standalone
   --pre-hook "systemctl stop {{certbot_stopped_services | join(' ') }}"

@@ -21,7 +21,9 @@
 
 - name: Create certificate
   ansible.builtin.command:
-      cmd: "{{ certbot_create_command }}"
+    cmd: "{{ certbot_create_command }}"
   when:
     - certbot_cert_stat.stat.exists is false or
       certbot_newsan_found
+  register: result
+  changed_when: result.rc != 0

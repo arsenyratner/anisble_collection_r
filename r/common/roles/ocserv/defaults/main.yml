@@ -12,7 +12,7 @@ ocserv_udp_port: 443
 ocserv_server_cert: ""
 ocserv_server_key: ""
 ocserv_user: ocserv
-ocserv_group: ocserv 
+ocserv_group: ocserv
 ocserv_default_domain: "{{ ansible_domain }}"
 ocserv_ipv4network: ""
 ocserv_nameservers: []
@@ -45,6 +45,6 @@ ocserv_pergroup_config:
       route = {{ ocserv_ipv4network }}
       {% for ns in ocserv_nameservers %}
       dns = {{ ns }}
-      {% endfor%}
+      {% endfor %}
 
 ocserv_peruser_config: []

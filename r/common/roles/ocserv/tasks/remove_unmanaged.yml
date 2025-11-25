@@ -1,8 +1,8 @@
 - name: add pergroup config to managed list
   ansible.builtin.set_fact:
-    ocserv_managed_files: "{{ 
-        ocserv_managed_files + 
-        [(ocserv_configpergroup_dir + '/' + file.name)] 
+    ocserv_managed_files: "{{
+        ocserv_managed_files +
+        [(ocserv_configpergroup_dir + '/' + file.name)]
       }}"
   loop: "{{ ocserv_pergroup_config }}"
   loop_control:
@@ -12,9 +12,9 @@
 
 - name: add peruser config to managed list
   ansible.builtin.set_fact:
-    ocserv_managed_files: "{{ 
-        ocserv_managed_files + 
-        [(ocserv_configperuser_dir + '/' + file.name)] 
+    ocserv_managed_files: "{{
+        ocserv_managed_files +
+        [(ocserv_configperuser_dir + '/' + file.name)]
       }}"
   loop: "{{ ocserv_peruser_config }}"
   loop_control:

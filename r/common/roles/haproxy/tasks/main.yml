@@ -16,6 +16,10 @@
     - "_{{ ansible_os_family | lower }}.yml"
   ignore_errors: true
 
+- name: remove unmanaged files
+  ansible.builtin.include_tasks:
+    file: remove_unmanaged.yml
+
 - name: create dirs
   ansible.builtin.file:
     state: directory
@@ -32,6 +36,7 @@
   ansible.builtin.copy:
     dest: "{{ haproxy_confd_dir }}/{{ file.name }}"
     content: "{{ file.content }}"
+    backup: false
   loop: "{{ haproxy_confd_files }}"
   loop_control:
     loop_var: file

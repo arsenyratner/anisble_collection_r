@@ -15,6 +15,9 @@ certbot_certificates: []
 certbot_plugin: standalone
 certbot_stopped_services:
   - nginx
+certbot_deploy_services: 
+  - nginx
+  - ocserv
 ## webroot
 # certbot_plugin: webroot
 # certbot_stopped_services: []
@@ -39,35 +42,13 @@ certbot_create_command: >-
   {% endif %}
 
 certbot_renew_command: >-
-  {{ certbot_bin }} renew -n -m {{ certbot_email }}
+  {{ certbot_bin }} renew -n
+  -m {{ certbot_email }}
   --webroot -w {{ certbot_webroot_dir }}
-  --deploy-hook "systemctl reload {{ certbot_stopped_services | join(' ') }}"
+  {% if certbot_deploy_services != [] %}
+  --deploy-hook "systemctl reload {{ certbot_deploy_services | join(' ') }}"
+  {% endif %}
 
 certbot_dirs:
   - certbot_webroot_dir
   - certbot_etc_dir
-
-certbot_nginx_bin: /usr/sbin/nginx
-certbot_nginx_config: |
-  worker_processes 1;
-
-  events {
-      worker_connections 1024;
-  }
-
-  http {
-      include mime.types;
-      default_type application/octet-stream;
-      sendfile on;
-      keepalive_timeout 65;
-
-      server {
-          listen 80;
-          server_name _;
-
-          location / {
-              root {{ certbot_webroot_dir }};
-              index index.html index.htm;
-          }
-      }
-  }

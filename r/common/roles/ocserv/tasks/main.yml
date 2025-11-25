@@ -24,6 +24,16 @@
     value: "{{ item.value }}"
   loop: "{{ ocserv_sysctl }}"
 
+- name: remove unmanaged files
+  ansible.builtin.include_tasks:
+    file: remove_unmanaged.yml
+
+- name: create dirs
+  ansible.builtin.file:
+    state: directory
+    path: "{{ item }}"
+  loop: "{{ ocserv_dirs }}"
+
 - name: "{{ ocserv_conf_file }}"
   ansible.builtin.template:
     backup: true
@@ -54,9 +64,36 @@
     mode: '0644'
   notify: ocserv restart
 
+- name: "per group config"
+  ansible.builtin.copy:
+    owner: root
+    group: root
+    mode: '0644'
+    backup: true
+    dest: "{{ ocserv_configpergroup_dir }}/{{ item.name }}"
+    content: "{{ item.content }}"
+  notify: ocserv restart
+  loop: "{{ ocserv_pergroup_config }}"
+  loop_control:
+    label: "{{ item.name }}"
+  when: ocserv_pergroup_config != []
+
+- name: "per user config"
+  ansible.builtin.copy:
+    owner: root
+    group: root
+    mode: '0644'
+    backup: true
+    dest: "{{ ocserv_configperuser_dir }}/{{ item.name }}"
+    content: "{{ item.content }}"
+  notify: ocserv restart
+  loop: "{{ ocserv_peruser_config }}"
+  loop_control:
+    label: "{{ item.name }}"
+  when: ocserv_peruser_config != []
+
 - name: systemctl enable ocserv
   ansible.builtin.systemd_service:
     name: ocserv
     enabled: true
   notify: ocserv restart
-

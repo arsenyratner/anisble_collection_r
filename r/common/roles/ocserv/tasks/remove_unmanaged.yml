@@ -1,0 +1,33 @@
+- name: add pergroup config to managed list
+  ansible.builtin.set_fact:
+    ocserv_managed_files: "{{ 
+        ocserv_managed_files + 
+        [(ocserv_configpergroup_dir + '/' + file.name)] 
+      }}"
+  loop: "{{ ocserv_pergroup_config }}"
+  loop_control:
+    loop_var: file
+    label: "{{ file.name }}"
+  when: ocserv_pergroup_config != []
+
+- name: add peruser config to managed list
+  ansible.builtin.set_fact:
+    ocserv_managed_files: "{{ 
+        ocserv_managed_files + 
+        [(ocserv_configperuser_dir + '/' + file.name)] 
+      }}"
+  loop: "{{ ocserv_peruser_config }}"
+  loop_control:
+    loop_var: file
+    label: "{{ file.name }}"
+  when: ocserv_peruser_config != []
+
+- name: remove unmanaged files
+  vars:
+    remove_unmanaged_targetdir: "{{ ocserv_item }}"
+    remove_unmanaged_keeplist: "{{ ocserv_dirs + ocserv_managed_files }}"
+  ansible.builtin.include_role:
+    name: r.common.remove_unmanaged
+  loop: "{{ ocserv_managed_dirs }}"
+  loop_control:
+    loop_var: ocserv_item

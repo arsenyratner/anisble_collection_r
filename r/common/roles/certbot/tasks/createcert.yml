@@ -19,6 +19,13 @@
     - certbot_cert_stat.stat.exists
     - "('DNS:' + item) not in createcert_info.subject_alt_name"
 
+# - name: Create certificate
+#   ansible.builtin.command:
+#       cmd: "{{ certbot_create_command }}"
+#   when:
+#     - certbot_cert_stat.stat.exists is false or
+#       certbot_newsan_found
+
 - name: Create certificate
   ansible.builtin.command:
     cmd: "{{ certbot_create_command }}"

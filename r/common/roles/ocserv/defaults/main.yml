@@ -1,7 +1,8 @@
 ocserv_fqdn: "{{ ansible_nodename }}"
-ocserv_conf_file: /etc/ocserv/ocserv.conf
-ocserv_users_file: /etc/ocserv/ocpasswd
-ocserv_profile_file: /etc/ocserv/profile.xml
+ocserv_conf_dir: "/etc/ocserv"
+ocserv_conf_file: "{{ ocserv_conf_dir }}/ocserv.conf"
+ocserv_users_file: "{{ ocserv_conf_dir }}/ocpasswd"
+ocserv_profile_file: "{{ ocserv_conf_dir }}/profile.xml"
 ocserv_listen_host: "{{ ansible_default_ipv4.address }}"
 ocserv_tcp_port: 443
 ocserv_udp_listen_host: "{{ ansible_default_ipv4.address }}"
@@ -22,3 +23,14 @@ ocserv_sysctl:
 ocserv_routes: []
 ocserv_noroutes: []
 ocserv_groups: []
+
+ocserv_dirs:
+  - "{{ ocserv_conf_dir }}"
+
+ocserv_managed_dirs:
+  - "{{ ocserv_conf_dir }}"
+
+ocserv_managed_files:
+  - "{{ ocserv_conf_file }}"
+  - "{{ ocserv_users_file }}"
+  - "{{ ocserv_profile_file }}"

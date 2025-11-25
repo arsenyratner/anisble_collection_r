@@ -24,6 +24,10 @@
     value: "{{ item.value }}"
   loop: "{{ ocserv_sysctl }}"
 
+- name: remove unmanaged files
+  ansible.builtin.include_tasks:
+    file: remove_unmanaged.yml
+
 - name: "{{ ocserv_conf_file }}"
   ansible.builtin.template:
     backup: true

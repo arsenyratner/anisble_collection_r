@@ -1,0 +1,9 @@
+- name: remove unmanaged files
+  vars:
+    remove_unmanaged_targetdir: "{{ ocserv_item }}"
+    remove_unmanaged_keeplist: "{{ ocserv_dirs + ocserv_managed_files }}"
+  ansible.builtin.include_role:
+    name: r.common.remove_unmanaged
+  loop: "{{ ocserv_managed_dirs }}"
+  loop_control:
+    loop_var: ocserv_item

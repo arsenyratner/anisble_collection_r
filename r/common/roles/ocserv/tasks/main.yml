@@ -74,6 +74,8 @@
     content: "{{ item.content }}"
   notify: ocserv restart
   loop: "{{ ocserv_pergroup_config }}"
+  loop_control:
+    label: "{{ item.name }}"
   when: ocserv_pergroup_config != []
 
 - name: "per user config"
@@ -86,6 +88,8 @@
     content: "{{ item.content }}"
   notify: ocserv restart
   loop: "{{ ocserv_peruser_config }}"
+  loop_control:
+    label: "{{ item.name }}"
   when: ocserv_peruser_config != []
 
 - name: systemctl enable ocserv

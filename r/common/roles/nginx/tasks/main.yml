@@ -16,10 +16,17 @@
     - "_{{ ansible_os_family | lower }}.yml"
   ignore_errors: true
 
+- name: remove unmanaged files
+  ansible.builtin.include_tasks:
+    file: remove_unmanaged.yml
+
 - name: create dirs
   ansible.builtin.file:
     state: directory
     path: "{{ item }}"
+    owner: root
+    group: root
+    mode: '0755'
   loop: "{{ nginx_dirs }}"
 
 - name: "{{ nginx_conf_file }}"
@@ -32,25 +39,27 @@
     mode: '0644'
   notify: Nginx restart
 
-- name: "{{ nginx_default_root }}/index.html"
+- name: "index.html in {{ nginx_default_root }}"
   ansible.builtin.copy:
+    owner: root
+    group: root
+    mode: '0644'
     dest: "{{ nginx_default_root }}/index.html"
     content: |
       <h1>{{ ansible_default_ipv4.address }}</h1>
   changed_when: false
 
-- name: "{{ nginx_conf_dir }}/well-known.conf"
+- name: "well-known.conf in {{ nginx_conf_dir }}"
   ansible.builtin.copy:
+    owner: root
+    group: root
+    mode: '0644'
     dest: "{{ nginx_conf_dir }}/well-known.conf"
     content: |
       location /.well-known {
         alias {{ nginx_wellknown_dir }};
         allow all;
       }
-
-- name: remove unmanaged files
-  ansible.builtin.include_tasks:
-    file: remove_unmanaged.yml
 
 - name: add nginx servers
   ansible.builtin.include_tasks:

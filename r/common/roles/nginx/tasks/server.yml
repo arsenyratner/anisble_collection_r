@@ -3,28 +3,37 @@
 
 - name: create server root
   ### block start
+  when: server.root is defined
   block:
     - name: create server root
       ansible.builtin.file:
+        owner: root
+        group: root
+        mode: '0755'
         state: directory
         path: "{{ server.root }}"
 
-    - name: "{{ server.root }}/index.html"
+    - name: "index.html {{ server.root }}"
       ansible.builtin.copy:
+        owner: root
+        group: root
+        mode: '0755'
         dest: "{{ server.root }}/index.html"
         content: |
           <h1>{{ server.server_name }}</h1>
           <h1>{{ ansible_default_ipv4.address }}</h1>
           <h1>{{ ansible_nodename }}</h1>
-      changed_when: false 
+      changed_when: false
   ### block end
-  when: server.root is defined
 
 - name: set default value
   ansible.builtin.set_fact:
     nginx_server_disabled: false
 
 - name: Check key and cert exists
+  when:
+    - server.ssl.certificate is defined
+    - server.ssl.key is defined
   ### block start
   block:
     - name: stat certificate
@@ -35,18 +44,15 @@
       ansible.builtin.stat:
         path: "{{ server.ssl.key }}"
       register: nginx_server_key_stat
-    - name: 
+    - name: set server enabled flag
       ansible.builtin.set_fact:
         nginx_server_disabled: true
-      when: 
+      when:
         - not nginx_server_cert_stat.stat.exists
         - not nginx_server_key_stat.stat.exists
   ### block end
-  when: 
-    - server.ssl.certificate is defined
-    - server.ssl.key is defined
 
-- name: "{{ nginx_sites_available_dir }}/{{ server.filename | default(server.server_name) }}"
+- name: "site avalable"
   ansible.builtin.template:
     backup: true
     src: nginx-server.conf
@@ -56,7 +62,7 @@
     mode: '0644'
   notify: Nginx restart
 
-- name: "Enable site: {{ server.server_name }}"
+- name: "enable site"
   ansible.builtin.file:
     state: link
     src: "{{ nginx_sites_available_dir }}/{{ server.filename | default(server.server_name) }}"
@@ -66,11 +72,11 @@
     - not nginx_server_disabled
   notify: Nginx restart
 
-- name: "Disable site: {{ server.server_name }}"
+- name: "disable site"
   ansible.builtin.file:
     state: absent
     path: "{{ nginx_sites_enabled_dir }}/{{ server.linkname | default(server.server_name) }}"
-  when: 
+  when:
     - nginx_server_disabled or
       server.enabled | default(false) is false
   notify: Nginx restart

@@ -39,12 +39,18 @@ ocserv_managed_files:
   - "{{ ocserv_users_file }}"
   - "{{ ocserv_profile_file }}"
 
-ocserv_pergroup_config:
-  - name: split
-    content: |
-      route = {{ ocserv_ipv4network }}
-      {% for ns in ocserv_nameservers %}
-      dns = {{ ns }}
-      {% endfor %}
+ocserv_pergroup_config: []
+  # - name: default
+  #   content: |
+  #     route = {{ ocserv_ipv4network }}
+  #     {% for ns in ocserv_nameservers %}
+  #     dns = {{ ns }}
+  #     {% endfor %}
+  # - name: split
+  #   content: |
+  #     route = {{ ocserv_ipv4network }}
+  #     {% for ns in ocserv_nameservers %}
+  #     dns = {{ ns }}
+  #     {% endfor %}
 
 ocserv_peruser_config: []

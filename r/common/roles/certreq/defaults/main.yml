@@ -1,0 +1,17 @@
+certreq_create_csronly: false
+certreq_key_dir: ""
+certreq_cert_dir: ""
+certreq_createsscert_organization_name: ""
+certreq_createsscert_key_size: 2048
+certreq_createsscert_key_type: RSA
+certreq_createsscert_key_path: "{{ certreq_key_dir }}/{{ ansible_nodename }}.key"
+certreq_createsscert_crt_path: "{{ certreq_cert_dir }}/{{ ansible_nodename }}.crt"
+certreq_createsscert_san:
+  - "DNS:{{ ansible_hostname }}"
+  - "DNS:{{ ansible_nodename }}"
+  - "IP:{{ ansible_default_ipv4.address }}"
+certreq_owner: root
+certreq_group: root
+certreq_fetch_crt: false
+certreq_fetch_csr: false
+certreq_create_selfsigned: false

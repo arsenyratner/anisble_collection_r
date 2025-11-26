@@ -1,0 +1,76 @@
+- name: Distribution specific variables
+  ansible.builtin.include_vars: "{{ item }}"
+  with_first_found:
+    - "_{{ ansible_distribution | lower }}-{{ ansible_distribution_version | lower }}.yml"
+    - "_{{ ansible_distribution | lower }}.yml"
+    - "_{{ ansible_os_family | lower }}.yml"
+  ignore_errors: true
+  failed_when: false
+
+- name: Distribution specific tasks
+  ansible.builtin.include_tasks:
+    file: "{{ item }}"
+  with_first_found:
+    - "_{{ ansible_distribution | lower }}-{{ ansible_distribution_version | lower }}.yml"
+    - "_{{ ansible_distribution | lower }}.yml"
+    - "_{{ ansible_os_family | lower }}.yml"
+  ignore_errors: true
+
+- name: Create dirs
+  ansible.builtin.file:
+    state: directory
+    path: "{{ item.path }}"
+    owner: "{{ item.owner | default(certreq_owner) }}"
+    group: "{{ item.group | default(certreq_group) }}"
+    mode: "{{ item.mode | default('0755') }}"
+  loop:
+    - path: "{{ certreq_key_dir }}"
+    - path: "{{ certreq_cert_dir }}"
+
+- name: Create key {{ certreq_createsscert_key_path }}
+  community.crypto.certreq_privatekey:
+    force: false
+    owner: "{{ certreq_owner }}"
+    group: "{{ certreq_group }}"
+    mode: '0600'
+    path: "{{ certreq_createsscert_key_path }}"
+    size: "{{ certreq_createsscert_key_size }}"
+    type: "{{ certreq_createsscert_key_type }}"
+
+- name: Create csr
+  community.crypto.certreq_csr_pipe:
+    privatekey_path: "{{ certreq_createsscert_key_path }}"
+    common_name: "{{ ansible_nodename }}"
+    organization_name: "{{ certreq_createsscert_organization_name }}"
+    subject_alt_name: "{{ certreq_createsscert_san }}"
+  register: certreq_createsscert_csr_result
+  changed_when: false
+
+- name: Create self signed crt
+  community.crypto.x509_certificate:
+    path: "{{ certreq_createsscert_crt_path }}"
+    csr_content: "{{ certreq_createsscert_csr_result.csr }}"
+    privatekey_path: "{{ certreq_createsscert_key_path }}"
+    provider: selfsigned
+  when: certreq_create_selfsigned
+
+- name: Fetch crt and csr
+  ansible.builtin.set_fact:
+    certreq_fetch_crt: false
+    certreq_fetch_csr: true
+  when: certreq_create_csronly
+
+- name: Fetch crt
+  ansible.builtin.fetch:
+    src: "{{ certreq_createsscert_crt_path }}"
+    flat: true
+    dest: files/
+  when: certreq_fetch_crt
+
+- name: Fetch csr
+  delegate_to: localhost
+  ansible.builtin.copy:
+    mode: '0755'
+    content: "{{ certreq_createsscert_csr_result.csr }}"
+    dest: "files/{{ ansible_nodename }}.csr"
+  when: certreq_fetch_csr

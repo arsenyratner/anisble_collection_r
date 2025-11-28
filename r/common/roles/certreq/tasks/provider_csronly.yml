@@ -14,8 +14,14 @@
   community.crypto.openssl_csr_pipe:
     privatekey_path: "{{ certreq_csr_key | default(certreq_default_key_path) }}"
     common_name: "{{ certreq_csr_cn | default(certreq_default_cn) }}"
-    organization_name: "{{ certreq_csr_orgname | default(certreq_default_organization_name) }}"
     subject_alt_name: "{{ certreq_csr_san | default(certreq_default_san) }}"
+    organizational_unit_name: "{{ certreq_csr_organizational_unit_name | default(certreq_default_organizational_unit_name) }}"
+    organization_name: "{{ certreq_csr_organization_name | default(certreq_default_organization_name) }}"
+    locality_name: "{{ certreq_csr_locality_name | default(certreq_default_locality_name) }}"
+    country_name: "{{ certreq_csr_country_name | default(certreq_default_country_name) }}"
+    email_address: "{{ certreq_csr_email_address | default(certreq_default_email_address) }}"
+    key_usage: "{{ certreq_csr_key_usage | default(certreq_default_key_usage) }}"
+    extended_key_usage: "{{ certreq_csr_extended_key_usage | default(certreq_default_extended_key_usage) }}"
   register: certreq_csr_result
   changed_when: false
 

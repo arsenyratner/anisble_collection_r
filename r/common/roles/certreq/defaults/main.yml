@@ -1,4 +1,58 @@
-certreq_default_organization_name: ""
+certreq_default_organizational_unit_name: "IT"
+certreq_default_organization_name: "R"
+certreq_default_locality_name: "MSK"
+certreq_default_country_name: "RU"
+certreq_default_email_address: ""
+certreq_default_key_usage:
+  # (цифровая подпись)
+  - digitalSignature
+  # (неотказуемость, используется в основном для электронной почты и электронного документооборота)
+  # - nonRepudiation
+  # (шифрование ключа, используется для обмена сессионными ключами, например в старых версиях TLS)
+  # - keyEncipherment
+  # (шифрование данных, прямое шифрование пользовательских данных)
+  # - dataEncipherment
+  # (подпись сертификатов, необходимо для удостоверяющих центров/CA)
+  # - keyCertSign
+  # (подпись списков отзыва сертификатов, необходимо для управления списками CRL)
+  # - cRLSign
+  # (согласование ключа, используется в алгоритмах, таких как Диффи-Хеллман, для генерации общего секрета)
+  # - keyAgreement
+  # (только шифрование, используется только в сочетании с keyAgreement)
+  # - encipherOnly
+  # (только расшифрование, используется только в сочетании с keyAgreement) 
+  # - decipherOnly
+certreq_default_extended_key_usage:
+  # (Аутентификация сервера TLS)
+  - serverAuth
+  # (Аутентификация клиента TLS)
+  # - clientAuth
+  # (Подпись кода)
+  # - codeSigning
+  # (Защита электронной почты)
+  # - emailProtection
+  # (Штамп времени)
+  # - timeStamping
+  # (Подпись OCSP)
+  # - ocspSigning
+  # (Конечная система IPSec)
+  # - ipsecEndSystem
+  # (Туннель IPSec)
+  # - ipsecTunnel
+  # (Пользователь IPSec)
+  # - ipsecUser
+   # (Биометрическая информация)
+  # - biometricInfo
+  # (Система управления распределенными версиями)
+  # - dvcs
+  # (Авторизация сервера SGBP)
+  # - sbgpCertAAServerAuth
+  # (Протокол проверки состояния сертификата)
+  # - scvpServer
+  # (EAP через PPP)
+  # - eapOverPPP
+  # (EAP через LAN)
+  # - eapOverLAN
 certreq_default_key_size: 2048
 certreq_default_key_type: RSA
 certreq_default_key_path: "{{ certreq_key_dir }}/{{ ansible_nodename }}.key"

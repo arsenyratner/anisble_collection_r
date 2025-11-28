@@ -1,0 +1,22 @@
+- name: Create key
+  community.crypto.openssl_privatekey:
+    force: false
+    owner: "{{ certreq_default_owner }}"
+    group: "{{ certreq_default_group }}"
+    mode: '0600'
+    path: "{{ certreq_default_key_path }}"
+    size: "{{ certreq_default_key_size }}"
+    type: "{{ certreq_default_key_type }}"
+    return_content: true
+  register: certreq_key_result
+
+- name: Create csr
+  community.crypto.openssl_csr_pipe:
+    privatekey_path: "{{ certreq_csr_key | default(certreq_default_key_path) }}"
+    common_name: "{{ certreq_csr_cn | default(certreq_default_cn) }}"
+    organization_name: "{{ certreq_csr_orgname | default(certreq_default_organization_name) }}"
+    subject_alt_name: "{{ certreq_csr_san | default(certreq_default_san) }}"
+  register: certreq_csr_result
+  changed_when: false
+
+# - debug: "var=certreq_csr_result"

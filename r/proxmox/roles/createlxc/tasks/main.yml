@@ -20,7 +20,7 @@
   ansible.builtin.debug:
     msg:
       - "{{ lxcinfo }}"
-  when: 
+  when:
     - createlxc_debug
 
 - name: create lxc
@@ -87,7 +87,7 @@
     hostname: "{{ createlxc_hostname }}"
     vmid: "{{ createlxc_result.vmid }}"
     tags: "{{ createlxc_tags }}"
-  when: 
+  when:
     - createlxc_tags != []
     - lxcinfo.proxmox_vms[0].config.tags | default(';') | split(';') | difference(createlxc_tags) != []
 
@@ -104,9 +104,9 @@
     hostname: "{{ createlxc_hostname }}"
     vmid: "{{ createlxc_result.vmid }}"
     description: "{{ createlxc_description }}"
-  when: 
+  when:
     - createlxc_description != ""
-    - createlxc_description != lxcinfo.proxmox_vms[0].config.description | default('') | trim 
+    - createlxc_description != lxcinfo.proxmox_vms[0].config.description | default('') | trim
 
 - name: state {{ createlxc_state }}
   community.proxmox.proxmox:

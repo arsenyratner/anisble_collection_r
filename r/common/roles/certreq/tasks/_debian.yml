@@ -1,5 +1,5 @@
 - name: install packages
   ansible.builtin.apt:
-    name: "{{ nginx_packages }}"
+    name: "{{ certreq_packages }}"
     state: present
     update_cache: true

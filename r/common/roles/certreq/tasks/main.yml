@@ -1,0 +1,54 @@
+- name: Distribution specific variables
+  ansible.builtin.include_vars: "{{ item }}"
+  with_first_found:
+    - "_{{ ansible_distribution | lower }}-{{ ansible_distribution_version | lower }}.yml"
+    - "_{{ ansible_distribution | lower }}.yml"
+    - "_{{ ansible_os_family | lower }}.yml"
+  ignore_errors: true
+  failed_when: false
+
+- name: Distribution specific tasks
+  ansible.builtin.include_tasks:
+    file: "{{ item }}"
+  with_first_found:
+    - "_{{ ansible_distribution | lower }}-{{ ansible_distribution_version | lower }}.yml"
+    - "_{{ ansible_distribution | lower }}.yml"
+    - "_{{ ansible_os_family | lower }}.yml"
+  ignore_errors: true
+
+- name: Create dirs
+  ansible.builtin.file:
+    state: directory
+    path: "{{ item.path }}"
+    owner: "{{ item.owner | default(certreq_default_owner) }}"
+    group: "{{ item.group | default(certreq_default_group) }}"
+    mode: "{{ item.mode | default('0755') }}"
+  loop: "{{ certreq_dirs }}"
+
+- name: issue
+  ansible.builtin.include_tasks:
+    file: "provider_{{ certreq_provider }}.yml"
+  ignore_errors: true
+
+- name: Fetch crt
+  ansible.builtin.fetch:
+    src: "{{ certreq_default_crt_path }}"
+    flat: true
+    dest: "{{ certreq_local_pki_storage_dir }}/crt/"
+  when: certreq_fetch_crt
+
+- name: Fetch csr
+  delegate_to: localhost
+  ansible.builtin.copy:
+    mode: '0755'
+    content: "{{ certreq_csr_result.csr }}"
+    dest: "{{ certreq_local_pki_storage_dir }}/csr/{{ ansible_nodename }}.csr"
+  when: certreq_fetch_csr
+
+- name: Fetch key
+  delegate_to: localhost
+  ansible.builtin.copy:
+    mode: '0755'
+    content: "{{ certreq_csr_result.csr }}"
+    dest: "{{ certreq_local_pki_storage_dir }}/key/{{ ansible_nodename }}.key"
+  when: certreq_fetch_key

@@ -1,0 +1,22 @@
+- name: create csr
+  ansible.builtin.include_tasks:
+    file: "provider_csronly.yml"
+
+- name: Create self signed crt
+  community.crypto.x509_certificate:
+    path: "{{ certreq_default_crt_path }}"
+    csr_content: "{{ certreq_csr_result.csr }}"
+    privatekey_path: "{{ certreq_default_key_path }}"
+    provider: acme
+  when: certreq_create_selfsigned
+
+- name: Create cert
+  delegate_to: "{{ certreq_letsencryp_host }}"
+  community.crypto.x509_certificate:
+    path: "{{ certreq_ownca_root_dir }}/pki/crt/{{ certreq_ownca_cn | default(certreq_default_cn) }}.crt"
+    csr_content: "{{ certreq_csr_result.csr }}"
+    ownca_path: "{{ certreq_ownca_cacert }}"
+    ownca_privatekey_path: "{{ certreq_ownca_cakey }}"
+    provider: ownca
+    return_content: true
+  register: certreq_ownca_result

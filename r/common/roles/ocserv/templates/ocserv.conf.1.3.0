@@ -1,0 +1,100 @@
+auth = plain[passwd={{ ocserv_users_file }}]
+{% if ocserv_cacert != "" %}
+enable-auth = certificate
+ca-cert = {{ ocserv_cacert }}
+{% endif %}
+listen-host = {{ ocserv_listen_host }}
+tcp-port = {{ ocserv_tcp_port }}
+listen-proxy-proto = true
+{% if ocserv_udp_port != "" %}
+udp-listen-host = {{ ocserv_udp_listen_host }}
+udp-port = {{ ocserv_udp_port }}
+{% endif %}
+server-cert = {{ ocserv_server_cert }}
+server-key = {{ ocserv_server_key }}
+run-as-user = {{ ocserv_user }}
+run-as-group = {{ ocserv_group }}
+socket-file = ocserv.sock
+chroot-dir = /var/lib/ocserv
+pid-file = /var/run/ocserv.pid
+default-domain = {{ ocserv_default_domain }}
+ipv4-network = {{ ocserv_ipv4network }}
+{% for dns in ocserv_nameservers %}
+dns = {{ dns }}
+{% endfor %}
+{% if ocserv_noroutes != [] %}
+{% for noroute in ocserv_noroutes %}
+no-route = {{ noroute }}
+{% endfor %}
+{% endif %}
+{% if ocserv_routes != [] %}
+{% for route in ocserv_routes %}
+route = {{ route }}
+{% endfor %}
+{% endif %}
+
+isolate-workers = true
+max-clients = 0
+max-same-clients = 0
+rate-limit-ms = 100
+server-stats-reset-time = 604800
+keepalive = 40
+dpd = 90
+mobile-dpd = 1800
+switch-to-tcp-timeout = 25
+try-mtu-discovery = false
+#  CN = 2.5.4.3, UID = 0.9.2342.19200300.100.1.1, SAN(rfc822name)
+# cert-user-oid = 0.9.2342.19200300.100.1.1
+cert-user-oid = 2.5.4.3
+compression = true
+tls-priorities = "NORMAL:%SERVER_PRECEDENCE"
+auth-timeout = 240
+min-reauth-time = 300
+max-ban-score = 80
+ban-reset-time = 1200
+cookie-timeout = 300
+deny-roaming = false
+rekey-time = 172800
+rekey-method = ssl
+use-occtl = true
+log-level = 2
+device = vpns
+predictable-ips = true
+tunnel-all-dns = true
+ping-leases = false
+cisco-client-compat = true
+dtls-legacy = true
+cisco-svc-client-compat = false
+client-bypass-protocol = false
+camouflage = false
+camouflage_secret = "mysecretkey"
+camouflage_realm = "Restricted Content"
+
+included-http-headers = Strict-Transport-Security: max-age=31536000 ; includeSubDomains
+included-http-headers = X-Frame-Options: deny
+included-http-headers = X-Content-Type-Options: nosniff
+included-http-headers = Content-Security-Policy: default-src 'none'
+included-http-headers = X-Permitted-Cross-Domain-Policies: none
+included-http-headers = Referrer-Policy: no-referrer
+included-http-headers = Clear-Site-Data: "cache","cookies","storage"
+included-http-headers = Cross-Origin-Embedder-Policy: require-corp
+included-http-headers = Cross-Origin-Opener-Policy: same-origin
+included-http-headers = Cross-Origin-Resource-Policy: same-origin
+included-http-headers = X-XSS-Protection: 0
+included-http-headers = Pragma: no-cache
+included-http-headers = Cache-control: no-store, no-cache
+
+{% if ocserv_vhosts != [] %}
+#VHOSTS
+{% for vhost in ocserv_vhosts %}
+[vhost:{{ vhost.name }}]
+{% if vhost.letsencrypt|default(false) is true %}
+server-cert = /etc/letsencrypt/live/{{ vhost.name }}/fullchain.pem
+server-key = /etc/letsencrypt/live/{{ vhost.name }}/privkey.pem
+{% elif vhost.server_cert is defined and vhost.server_key is defined %}
+server-cert = {{ vhost.server_cert }}
+server-key = {{ vhost.server_key }}
+{% endif %}
+{{ vhost.content }}
+{% endfor %}
+{% endif %}

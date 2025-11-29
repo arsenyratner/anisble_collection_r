@@ -1,5 +1,5 @@
 - name: Install packages
-  ansible.builtin.dnf: 
+  ansible.builtin.dnf:
     name: "{{ nginx_packages }}"
     state: present
 

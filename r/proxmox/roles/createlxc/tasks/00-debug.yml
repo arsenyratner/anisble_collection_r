@@ -15,7 +15,7 @@
       # start vm after creation
       - "createlxc_startup: {{ createlxc_startup }}"
       - "createlxc_onboot: {{ createlxc_onboot }}"
-      # createlxc_clone_type: "" # linked | full 
+      # createlxc_clone_type: "" # linked | full
       - "createlxc_unprivileged: {{ createlxc_unprivileged }}"
       - "createlxc_state: {{ createlxc_state }}"
       - "createlxc_force: {{ createlxc_force }}"

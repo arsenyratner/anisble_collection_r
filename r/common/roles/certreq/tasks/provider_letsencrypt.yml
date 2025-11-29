@@ -1,4 +1,4 @@
-- name: Create self signed crt
+- name: Create 
   community.crypto.x509_certificate:
     path: "{{ certreq_crt_path }}"
     csr_content: "{{ certreq_csr_result.csr }}"

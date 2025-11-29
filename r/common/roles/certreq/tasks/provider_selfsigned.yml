@@ -3,5 +3,5 @@
     path: "{{ certreq_crt_path }}"
     csr_content: "{{ certreq_csr_result.csr }}"
     privatekey_path: "{{ certreq_key_path }}"
-    provider: ownca
+    provider: selfsigned
     backup: true

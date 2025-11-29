@@ -1,4 +1,4 @@
-- name: Create crt
+- name: Create crt and sign
   delegate_to: "{{ certreq_ownca_host }}"
   community.crypto.x509_certificate:
     path: "{{ certreq_ownca_root_dir }}/pki/crt/{{ certreq_csr_cn }}.crt"

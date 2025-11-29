@@ -52,7 +52,7 @@
   register: certreq_csr_result
   changed_when: false
 
-- name: issue crt
+- name: Create certificate
   ansible.builtin.include_tasks:
     file: "provider_{{ certreq_provider }}.yml"
   ignore_errors: true

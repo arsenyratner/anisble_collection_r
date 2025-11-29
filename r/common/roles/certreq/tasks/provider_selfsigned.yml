@@ -1,7 +1,3 @@
-- name: create csr
-  ansible.builtin.include_tasks:
-    file: "provider_csronly.yml"
-
 - name: Create self signed crt
   community.crypto.x509_certificate:
     path: "{{ certreq_crt_path }}"

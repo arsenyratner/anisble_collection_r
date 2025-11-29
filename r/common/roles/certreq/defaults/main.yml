@@ -84,6 +84,6 @@ certreq_key_size: 2048
 certreq_key_type: RSA
 
 certreq_ownca_host: "localhost"
-certreq_ownca_root_dir: "/opt/ca/r_l2_r-vscode1"
-certreq_ownca_cacert: "{{ certreq_ownca_root_dir }}/r_l2_r-vscode1.crt"
-certreq_ownca_cakey: "{{ certreq_ownca_root_dir }}/r_l2_r-vscode1.key"
+certreq_ownca_root_dir: "/opt/ca/localhost"
+certreq_ownca_cacert: "{{ certreq_ownca_root_dir }}/localhost.crt"
+certreq_ownca_cakey: "{{ certreq_ownca_root_dir }}/localhost.key"

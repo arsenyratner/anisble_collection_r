@@ -1,7 +1,3 @@
-- name: create csr
-  ansible.builtin.include_tasks:
-    file: "provider_csronly.yml"
-
 - name: Create crt
   delegate_to: "{{ certreq_ownca_host }}"
   community.crypto.x509_certificate:

@@ -1,7 +1,7 @@
 ocserv_fqdn: "{{ ansible_nodename }}"
 ocserv_conf_dir: "/etc/ocserv"
-ocserv_configpergroup_dir: "{{ ocserv_conf_dir }}/group.d/"
-ocserv_configperuser_dir: "{{ ocserv_conf_dir }}/user.d/"
+ocserv_configpergroup_dir: "{{ ocserv_conf_dir }}/group.d"
+ocserv_configperuser_dir: "{{ ocserv_conf_dir }}/user.d"
 ocserv_conf_file: "{{ ocserv_conf_dir }}/ocserv.conf"
 ocserv_users_file: "{{ ocserv_conf_dir }}/ocpasswd"
 ocserv_profile_file: "{{ ocserv_conf_dir }}/profile.xml"
@@ -24,7 +24,21 @@ ocserv_sysctl:
     value: 1
 ocserv_routes: []
 ocserv_noroutes: []
-ocserv_groups: []
+# ocserv_groups: []
+ocserv_pergroup_config:
+  - name: default
+    content: |
+      route = {{ ocserv_ipv4network }}
+      {% for ns in ocserv_nameservers %}
+      dns = {{ ns }}
+      {% endfor%}
+  - name: split
+    content: |
+      route = {{ ocserv_ipv4network }}
+      {% for ns in ocserv_nameservers %}
+      dns = {{ ns }}
+      {% endfor%}
+ocserv_groups: "{{ ocserv_pergroup_config }}"
 
 ocserv_dirs:
   - "{{ ocserv_conf_dir }}"
@@ -39,12 +53,6 @@ ocserv_managed_files:
   - "{{ ocserv_users_file }}"
   - "{{ ocserv_profile_file }}"
 
-ocserv_pergroup_config:
-  - name: split
-    content: |
-      route = {{ ocserv_ipv4network }}
-      {% for ns in ocserv_nameservers %}
-      dns = {{ ns }}
-      {% endfor%}
+
 
 ocserv_peruser_config: []

@@ -3,4 +3,4 @@ certreq_packages:
   - python3-cryptography
   - acme-tiny
 certreq_key_dir: /etc/ssl/private
-certreq_cert_dir: /etc/ssl/certs
+certreq_crt_dir: /etc/ssl/certs

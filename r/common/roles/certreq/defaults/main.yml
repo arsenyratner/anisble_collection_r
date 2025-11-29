@@ -1,9 +1,26 @@
-certreq_default_organizational_unit_name: "IT"
-certreq_default_organization_name: "R"
-certreq_default_locality_name: "MSK"
-certreq_default_country_name: "RU"
-certreq_default_email_address: ""
-certreq_default_key_usage:
+certreq_default_owner: root
+certreq_default_group: root
+certreq_default_file_mode: '0644'
+certreq_default_dir_mode: '0755'
+
+certreq_csr_dir: "/usr/local/etc/pki/csr"
+certreq_key_dir: "/usr/local/etc/pki/key"
+certreq_crt_dir: "/usr/local/etc/pki/crt"
+certreq_dirs:
+  - path: "{{ certreq_key_dir }}"
+  - path: "{{ certreq_csr_dir }}"
+  - path: "{{ certreq_crt_dir }}"
+
+certreq_csr_organizational_unit_name: "IT"
+certreq_csr_organization_name: "R"
+certreq_csr_locality_name: "MSK"
+certreq_csr_country_name: "RU"
+certreq_csr_email_address: "arsenyratner@gmail.com"
+certreq_csr_cn: "{{ ansible_nodename }}"
+certreq_csr_san:
+  - "DNS:{{ inventory_hostname }}"
+  - "IP:{{ ansible_default_ipv4.address }}"
+certreq_csr_key_usage:
   # (цифровая подпись)
   - digitalSignature
   # (неотказуемость, используется в основном для электронной почты и электронного документооборота)
@@ -22,7 +39,7 @@ certreq_default_key_usage:
   # - encipherOnly
   # (только расшифрование, используется только в сочетании с keyAgreement) 
   # - decipherOnly
-certreq_default_extended_key_usage:
+certreq_csr_extended_key_usage:
   # (Аутентификация сервера TLS)
   - serverAuth
   # (Аутентификация клиента TLS)
@@ -41,7 +58,7 @@ certreq_default_extended_key_usage:
   # - ipsecTunnel
   # (Пользователь IPSec)
   # - ipsecUser
-   # (Биометрическая информация)
+  # (Биометрическая информация)
   # - biometricInfo
   # (Система управления распределенными версиями)
   # - dvcs
@@ -53,34 +70,18 @@ certreq_default_extended_key_usage:
   # - eapOverPPP
   # (EAP через LAN)
   # - eapOverLAN
-certreq_default_key_size: 2048
-certreq_default_key_type: RSA
-certreq_default_key_path: "{{ certreq_key_dir }}/{{ ansible_nodename }}.key"
-certreq_default_crt_path: "{{ certreq_cert_dir }}/{{ ansible_nodename }}.crt"
-certreq_default_cn: "{{ ansible_nodename }}"
-certreq_default_san:
-  - "DNS:{{ ansible_nodename }}"
-  - "DNS:{{ inventory_hostname }}"
-  - "IP:{{ ansible_default_ipv4.address }}"
 
+certreq_fetch_dir: "files/pki"
 certreq_fetch_crt: false
 certreq_fetch_csr: false
 certreq_fetch_key: false
 
-certreq_provider: "" # csronly letsencrypt ownca selfsigned
+certreq_provider: "selfsigned" # csronly letsencrypt ownca selfsigned
 
-certreq_key_dir: ""
-certreq_cert_dir: ""
-
-certreq_default_owner: root
-certreq_default_group: root
-certreq_default_file_mode: '0644'
-certreq_default_dir_mode: '0755'
-certreq_dirs:
-  - path: "{{ certreq_key_dir }}"
-  - path: "{{ certreq_cert_dir }}"
-
-certreq_local_pki_storage_dir: "files/pki"
+certreq_crt_path: "{{ certreq_crt_dir }}/{{ certreq_csr_cn }}.crt"
+certreq_key_path: "{{ certreq_key_dir }}/{{ certreq_csr_cn }}.key"
+certreq_key_size: 2048
+certreq_key_type: RSA
 
 certreq_ownca_host: "localhost"
 certreq_ownca_root_dir: "/opt/ca/r_l2_r-vscode1"

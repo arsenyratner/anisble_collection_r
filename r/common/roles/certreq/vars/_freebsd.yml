@@ -2,6 +2,6 @@ certreq_packages:
   - openssl
   - py311-cryptography
 certreq_key_dir: /usr/local/openssl/private
-certreq_cert_dir: /usr/local/openssl/certs
+certreq_crt_dir: /usr/local/openssl/certs
 certreq_default_owner: root
 certreq_default_group: wheel

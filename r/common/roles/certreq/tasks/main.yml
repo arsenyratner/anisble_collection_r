@@ -22,19 +22,46 @@
     path: "{{ item.path }}"
     owner: "{{ item.owner | default(certreq_default_owner) }}"
     group: "{{ item.group | default(certreq_default_group) }}"
-    mode: "{{ item.mode | default('0755') }}"
+    mode: "{{ item.mode | default(certreq_default_dir_mode) }}"
   loop: "{{ certreq_dirs }}"
 
-- name: issue
+- name: Create key
+  community.crypto.openssl_privatekey:
+    force: "{{ certreq_key_force | default(false) }}"
+    owner: "{{ certreq_default_owner }}"
+    group: "{{ certreq_default_group }}"
+    mode: '0600'
+    path: "{{ certreq_key_path }}"
+    size: "{{ certreq_key_size }}"
+    type: "{{ certreq_key_type }}"
+    return_content: true
+  register: certreq_key_result
+
+- name: Create csr
+  community.crypto.openssl_csr_pipe:
+    privatekey_path: "{{ certreq_key_path }}"
+    common_name: "{{ certreq_csr_cn | default(certreq_csr_cn) }}"
+    subject_alt_name: "{{ certreq_csr_san | default(certreq_csr_san) }}"
+    organizational_unit_name: "{{ certreq_csr_organizational_unit_name | default(certreq_csr_organizational_unit_name) }}"
+    organization_name: "{{ certreq_csr_organization_name | default(certreq_csr_organization_name) }}"
+    locality_name: "{{ certreq_csr_locality_name | default(certreq_csr_locality_name) }}"
+    country_name: "{{ certreq_csr_country_name | default(certreq_csr_country_name) }}"
+    email_address: "{{ certreq_csr_email_address | default(certreq_csr_email_address) }}"
+    key_usage: "{{ certreq_csr_key_usage | default(certreq_csr_key_usage) }}"
+    extended_key_usage: "{{ certreq_csr_extended_key_usage | default(certreq_csr_extended_key_usage) }}"
+  register: certreq_csr_result
+  changed_when: false
+
+- name: issue crt
   ansible.builtin.include_tasks:
     file: "provider_{{ certreq_provider }}.yml"
   ignore_errors: true
 
 - name: Fetch crt
   ansible.builtin.fetch:
-    src: "{{ certreq_default_crt_path }}"
+    src: "{{ certreq_crt_path }}"
     flat: true
-    dest: "{{ certreq_local_pki_storage_dir }}/crt/"
+    dest: "{{ certreq_fetch_dir }}/crt/"
   when: certreq_fetch_crt
 
 - name: Fetch csr
@@ -42,7 +69,7 @@
   ansible.builtin.copy:
     mode: '0755'
     content: "{{ certreq_csr_result.csr }}"
-    dest: "{{ certreq_local_pki_storage_dir }}/csr/{{ ansible_nodename }}.csr"
+    dest: "{{ certreq_fetch_dir }}/csr/{{ ansible_nodename }}.csr"
   when: certreq_fetch_csr
 
 - name: Fetch key
@@ -50,5 +77,5 @@
   ansible.builtin.copy:
     mode: '0755'
     content: "{{ certreq_csr_result.csr }}"
-    dest: "{{ certreq_local_pki_storage_dir }}/key/{{ ansible_nodename }}.key"
+    dest: "{{ certreq_fetch_dir }}/key/{{ ansible_nodename }}.key"
   when: certreq_fetch_key

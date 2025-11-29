@@ -2,10 +2,10 @@
   ansible.builtin.include_tasks:
     file: "provider_csronly.yml"
 
-- name: Create cert
+- name: Create crt
   delegate_to: "{{ certreq_ownca_host }}"
   community.crypto.x509_certificate:
-    path: "{{ certreq_ownca_root_dir }}/pki/crt/{{ certreq_ownca_cn | default(certreq_default_cn) }}.crt"
+    path: "{{ certreq_ownca_root_dir }}/pki/crt/{{ certreq_csr_cn }}.crt"
     csr_content: "{{ certreq_csr_result.csr }}"
     ownca_path: "{{ certreq_ownca_cacert }}"
     ownca_privatekey_path: "{{ certreq_ownca_cakey }}"
@@ -13,10 +13,10 @@
     return_content: true
   register: certreq_ownca_result
 
-- name: place cert
+- name: save crt
   ansible.builtin.copy:
-    dest: "{{ certreq_ownca_crt_path | default(certreq_default_crt_path) }}"
+    dest: "{{ certreq_ownca_crt_path | default(certreq_crt_path) }}"
     content: "{{ certreq_ownca_result.certificate }}"
-    owner: "{{ certreq_ownca_owner | default(certreq_default_owner) }}"
-    group: "{{ certreq_ownca_group | default(certreq_default_group) }}"
-    mode: "{{ certreq_ownca_file_mode | default(certreq_default_file_mode) }}"
+    owner: "{{ certreq_default_owner }}"
+    group: "{{ certreq_default_group }}"
+    mode: "{{ certreq_default_file_mode }}"

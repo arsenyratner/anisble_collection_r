@@ -3,9 +3,9 @@
   community.crypto.x509_certificate:
     path: "{{ certreq_crt_path }}"
     csr_content: "{{ certreq_csr_result.csr }}"
-    provider: acme
-    # acme_accountkey_path: /etc/ssl/private/ansible.com.pem
     acme_challenge_path: "{{ certreq_letsencrypt_webroot }}/.well-known/acme-challenge/"
+    # acme_accountkey_path: /etc/ssl/private/ansible.com.pem
+    provider: acme
     backup: true
     return_content: true
   register: certreq_crt_result

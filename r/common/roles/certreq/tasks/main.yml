@@ -50,7 +50,6 @@
     email_address: "{{ certreq_csr_email_address | default(certreq_csr_email_address) }}"
     key_usage: "{{ certreq_csr_key_usage | default(certreq_csr_key_usage) }}"
     extended_key_usage: "{{ certreq_csr_extended_key_usage | default(certreq_csr_extended_key_usage) }}"
-    backup: true
   register: certreq_csr_result
   changed_when: false
 
@@ -60,28 +59,29 @@
   ignore_errors: true
 
 - name: Fetch crt
-  ansible.builtin.fetch:
-    src: "{{ certreq_crt_path }}"
-    flat: true
-    dest: "{{ certreq_fetch_dir }}/crt/"
+  delegate_to: localhost
+  ansible.builtin.copy:
+    mode: "{{ certreq_default_file_mode }}"
+    content: "{{ certreq_crt_result.certificate }}"
+    dest: "{{ certreq_fetch_dir }}/crt/{{ certreq_csr_cn }}.crt"
     backup: true
   when: certreq_fetch_crt
 
 - name: Fetch csr
   delegate_to: localhost
   ansible.builtin.copy:
-    mode: '0755'
+    mode: "{{ certreq_default_file_mode }}"
     content: "{{ certreq_csr_result.csr }}"
-    dest: "{{ certreq_fetch_dir }}/csr/{{ ansible_nodename }}.csr"
+    dest: "{{ certreq_fetch_dir }}/csr/{{ certreq_csr_cn }}.csr"
     backup: true
   when: certreq_fetch_csr
 
 - name: Fetch key
   delegate_to: localhost
   ansible.builtin.copy:
-    mode: '0755'
-    content: "{{ certreq_csr_result.csr }}"
-    dest: "{{ certreq_fetch_dir }}/key/{{ ansible_nodename }}.key"
+    mode: "{{ certreq_default_file_mode }}"
+    content: "{{ certreq_key_result.privatekey }}"
+    dest: "{{ certreq_fetch_dir }}/key/{{ certreq_csr_cn }}.key"
     backup: true
   when: certreq_fetch_key
 

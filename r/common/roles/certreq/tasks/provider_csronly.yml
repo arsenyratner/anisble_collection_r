@@ -5,4 +5,5 @@
     owner: "{{ certreq_default_owner }}"
     group: "{{ certreq_default_group }}"
     mode: "{{ certreq_default_file_mode }}"
+    backup: true
   when: certreq_provider == "csronly"

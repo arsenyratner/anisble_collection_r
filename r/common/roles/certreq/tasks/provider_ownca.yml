@@ -7,12 +7,14 @@
     ownca_privatekey_path: "{{ certreq_ownca_cakey }}"
     provider: ownca
     return_content: true
+    backup: true
   register: certreq_ownca_result
 
 - name: save crt
   ansible.builtin.copy:
-    dest: "{{ certreq_ownca_crt_path | default(certreq_crt_path) }}"
+    dest: "{{ certreq_crt_path }}"
     content: "{{ certreq_ownca_result.certificate }}"
     owner: "{{ certreq_default_owner }}"
     group: "{{ certreq_default_group }}"
     mode: "{{ certreq_default_file_mode }}"
+    backup: true

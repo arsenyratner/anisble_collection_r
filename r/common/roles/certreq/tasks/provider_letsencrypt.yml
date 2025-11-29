@@ -4,6 +4,7 @@
     csr_content: "{{ certreq_csr_result.csr }}"
     privatekey_path: "{{ certreq_key_path }}"
     provider: acme
+    backup: true
   when: certreq_create_selfsigned
 
 - name: Create crt
@@ -15,4 +16,5 @@
     ownca_privatekey_path: "{{ certreq_ownca_cakey }}"
     provider: ownca
     return_content: true
+    backup: true
   register: certreq_ownca_result

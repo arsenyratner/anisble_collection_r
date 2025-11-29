@@ -8,12 +8,12 @@
     provider: ownca
     return_content: true
     backup: true
-  register: certreq_ownca_result
+  register: certreq_crt_result
 
 - name: save crt
   ansible.builtin.copy:
     dest: "{{ certreq_crt_path }}"
-    content: "{{ certreq_ownca_result.certificate }}"
+    content: "{{ certreq_crt_result.certificate }}"
     owner: "{{ certreq_default_owner }}"
     group: "{{ certreq_default_group }}"
     mode: "{{ certreq_default_file_mode }}"

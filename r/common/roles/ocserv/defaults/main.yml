@@ -25,19 +25,20 @@ ocserv_sysctl:
 ocserv_routes: []
 ocserv_noroutes: []
 # ocserv_groups: []
+ocserv_peruser_config: []
 ocserv_pergroup_config:
   - name: default
     content: |
       route = {{ ocserv_ipv4network }}
       {% for ns in ocserv_nameservers %}
       dns = {{ ns }}
-      {% endfor%}
+      {% endfor %}
   - name: split
     content: |
       route = {{ ocserv_ipv4network }}
       {% for ns in ocserv_nameservers %}
       dns = {{ ns }}
-      {% endfor%}
+      {% endfor %}
 ocserv_groups: "{{ ocserv_pergroup_config }}"
 
 ocserv_dirs:
@@ -52,19 +53,3 @@ ocserv_managed_files:
   - "{{ ocserv_conf_file }}"
   - "{{ ocserv_users_file }}"
   - "{{ ocserv_profile_file }}"
-
-ocserv_pergroup_config: []
-  # - name: default
-  #   content: |
-  #     route = {{ ocserv_ipv4network }}
-  #     {% for ns in ocserv_nameservers %}
-  #     dns = {{ ns }}
-  #     {% endfor %}
-  # - name: split
-  #   content: |
-  #     route = {{ ocserv_ipv4network }}
-  #     {% for ns in ocserv_nameservers %}
-  #     dns = {{ ns }}
-  #     {% endfor %}
-
-ocserv_peruser_config: []

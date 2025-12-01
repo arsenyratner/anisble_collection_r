@@ -16,7 +16,7 @@
     - "_{{ ansible_os_family | lower }}.yml"
   ignore_errors: true
 
-- name: sysctl 
+- name: sysctl
   ansible.posix.sysctl:
     reload: true
     sysctl_set: true
@@ -32,6 +32,7 @@
   ansible.builtin.file:
     state: directory
     path: "{{ item }}"
+    mode: '0755'
   loop: "{{ ocserv_dirs }}"
 
 - name: "{{ ocserv_conf_file }}"
@@ -52,8 +53,8 @@
     owner: root
     group: root
     mode: '0644'
-  changed_when: false 
-  
+  changed_when: false
+
 - name: "{{ ocserv_profile_file }}"
   ansible.builtin.template:
     backup: true

@@ -1,8 +1,8 @@
 - name: add confd files to managed list
   ansible.builtin.set_fact:
-    haproxy_managed_files: "{{ 
-        haproxy_managed_files + 
-        [(haproxy_confd_dir + '/' + file.name)] 
+    haproxy_managed_files: "{{
+        haproxy_managed_files +
+        [(haproxy_confd_dir + '/' + file.name)]
       }}"
   loop: "{{ haproxy_confd_files }}"
   loop_control:

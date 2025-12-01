@@ -93,38 +93,10 @@ certreq_ownca_root_dir: "/opt/ca/localhost"
 certreq_ownca_cacert: "{{ certreq_ownca_root_dir }}/localhost.crt"
 certreq_ownca_cakey: "{{ certreq_ownca_root_dir }}/localhost.key"
 
+certreq_acme_step2_host: ""
 certreq_acme_webroot: "/var/www/html"  # + /.well-known/acme-challenge/
 certreq_acme_account_key: ""
 # certreq_acme_directory: https://acme-v02.api.letsencrypt.org/directory
 certreq_acme_directory: https://acme-staging-v02.api.letsencrypt.org/directory
 certreq_acme_version: 2
 certreq_acme_challenge: http-01
-
-certreq_certbot_host: ""
-# certreq_certbot_csr_file:
-# certreq_certbot_crt_file:
-# certreq_certbot_fullchain_file:
-# certreq_certbot_chain_file:
-certreq_certbot_webroot: "/var/www/html"
-
-certreq_certbot_newcert_cmd: >-
-  /usr/bin/certbot certonly --webroot --agree-tos -n
-  --cert-name {{ certreq_csr_cn }}
-  --webroot-path {{ certreq_certbot_webroot }}
-  --csr {{ certreq_certbot_csr_file | default(certreq_csr_file) }}
-  --email {{ certreq_csr_email_address }}
-  --expand
-# --cert-path {{ certreq_certbot_crt_file | default(certreq_crt_file) }}
-# --fullchain-path {{ certreq_certbot_fullchain_file | default(certreq_fullchain_file) }}
-# --chain-path {{ certreq_certbot_chain_file | default(certreq_chain_file) }}
-
-certreq_certbot_renew_cmd: >-
-  /usr/bin/certbot renew --webroot --agree-tos -n
-  --cert-name {{ certreq_csr_cn }}
-  --webroot-path {{ certreq_certbot_webroot }}
-  --expand
-  --reuse-key
-# --cert-path {{ certreq_certbot_crt_file | default(certreq_crt_file) }}
-# --fullchain-path {{ certreq_certbot_fullchain_file | default(certreq_fullchain_file) }}
-# --chain-path {{ certreq_certbot_chain_file | default(certreq_chain_file) }}
-# --email {{ certreq_csr_email_address }}

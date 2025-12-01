@@ -1,32 +1,8 @@
-# - name: Generate a Let's Encrypt Certificate
-#   delegate_to: "{{ certreq_letsencryp_host }}"
-#   community.crypto.x509_certificate:
-#     path: "{{ certreq_crt_file }}"
-#     csr_content: "{{ certreq_csr_result.csr }}"
-#     acme_challenge_path: "{{ certreq_acme_webroot }}/.well-known/acme-challenge/"
-#     # acme_accountkey_path: /etc/ssl/private/ansible.com.pem
-#     provider: acme
-#     backup: true
-#     return_content: true
-#   register: certreq_crt_result
-#   notify: "{{ certreq_notify }}"
-
-# - name: Create account key if it doesn't exist
-#   community.crypto.openssl_privatekey:
-#     path: "{{ certreq_acme_account_key }}"
-#     size: 4096
-#     state: file
-
-# - name: Check whether an account with the given account key exists
-#   community.crypto.acme_account_info:
-#     acme_directory: "{{ certreq_acme_directory }}"
-#     acme_version: "{{ certreq_acme_version }}"
-#     account_key_content: "{{ certreq_acme_account_key }}"
-#   register: certreq_acme_account_result
-
-# - name: Print account contacts
-#   ansible.builtin.debug:
-#     var: certreq_acme_account_result
+- name: Create directory for ansible custom facts
+  ansible.builtin.file:
+    state: directory
+    recurse: true
+    path: /etc/ansible/facts.d
 
 - name: Step 0. Create Account. Agree TOS
   community.crypto.acme_account:
@@ -37,78 +13,79 @@
     terms_agreed: true
     contact:
       - mailto:{{ certreq_csr_email_address }}
-  register: certreq_acme_account_result
-- debug: "var=certreq_acme_account_result"
+  register: certreq_acme_step0_result
+  changed_when: certreq_acme_step0_result.account_uri != ansible_local.certreq_acme_account_uri | default('')
 
-# - name: Get current certificate info
-#   community.crypto.openssl_certificate_info:
-#     path: "{{ certreq_crt_file }}"
-#   register: current_cert
-#   ignore_errors: true
+- name: Save account_uri result to fact
+  ansible.builtin.copy:
+    dest: /etc/ansible/facts.d/certreq_acme_account_uri.fact
+    content: "{{ certreq_acme_step0_result.account_uri | to_nice_json }}"
+  when: certreq_acme_step0_result.changed
 
-# - name: Set certificate facts
-#   ansible.builtin.set_fact:
-#     cert_exists: "{{ current_cert is success and current_cert.certificates | length > 0 }}"
-#     cert_expiry_days: "{{ (current_cert.not_after | to_datetime('%Y%m%d%H%M%SZ') - ansible_date_time.epoch | int | to_datetime('%s')).days if cert_exists else 0 }}"
-#     current_domains: "{{ current_cert.certificates[0].extensions.subject_alt_name.dns | default([]) if cert_exists else [] }}"
+- name: Re-read facts certreq_acme_account_uri
+  ansible.builtin.setup:
+    filter: ansible_local
 
-# - name: Debug certificate info
-#   ansible.builtin.debug:
-#     msg: |
-#       Certificate exists: {{ cert_exists }}
-#       Days until expiry: {{ cert_expiry_days }}
-#       Current domains: {{ current_domains }}
-#       Required domains: {{ letsencrypt_domains }}
-
-# - name: Check if certificate needs renewal
-#   ansible.builtin.set_fact:
-#     cert_needs_renewal: true
-#   when:
-#     - not cert_exists or
-#       cert_expiry_days < letsencrypt_renew_days or
-#       current_domains | sort != letsencrypt_domains | sort
-
-- name: Step 1. Create chalages
+- name: Step 1. Create chalanges
   community.crypto.acme_certificate_order_create:
     acme_directory: "{{ certreq_acme_directory }}"
     acme_version: "{{ certreq_acme_version }}"
     account_key_content: "{{ certreq_acme_account_key }}"
     csr_content: "{{ certreq_csr_result.csr }}"
-  register: certreq_acme_result
+  register: certreq_acme_step1_result
+  when: not ansible_local.certreq_acme_step1 is defined
 
-- debug:
-    var: certreq_acme_result
+- name: Save step1 result to fact
+  ansible.builtin.copy:
+    dest: /etc/ansible/facts.d/certreq_acme_step1.fact
+    content: "{{ certreq_acme_step1_result | to_nice_json }}"
+  when: certreq_acme_step1_result.changed
 
-# - name: Copy http-01 challenges
-#   ansible.builtin.copy:
-#     dest: /var/www/{{ certreq_item.identifier }}/{{ certreq_item.challenges['http-01'].resource }}
-#     content: "{{ certreq_item.challenges['http-01'].resource_value }}"
-#   loop: "{{ certreq_acme_result.challenge_data }}"
-#   when: "'http-01' in certreq_item.challenges"
+- name: Re-read facts certreq_acme_step1
+  ansible.builtin.setup:
+    filter: ansible_local
+  when: certreq_acme_step1_result.changed
+
+- name: create webroot dir
+  ansible.builtin.file:
+    state: directory
+    path: "{{ certreq_acme_webroot }}/.well-known/acme-challenge"
+    owner: "{{ certreq_default_owner }}"
+    group: "{{ certreq_default_group }}"
+    mode: "{{ certreq_default_dir_mode }}"
 
 - name: Save http-01 challenges
+  delegate_to: "{{ certreq_acme_step2_host if certreq_acme_step2_host != '' else omit }}"
   ansible.builtin.copy:
-    dest: "{{ certreq_acme_webroot }}/.well-known/acme-challenge/{{ certreq_item.value['http-01']['resource'] }}"
-    content: "{{ certreq_item.value['http-01']['resource_value'] }}"
+    dest: "{{ certreq_acme_webroot }}/{{ certreq_item.challenges['http-01']['resource'] }}"
+    content: "{{ certreq_item.challenges['http-01']['resource_value'] }}"
   loop_control:
     loop_var: certreq_item
-    label: 
-  loop: "{{ certreq_acme_result.challenge_data }}"
-  when: "'http-01' in challenges.challenges"
-  # loop: "{{ certreq_acme_result.challenge_data | dict2items }}"
-  # when: certreq_acme_result is changed
+    label: '{{ certreq_item.identifier }}'
+  loop: "{{ ansible_local.certreq_acme_step1.challenge_data }}"
+  when: "'http-01' in certreq_item.challenges"
 
 - name: Step 2. Validate chalenges
+  delegate_to: "{{ certreq_acme_step2_host if certreq_acme_step2_host != '' else omit }}"
   community.crypto.acme_certificate_order_validate:
     acme_directory: "{{ certreq_acme_directory }}"
     acme_version: "{{ certreq_acme_version }}"
     account_key_content: "{{ certreq_acme_account_key }}"
     challenge: "{{ certreq_acme_challenge }}"
-    order_uri: "{{ certreq_acme_result.order_uri }}"
-  register: certreq_acme_result
+    order_uri: "{{ ansible_local.certreq_acme_step1.order_uri }}"
+  register: certreq_acme_step2_result
+  when: not ansible_local.certreq_acme_step2 is defined
 
-- debug:
-    var: certreq_acme_result
+- name: Save step2 result to fact
+  ansible.builtin.copy:
+    dest: /etc/ansible/facts.d/certreq_acme_step2.fact
+    content: "{{ certreq_acme_step2_result | to_nice_json }}"
+  when: certreq_acme_step2_result.changed
+
+- name: Re-read facts certreq_acme_step2
+  ansible.builtin.setup:
+    filter: ansible_local
+  when: certreq_acme_step2_result.changed
 
 - name: Step 3. Get certificates
   community.crypto.acme_certificate_order_finalize:
@@ -116,27 +93,41 @@
     acme_version: "{{ certreq_acme_version }}"
     account_key_content: "{{ certreq_acme_account_key }}"
     csr_content: "{{ certreq_csr_result.csr }}"
-    order_uri: "{{ certreq_acme_result.order_uri }}"
-    dest: "{{ certreq_crt_file }}"
+    order_uri: "{{ ansible_local.certreq_acme_step1.order_uri }}"
+    cert_dest: "{{ certreq_crt_dir }}/{{ certreq_csr_cn }}.pem"
     fullchain_dest: "{{ certreq_fullchain_file }}"
     chain_dest: "{{ certreq_chain_file }}"
-  register: certreq_acme_result
+  register: certreq_acme_step3_result
 
-- debug:
-    var: certreq_acme_result
+- name: Copy pem to crt
+  ansible.builtin.copy:
+    backup: true
+    remote_src: true
+    src: "{{ certreq_crt_dir }}/{{ certreq_csr_cn }}.pem"
+    dest: "{{ certreq_crt_file }}"
 
-# - name: Step 2. Verify chalenges
-#   community.crypto.acme_certificate:
-#     acme_directory: "{{ certreq_acme_directory }}"
-#     acme_version: "{{ certreq_acme_version }}"
-#     account_key_content: "{{ certreq_acme_account_key }}"
-#     csr_content: "{{ certreq_csr_result.csr }}"
-#     dest: "{{ certreq_crt_file }}"
-#     fullchain_dest: "{{ certreq_fullchain_file }}"
-#     chain_dest: "{{ certreq_chain_file }}"
-#     data: "{{ certreq_acme_result }}"
-#     modify_account: false
-#   register: certreq_acme_result
+- name: clear tmp files
+  when: 
+    - certreq_acme_step3_result.changed
+    - not certreq_acme_step3_result.failed
+  ### block start
+  block:
+    - name: clear chalanges
+      ansible.builtin.file:
+        state: absent
+        path: "{{ certreq_acme_webroot }}/{{ certreq_item.challenges['http-01']['resource'] }}"
+      loop_control:
+        loop_var: certreq_item
+        label: '{{ certreq_item.identifier }}'
+      loop: "{{ ansible_local.certreq_acme_step1.challenge_data }}"
 
-# - debug:
-#     var: certreq_acme_result
+    - name: clear local facts
+      ansible.builtin.file:
+        state: absent
+        path: "/etc/ansible/facts.d/{{ certreq_item }}.fact"
+      loop_control:
+        loop_var: certreq_item
+      loop:
+        - certreq_acme_step1
+        - certreq_acme_step2
+  ### block end

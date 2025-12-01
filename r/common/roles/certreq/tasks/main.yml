@@ -50,16 +50,32 @@
     email_address: "{{ certreq_csr_email_address | default(certreq_csr_email_address) }}"
     key_usage: "{{ certreq_csr_key_usage | default(certreq_csr_key_usage) }}"
     extended_key_usage: "{{ certreq_csr_extended_key_usage | default(certreq_csr_extended_key_usage) }}"
-    # community.crypto.openssl_csr_pipe:
     path: "{{ certreq_csr_file }}"
     return_content: true
   register: certreq_csr_result
   changed_when: false
 
+- name: Stat crt
+  ansible.builtin.stat:
+    path: "{{ certreq_crt_file }}"
+  register: certreq_crt_stat
+
+- name: Get crt info
+  community.crypto.x509_certificate_info:
+    path: "{{ certreq_crt_file }}"
+    valid_at:
+      tendays: "+10d"
+  register: certreq_crt_info
+  when: certreq_crt_stat.stat.exists
+
 - name: Create certificate
   ansible.builtin.include_tasks:
     file: "provider_{{ certreq_provider }}.yml"
   ignore_errors: true
+  when: certreq_force or 
+    not certreq_crt_stat.stat.exists and
+    not certreq_crt_info.valid_at.tendays and
+    certreq_csr_san | sort | lower != certreq_crt_info.subject_alt_name | sort | lower
 
 - name: Fetch crt
   delegate_to: localhost
@@ -88,5 +104,7 @@
     backup: true
   when: certreq_fetch_key
 
-- debug:
-    var: certreq_crt_result
+- debug: 
+    msg: 
+      - "{{ certreq_crt_result }}"
+  when: certreq_crt_result is defined

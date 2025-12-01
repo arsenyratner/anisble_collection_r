@@ -1,9 +1,10 @@
 - name: Create self signed crt
   community.crypto.x509_certificate:
-    path: "{{ certreq_crt_path }}"
+    path: "{{ certreq_crt_file }}"
     csr_content: "{{ certreq_csr_result.csr }}"
-    privatekey_path: "{{ certreq_key_path }}"
+    privatekey_path: "{{ certreq_key_file }}"
     provider: selfsigned
     return_content: true
     backup: true
   register: certreq_crt_result
+  notify: "{{ certreq_notify }}"

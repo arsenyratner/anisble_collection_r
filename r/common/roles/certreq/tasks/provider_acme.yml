@@ -1,0 +1,142 @@
+# - name: Generate a Let's Encrypt Certificate
+#   delegate_to: "{{ certreq_letsencryp_host }}"
+#   community.crypto.x509_certificate:
+#     path: "{{ certreq_crt_file }}"
+#     csr_content: "{{ certreq_csr_result.csr }}"
+#     acme_challenge_path: "{{ certreq_acme_webroot }}/.well-known/acme-challenge/"
+#     # acme_accountkey_path: /etc/ssl/private/ansible.com.pem
+#     provider: acme
+#     backup: true
+#     return_content: true
+#   register: certreq_crt_result
+#   notify: "{{ certreq_notify }}"
+
+# - name: Create account key if it doesn't exist
+#   community.crypto.openssl_privatekey:
+#     path: "{{ certreq_acme_account_key }}"
+#     size: 4096
+#     state: file
+
+# - name: Check whether an account with the given account key exists
+#   community.crypto.acme_account_info:
+#     acme_directory: "{{ certreq_acme_directory }}"
+#     acme_version: "{{ certreq_acme_version }}"
+#     account_key_content: "{{ certreq_acme_account_key }}"
+#   register: certreq_acme_account_result
+
+# - name: Print account contacts
+#   ansible.builtin.debug:
+#     var: certreq_acme_account_result
+
+- name: Step 0. Create Account. Agree TOS
+  community.crypto.acme_account:
+    acme_directory: "{{ certreq_acme_directory }}"
+    acme_version: "{{ certreq_acme_version }}"
+    account_key_content: "{{ certreq_acme_account_key }}"
+    state: present
+    terms_agreed: true
+    contact:
+      - mailto:{{ certreq_csr_email_address }}
+  register: certreq_acme_account_result
+- debug: "var=certreq_acme_account_result"
+
+# - name: Get current certificate info
+#   community.crypto.openssl_certificate_info:
+#     path: "{{ certreq_crt_file }}"
+#   register: current_cert
+#   ignore_errors: true
+
+# - name: Set certificate facts
+#   ansible.builtin.set_fact:
+#     cert_exists: "{{ current_cert is success and current_cert.certificates | length > 0 }}"
+#     cert_expiry_days: "{{ (current_cert.not_after | to_datetime('%Y%m%d%H%M%SZ') - ansible_date_time.epoch | int | to_datetime('%s')).days if cert_exists else 0 }}"
+#     current_domains: "{{ current_cert.certificates[0].extensions.subject_alt_name.dns | default([]) if cert_exists else [] }}"
+
+# - name: Debug certificate info
+#   ansible.builtin.debug:
+#     msg: |
+#       Certificate exists: {{ cert_exists }}
+#       Days until expiry: {{ cert_expiry_days }}
+#       Current domains: {{ current_domains }}
+#       Required domains: {{ letsencrypt_domains }}
+
+# - name: Check if certificate needs renewal
+#   ansible.builtin.set_fact:
+#     cert_needs_renewal: true
+#   when:
+#     - not cert_exists or
+#       cert_expiry_days < letsencrypt_renew_days or
+#       current_domains | sort != letsencrypt_domains | sort
+
+- name: Step 1. Create chalages
+  community.crypto.acme_certificate_order_create:
+    acme_directory: "{{ certreq_acme_directory }}"
+    acme_version: "{{ certreq_acme_version }}"
+    account_key_content: "{{ certreq_acme_account_key }}"
+    csr_content: "{{ certreq_csr_result.csr }}"
+  register: certreq_acme_result
+
+- debug:
+    var: certreq_acme_result
+
+# - name: Copy http-01 challenges
+#   ansible.builtin.copy:
+#     dest: /var/www/{{ certreq_item.identifier }}/{{ certreq_item.challenges['http-01'].resource }}
+#     content: "{{ certreq_item.challenges['http-01'].resource_value }}"
+#   loop: "{{ certreq_acme_result.challenge_data }}"
+#   when: "'http-01' in certreq_item.challenges"
+
+- name: Save http-01 challenges
+  ansible.builtin.copy:
+    dest: "{{ certreq_acme_webroot }}/.well-known/acme-challenge/{{ certreq_item.value['http-01']['resource'] }}"
+    content: "{{ certreq_item.value['http-01']['resource_value'] }}"
+  loop_control:
+    loop_var: certreq_item
+    label: 
+  loop: "{{ certreq_acme_result.challenge_data }}"
+  when: "'http-01' in challenges.challenges"
+  # loop: "{{ certreq_acme_result.challenge_data | dict2items }}"
+  # when: certreq_acme_result is changed
+
+- name: Step 2. Validate chalenges
+  community.crypto.acme_certificate_order_validate:
+    acme_directory: "{{ certreq_acme_directory }}"
+    acme_version: "{{ certreq_acme_version }}"
+    account_key_content: "{{ certreq_acme_account_key }}"
+    challenge: "{{ certreq_acme_challenge }}"
+    order_uri: "{{ certreq_acme_result.order_uri }}"
+  register: certreq_acme_result
+
+- debug:
+    var: certreq_acme_result
+
+- name: Step 3. Get certificates
+  community.crypto.acme_certificate_order_finalize:
+    acme_directory: "{{ certreq_acme_directory }}"
+    acme_version: "{{ certreq_acme_version }}"
+    account_key_content: "{{ certreq_acme_account_key }}"
+    csr_content: "{{ certreq_csr_result.csr }}"
+    order_uri: "{{ certreq_acme_result.order_uri }}"
+    dest: "{{ certreq_crt_file }}"
+    fullchain_dest: "{{ certreq_fullchain_file }}"
+    chain_dest: "{{ certreq_chain_file }}"
+  register: certreq_acme_result
+
+- debug:
+    var: certreq_acme_result
+
+# - name: Step 2. Verify chalenges
+#   community.crypto.acme_certificate:
+#     acme_directory: "{{ certreq_acme_directory }}"
+#     acme_version: "{{ certreq_acme_version }}"
+#     account_key_content: "{{ certreq_acme_account_key }}"
+#     csr_content: "{{ certreq_csr_result.csr }}"
+#     dest: "{{ certreq_crt_file }}"
+#     fullchain_dest: "{{ certreq_fullchain_file }}"
+#     chain_dest: "{{ certreq_chain_file }}"
+#     data: "{{ certreq_acme_result }}"
+#     modify_account: false
+#   register: certreq_acme_result
+
+# - debug:
+#     var: certreq_acme_result

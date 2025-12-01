@@ -12,9 +12,10 @@
 
 - name: save crt
   ansible.builtin.copy:
-    dest: "{{ certreq_crt_path }}"
+    dest: "{{ certreq_crt_file }}"
     content: "{{ certreq_crt_result.certificate }}"
     owner: "{{ certreq_default_owner }}"
     group: "{{ certreq_default_group }}"
     mode: "{{ certreq_default_file_mode }}"
     backup: true
+  notify: "{{ certreq_notify }}"

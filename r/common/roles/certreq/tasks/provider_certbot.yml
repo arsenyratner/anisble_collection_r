@@ -1,0 +1,22 @@
+- name: Save csr to file
+  delegate_to: "{{ certreq_certbot_host if certreq_certbot_host != '' else omit }}"
+  ansible.builtin.copy:
+    dest: "{{ certreq_certbot_csr_file }}"
+    content: "{{ certreq_crt_result.certificate }}"
+    owner: "{{ certreq_default_owner }}"
+    group: "{{ certreq_default_group }}"
+    mode: "{{ certreq_default_file_mode }}"
+    backup: true
+  when: certreq_certbot_host != ""
+
+- name: certbot certonly
+  ansible.builtin.command:
+    cmd: "{{ certreq_certbot_newcert_cmd }}"
+  register: certreq_certbot_result
+
+- name: add renew job to cron
+  ansible.builtin.debug:
+    msg:
+      - "{{ certreq_certbot_result }}"
+      # - "{{ certreq_certbot_renew_cmd }}"
+  when: certreq_certbot_host == ""

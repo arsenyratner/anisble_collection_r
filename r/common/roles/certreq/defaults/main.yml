@@ -2,9 +2,10 @@ certreq_default_owner: root
 certreq_default_group: root
 certreq_default_file_mode: '0644'
 certreq_default_dir_mode: '0755'
+certreq_force: false
 
-certreq_csr_dir: "/usr/local/etc/pki/csr"
 certreq_key_dir: "/usr/local/etc/pki/key"
+certreq_csr_dir: "/usr/local/etc/pki/csr"
 certreq_crt_dir: "/usr/local/etc/pki/crt"
 certreq_dirs:
   - path: "{{ certreq_key_dir }}"
@@ -19,7 +20,7 @@ certreq_csr_email_address: "arsenyratner@gmail.com"
 certreq_csr_cn: "{{ ansible_nodename }}"
 certreq_csr_san:
   - "DNS:{{ inventory_hostname }}"
-  - "IP:{{ ansible_default_ipv4.address }}"
+  # - "IP:{{ ansible_default_ipv4.address }}" # для certbot не подойдёт
 certreq_csr_key_usage:
   # (цифровая подпись)
   - digitalSignature
@@ -75,17 +76,55 @@ certreq_fetch_dir: "files/pki"
 certreq_fetch_crt: false
 certreq_fetch_csr: false
 certreq_fetch_key: false
+certreq_notify: []
 
-certreq_provider: "selfsigned" # csronly letsencrypt ownca selfsigned
+certreq_provider: "selfsigned" # csronly acme certbot ownca selfsigned
 
-certreq_crt_path: "{{ certreq_crt_dir }}/{{ certreq_csr_cn }}.crt"
-certreq_key_path: "{{ certreq_key_dir }}/{{ certreq_csr_cn }}.key"
 certreq_key_size: 2048
 certreq_key_type: RSA
+certreq_key_file: "{{ certreq_key_dir }}/{{ certreq_csr_cn }}.key"
+certreq_csr_file: "{{ certreq_csr_dir }}/{{ certreq_csr_cn }}.csr"
+certreq_crt_file: "{{ certreq_crt_dir }}/{{ certreq_csr_cn }}.crt"
+certreq_fullchain_file: "{{ certreq_crt_dir }}/{{ certreq_csr_cn }}-fullchain.pem"
+certreq_chain_file: "{{ certreq_crt_dir }}/{{ certreq_csr_cn }}-chain.pem"
 
 certreq_ownca_host: "localhost"
 certreq_ownca_root_dir: "/opt/ca/localhost"
 certreq_ownca_cacert: "{{ certreq_ownca_root_dir }}/localhost.crt"
 certreq_ownca_cakey: "{{ certreq_ownca_root_dir }}/localhost.key"
 
-certreq_letsencrypt_webroot: "/var/www/html"  # + /.well-known/acme-challenge/
+certreq_acme_webroot: "/var/www/html"  # + /.well-known/acme-challenge/
+certreq_acme_account_key: ""
+# certreq_acme_directory: https://acme-v02.api.letsencrypt.org/directory
+certreq_acme_directory: https://acme-staging-v02.api.letsencrypt.org/directory
+certreq_acme_version: 2
+certreq_acme_challenge: http-01
+
+certreq_certbot_host: ""
+# certreq_certbot_csr_file:
+# certreq_certbot_crt_file:
+# certreq_certbot_fullchain_file:
+# certreq_certbot_chain_file:
+certreq_certbot_webroot: "/var/www/html"
+
+certreq_certbot_newcert_cmd: >-
+  /usr/bin/certbot certonly --webroot --agree-tos -n
+  --cert-name {{ certreq_csr_cn }}
+  --webroot-path {{ certreq_certbot_webroot }}
+  --csr {{ certreq_certbot_csr_file | default(certreq_csr_file) }}
+  --email {{ certreq_csr_email_address }}
+  --expand
+# --cert-path {{ certreq_certbot_crt_file | default(certreq_crt_file) }}
+# --fullchain-path {{ certreq_certbot_fullchain_file | default(certreq_fullchain_file) }}
+# --chain-path {{ certreq_certbot_chain_file | default(certreq_chain_file) }}
+
+certreq_certbot_renew_cmd: >-
+  /usr/bin/certbot renew --webroot --agree-tos -n
+  --cert-name {{ certreq_csr_cn }}
+  --webroot-path {{ certreq_certbot_webroot }}
+  --expand
+  --reuse-key
+# --cert-path {{ certreq_certbot_crt_file | default(certreq_crt_file) }}
+# --fullchain-path {{ certreq_certbot_fullchain_file | default(certreq_fullchain_file) }}
+# --chain-path {{ certreq_certbot_chain_file | default(certreq_chain_file) }}
+# --email {{ certreq_csr_email_address }}

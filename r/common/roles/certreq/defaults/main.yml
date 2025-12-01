@@ -17,7 +17,7 @@ certreq_csr_organization_name: "R"
 certreq_csr_locality_name: "MSK"
 certreq_csr_country_name: "RU"
 certreq_csr_email_address: "arsenyratner@gmail.com"
-certreq_csr_cn: "{{ ansible_nodename }}"
+certreq_csr_cn: ""
 certreq_csr_san:
   - "DNS:{{ inventory_hostname }}"
   # - "IP:{{ ansible_default_ipv4.address }}" # для certbot не подойдёт
@@ -38,7 +38,7 @@ certreq_csr_key_usage:
   # - keyAgreement
   # (только шифрование, используется только в сочетании с keyAgreement)
   # - encipherOnly
-  # (только расшифрование, используется только в сочетании с keyAgreement) 
+  # (только расшифрование, используется только в сочетании с keyAgreement)
   # - decipherOnly
 certreq_csr_extended_key_usage:
   # (Аутентификация сервера TLS)

@@ -96,7 +96,7 @@ certreq_ownca_cakey: "{{ certreq_ownca_root_dir }}/localhost.key"
 certreq_acme_step2_host: ""
 certreq_acme_webroot: "/var/www/html"  # + /.well-known/acme-challenge/
 certreq_acme_account_key: ""
-# certreq_acme_directory: https://acme-v02.api.letsencrypt.org/directory
-certreq_acme_directory: https://acme-staging-v02.api.letsencrypt.org/directory
+# certreq_acme_directory: "https://acme-v02.api.letsencrypt.org/directory"
+certreq_acme_directory: "https://acme-staging-v02.api.letsencrypt.org/directory"
 certreq_acme_version: 2
 certreq_acme_challenge: http-01

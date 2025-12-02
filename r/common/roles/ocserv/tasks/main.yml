@@ -1,28 +1,34 @@
 - name: Distribution specific variables
-  ansible.builtin.include_vars: "{{ item }}"
+  ansible.builtin.include_vars: "{{ ocserv_item }}"
   with_first_found:
     - "_{{ ansible_distribution | lower }}-{{ ansible_distribution_version | lower }}.yml"
     - "_{{ ansible_distribution | lower }}.yml"
     - "_{{ ansible_os_family | lower }}.yml"
   ignore_errors: true
   failed_when: false
+  loop_control:
+    loop_var: ocserv_item
 
 - name: Distribution specific tasks
   ansible.builtin.include_tasks:
-    file: "{{ item }}"
+    file: "{{ ocserv_item }}"
   with_first_found:
     - "_{{ ansible_distribution | lower }}-{{ ansible_distribution_version | lower }}.yml"
     - "_{{ ansible_distribution | lower }}.yml"
     - "_{{ ansible_os_family | lower }}.yml"
   ignore_errors: true
+  loop_control:
+    loop_var: ocserv_item
 
 - name: sysctl
   ansible.posix.sysctl:
     reload: true
     sysctl_set: true
-    name: "{{ item.name }}"
-    value: "{{ item.value }}"
+    name: "{{ ocserv_item.name }}"
+    value: "{{ ocserv_item.value }}"
   loop: "{{ ocserv_sysctl }}"
+  loop_control:
+    loop_var: ocserv_item
 
 - name: remove unmanaged files
   ansible.builtin.include_tasks:
@@ -71,12 +77,13 @@
     group: root
     mode: '0644'
     backup: true
-    dest: "{{ ocserv_configpergroup_dir }}/{{ item.name }}"
-    content: "{{ item.content }}"
+    dest: "{{ ocserv_configpergroup_dir }}/{{ ocserv_item.name }}"
+    content: "{{ ocserv_item.content }}"
   notify: ocserv restart
   loop: "{{ ocserv_pergroup_config }}"
   loop_control:
-    label: "{{ item.name }}"
+    label: "{{ ocserv_item.name }}"
+    loop_var: ocserv_item
   when: ocserv_pergroup_config != []
 
 - name: "per user config"
@@ -85,12 +92,13 @@
     group: root
     mode: '0644'
     backup: true
-    dest: "{{ ocserv_configperuser_dir }}/{{ item.name }}"
-    content: "{{ item.content }}"
+    dest: "{{ ocserv_configperuser_dir }}/{{ ocserv_item.name }}"
+    content: "{{ ocserv_item.content }}"
   notify: ocserv restart
   loop: "{{ ocserv_peruser_config }}"
   loop_control:
-    label: "{{ item.name }}"
+    label: "{{ ocserv_item.name }}"
+    loop_var: ocserv_item
   when: ocserv_peruser_config != []
 
 - name: systemctl enable ocserv

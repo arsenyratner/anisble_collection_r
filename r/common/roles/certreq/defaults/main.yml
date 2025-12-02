@@ -3,6 +3,8 @@ certreq_default_group: root
 certreq_default_file_mode: '0644'
 certreq_default_dir_mode: '0755'
 certreq_force: false
+certreq_issue: false
+certreq_issue_msg: skipping
 
 certreq_root_dir: "/usr/local/etc/pki/{{ certreq_csr_cn }}"
 certreq_key_dir: "{{ certreq_root_dir }}"

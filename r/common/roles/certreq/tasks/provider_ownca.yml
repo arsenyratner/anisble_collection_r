@@ -1,4 +1,4 @@
-- name: Create crt and sign
+- name: Create crt and sign {{ certreq_csr_cn }}
   delegate_to: "{{ certreq_ownca_host }}"
   community.crypto.x509_certificate:
     path: "{{ certreq_ownca_root_dir }}/pki/crt/{{ certreq_csr_cn }}.crt"
@@ -10,7 +10,7 @@
     backup: true
   register: certreq_crt_result
 
-- name: save crt
+- name: save crt {{ certreq_csr_cn }}
   ansible.builtin.copy:
     dest: "{{ certreq_crt_file }}"
     content: "{{ certreq_crt_result.certificate }}"

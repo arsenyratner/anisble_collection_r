@@ -1,4 +1,4 @@
-- name: csr
+- name: csr {{ certreq_csr_cn }}
   ansible.builtin.debug:
     msg:
       - "look csr in file: {{ certreq_csr_file }}"

@@ -87,7 +87,7 @@
     filter: ansible_local
   when: certreq_acme_step2_result.changed
 
-- name: Step 3. Get certificates
+- name: Step 3. Get certificates 
   community.crypto.acme_certificate_order_finalize:
     acme_directory: "{{ certreq_acme_directory }}"
     acme_version: "{{ certreq_acme_version }}"
@@ -99,7 +99,7 @@
     chain_dest: "{{ certreq_chain_file }}"
   register: certreq_acme_step3_result
 
-- name: Copy pem to crt
+- name: Copy pem to crt {{ certreq_csr_cn }}
   ansible.builtin.copy:
     backup: true
     remote_src: true

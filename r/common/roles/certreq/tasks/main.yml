@@ -77,7 +77,6 @@
   when: certreq_crt_stat.stat.exists
 
 - name: Checking the issue conditions
-  when: certreq_csr_cn != ''
   ### block start
   block:
     - name: if forced
@@ -111,6 +110,7 @@
     - ansible.builtin.debug:
         msg: "{{ certreq_issue_msg }}"
   ### block end
+  when: certreq_csr_cn != ''
 
 - name: Create certificate {{ certreq_csr_cn }}
   ansible.builtin.include_tasks:

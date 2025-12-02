@@ -43,7 +43,7 @@
 #     group: root
 #     mode: "0644"
 #     # validate: "/bin/named-checkconf %s"
-#   notify: Restart bind
+#   notify: Bind restart
 
 # - name: systemd daemon-reload
 #   ansible.builtin.systemd:

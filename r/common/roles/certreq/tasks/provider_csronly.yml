@@ -1,9 +1,5 @@
-- name: save csr
-  ansible.builtin.copy:
-    dest: "{{ certreq_csr_file }}"
-    content: "{{ certreq_csr_result.csr }}"
-    owner: "{{ certreq_default_owner }}"
-    group: "{{ certreq_default_group }}"
-    mode: "{{ certreq_default_file_mode }}"
-    backup: true
-  # when: certreq_provider == "csronly"
+- name: csr
+  ansible.builtin.debug:
+    msg:
+      - "look csr in file: {{ certreq_csr_file }}"
+      - "look csr in var: certreq_csr_result.csr"

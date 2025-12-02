@@ -4,10 +4,12 @@ certreq_default_file_mode: '0644'
 certreq_default_dir_mode: '0755'
 certreq_force: false
 
-certreq_key_dir: "/usr/local/etc/pki/key"
-certreq_csr_dir: "/usr/local/etc/pki/csr"
-certreq_crt_dir: "/usr/local/etc/pki/crt"
+certreq_root_dir: "/usr/local/etc/pki/{{ certreq_csr_cn }}"
+certreq_key_dir: "{{ certreq_root_dir }}"
+certreq_csr_dir: "{{ certreq_root_dir }}"
+certreq_crt_dir: "{{ certreq_root_dir }}"
 certreq_dirs:
+  - path: "{{ certreq_root_dir }}"
   - path: "{{ certreq_key_dir }}"
   - path: "{{ certreq_csr_dir }}"
   - path: "{{ certreq_crt_dir }}"
@@ -72,13 +74,13 @@ certreq_csr_extended_key_usage:
   # (EAP через LAN)
   # - eapOverLAN
 
-certreq_fetch_dir: "files/pki"
+certreq_fetch_dir: "files/pki/{{ certreq_csr_cn }}"
 certreq_fetch_crt: false
 certreq_fetch_csr: false
 certreq_fetch_key: false
 certreq_notify: []
 
-certreq_provider: "selfsigned" # csronly acme certbot ownca selfsigned
+certreq_provider: "selfsigned" # csronly acme ownca selfsigned
 
 certreq_key_size: 2048
 certreq_key_type: RSA

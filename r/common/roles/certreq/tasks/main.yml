@@ -1,29 +1,35 @@
 - name: Distribution specific variables
-  ansible.builtin.include_vars: "{{ item }}"
+  ansible.builtin.include_vars: "{{ certreq_item }}"
   with_first_found:
     - "_{{ ansible_distribution | lower }}-{{ ansible_distribution_version | lower }}.yml"
     - "_{{ ansible_distribution | lower }}.yml"
     - "_{{ ansible_os_family | lower }}.yml"
   ignore_errors: true
   failed_when: false
+  loop_control:
+    loop_var: certreq_item
 
 - name: Distribution specific tasks
   ansible.builtin.include_tasks:
-    file: "{{ item }}"
+    file: "{{ certreq_item }}"
   with_first_found:
     - "_{{ ansible_distribution | lower }}-{{ ansible_distribution_version | lower }}.yml"
     - "_{{ ansible_distribution | lower }}.yml"
     - "_{{ ansible_os_family | lower }}.yml"
   ignore_errors: true
+  loop_control:
+    loop_var: certreq_item
 
 - name: Create dirs
   ansible.builtin.file:
     state: directory
-    path: "{{ item.path }}"
-    owner: "{{ item.owner | default(certreq_default_owner) }}"
-    group: "{{ item.group | default(certreq_default_group) }}"
-    mode: "{{ item.mode | default(certreq_default_dir_mode) }}"
+    path: "{{ certreq_item.path }}"
+    owner: "{{ certreq_item.owner | default(certreq_default_owner) }}"
+    group: "{{ certreq_item.group | default(certreq_default_group) }}"
+    mode: "{{ certreq_item.mode | default(certreq_default_dir_mode) }}"
   loop: "{{ certreq_dirs }}"
+  loop_control:
+    loop_var: certreq_item
 
 - name: Create key
   community.crypto.openssl_privatekey:
@@ -70,21 +76,37 @@
   register: certreq_crt_info
   when: certreq_crt_stat.stat.exists
 
+# - debug:
+#     msg:
+#     - "{{ certreq_csr_cn != '' }} or"
+#     - "{{ certreq_force }} or"
+#     - "{{ 
+#         (
+#           not certreq_crt_stat.stat.exists and
+#           not certreq_crt_info.valid_at.tendays | default(true) and
+#           certreq_csr_san | sort | lower != certreq_crt_info.subject_alt_name | default([]) | sort | lower
+#         ) 
+#       }}"
+
 - name: Create certificate
   ansible.builtin.include_tasks:
     file: "provider_{{ certreq_provider }}.yml"
   ignore_errors: true
-  when: (certreq_csr_cn != "" and certreq_force) or
-    not certreq_crt_stat.stat.exists and
-    not certreq_crt_info.valid_at.tendays and
-    certreq_csr_san | sort | lower != certreq_crt_info.subject_alt_name | sort | lower
+  when: 
+    certreq_csr_cn != '' or
+    certreq_force or 
+    (
+      not certreq_crt_stat.stat.exists and
+      not certreq_crt_info.valid_at.tendays | default(true) and
+      certreq_csr_san | sort | lower != certreq_crt_info.subject_alt_name | default([]) | sort | lower
+    )
 
 - name: Fetch crt
   delegate_to: localhost
   ansible.builtin.copy:
     mode: "{{ certreq_default_file_mode }}"
     content: "{{ certreq_crt_result.certificate }}"
-    dest: "{{ certreq_fetch_dir }}/crt/{{ certreq_csr_cn }}.crt"
+    dest: "{{ certreq_fetch_dir }}/{{ certreq_csr_cn }}.crt"
     backup: true
   when: certreq_fetch_crt
 
@@ -93,7 +115,7 @@
   ansible.builtin.copy:
     mode: "{{ certreq_default_file_mode }}"
     content: "{{ certreq_csr_result.csr }}"
-    dest: "{{ certreq_fetch_dir }}/csr/{{ certreq_csr_cn }}.csr"
+    dest: "{{ certreq_fetch_dir }}/{{ certreq_csr_cn }}.csr"
     backup: true
   when: certreq_fetch_csr
 
@@ -102,6 +124,6 @@
   ansible.builtin.copy:
     mode: "{{ certreq_default_file_mode }}"
     content: "{{ certreq_key_result.privatekey }}"
-    dest: "{{ certreq_fetch_dir }}/key/{{ certreq_csr_cn }}.key"
+    dest: "{{ certreq_fetch_dir }}/{{ certreq_csr_cn }}.key"
     backup: true
   when: certreq_fetch_key

@@ -7,3 +7,4 @@
     daemon_reload: true
   when: 
     - bind_sambadc_dnsbackend != 'SAMBA_INTERNAL'
+  listen: restart bind

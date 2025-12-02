@@ -25,7 +25,7 @@
     group: "{{ bind_group }}"
   loop: "{{ bind_dirs }}"
   when: bind_dirs != []
-  notify: Restart bind
+  notify: Bind restart
 
 - name: "{{ bind_confd_dir }}/options.conf"
   ansible.builtin.template:
@@ -34,7 +34,7 @@
     owner: "{{ bind_user }}"
     group: "{{ bind_group }}"
     mode: "0640"
-  notify: Restart bind
+  notify: Bind restart
 
 - name: "{{ bind_confd_dir }}/acl-trusted.conf"
   ansible.builtin.copy:
@@ -48,7 +48,7 @@
         {{ address }};
       {% endfor %}
       };
-  notify: Restart bind
+  notify: Bind restart
 
 - name: "{{ bind_confd_dir }}"
   ansible.builtin.copy:
@@ -59,7 +59,7 @@
     content: "{{ item.content }}"
   loop: "{{ bind_confd_files }}"
   when: bind_confd_files != []
-  notify: Restart bind
+  notify: Bind restart
 
 - name: "{{ bind_optiond_dir }}"
   ansible.builtin.copy:
@@ -70,7 +70,7 @@
     content: "{{ item.content }}"
   loop: "{{ bind_optiond_files }}"
   when: bind_optiond_files != []
-  notify: Restart bind
+  notify: Bind restart
 
 - name: "{{ bind_defaultview_dir }}/default-zones.conf"
   ansible.builtin.copy:
@@ -79,7 +79,7 @@
     group: "{{ bind_group }}"
     mode: "0640"
     content: "{{ bind_default_zones }}"
-  notify: Restart bind
+  notify: Bind restart
 
 - name: "copy zones config"
   ansible.builtin.template:
@@ -95,7 +95,7 @@
   when: 
     - bind_zones is defined
     - zone.dbonly | default(false) is false
-  notify: Restart bind
+  notify: Bind restart
 
 - name: "{{ bind_db_dir }}"
   ansible.builtin.copy:
@@ -109,7 +109,7 @@
     label: "{{ zone.db_file | default(bind_db_dir + '/' + zone.name) }}"
     loop_var: zone
   when: zone.db is defined
-  notify: Restart bind
+  notify: Bind restart
 
 - name: "{{ bind_conf_file }}"
   ansible.builtin.template:
@@ -119,7 +119,7 @@
     group: "{{ bind_group }}"
     mode: "0640"
     # validate: "/bin/named-checkconf %s"
-  notify: Restart bind
+  notify: Bind restart
 
 - name: systemctl enable {{ bind_service_name }}
   ansible.builtin.systemd:

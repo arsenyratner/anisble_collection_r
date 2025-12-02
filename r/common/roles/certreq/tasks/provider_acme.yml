@@ -105,6 +105,7 @@
     remote_src: true
     src: "{{ certreq_crt_dir }}/{{ certreq_csr_cn }}.pem"
     dest: "{{ certreq_crt_file }}"
+  notify: "{{ certreq_notify }}"
 
 - name: clear tmp files
   when: 

@@ -76,54 +76,40 @@
   register: certreq_crt_info
   when: certreq_crt_stat.stat.exists
 
-- name: Check conditions
+- name: Checking the issue conditions
   when: certreq_csr_cn != ''
   ### block start
   block:
     - name: if forced
       ansible.builtin.set_fact:
         certreq_issue: true
-        certreq_issue_msg: "issue. is forced by certreq_force variable"
-      when: 
+        certreq_issue_msg: "issue certificate, forced by certreq_force"
+      when:
         - certreq_force
+        - certreq_issue is false
     - name: if crt file does not exists
       ansible.builtin.set_fact:
         certreq_issue: true
-        certreq_issue_msg: "issue. crt file does not exists"
-      when: 
+        certreq_issue_msg: "issue certificate, crt file does not exists"
+      when:
         - not certreq_crt_stat.stat.exists
         - certreq_issue is false
     - name: if not valid in 10 days
       ansible.builtin.set_fact:
         certreq_issue: true
-        certreq_issue_msg: "issue. expire in 10 days"
-      when: 
+        certreq_issue_msg: "issue certificate, expire in 10 days"
+      when:
         - not certreq_crt_info.valid_at.tendays | default(false)
         - certreq_issue is false
     - name: if SAN differs
       ansible.builtin.set_fact:
         certreq_issue: true
-        certreq_issue_msg: "issue. SAN are differ"
-      when: 
+        certreq_issue_msg: "issue certificate, SAN are differ"
+      when:
         - certreq_csr_san | sort | lower != certreq_crt_info.subject_alt_name | default([]) | sort | lower
         - certreq_issue is false
-    - name: 
-      ansible.builtin.debug:
+    - ansible.builtin.debug:
         msg: "{{ certreq_issue_msg }}"
-    #       - "{{ (certreq_csr_cn != '' and certreq_force) | string + ' ' + 'CN specified' if certreq_csr_cn != '' else 'CN NOT specified' }} and {{ 'Issue FORCED' if certreq_force  else 'Issue NOT forced' }}"
-    #       - "{{ (not certreq_crt_stat.stat.exists) | string + ' ' + ('CRT file not exist' if not certreq_crt_stat.stat.exists  else 'CRT file exists') }}"
-    #       - "{{ (not certreq_crt_info.valid_at.tendays | default(false) | string) + ' ' + ('CRT expired in 10 days' if (not certreq_crt_info.valid_at.tendays | default(false))  else 'CRT not expired in 10 days') }}"
-    #       - "{{ (certreq_csr_san | sort | lower != certreq_crt_info.subject_alt_name | default([]) | sort | lower) | string + (' SAN list changed' if certreq_csr_san | sort | lower != certreq_crt_info.subject_alt_name | default([]) | sort | lower  else 'SAN list not chaged') }}"
-    #       - "{{ 'Issuing' if 
-    #           (
-    #             (certreq_csr_cn != '' and certreq_force) or 
-    #             (
-    #               not certreq_crt_stat.stat.exists and
-    #               not certreq_crt_info.valid_at.tendays | default(false) and
-    #               certreq_csr_san | sort | lower != certreq_crt_info.subject_alt_name | default([]) | sort | lower
-    #             )
-    #            ) else 'Skiping'
-    #         }}"
   ### block end
 
 - name: Create certificate {{ certreq_csr_cn }}

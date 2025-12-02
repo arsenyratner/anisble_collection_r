@@ -3,14 +3,14 @@ haproxy_global: {}
 haproxy_defaults: {}
 haproxy_frontends: []
 haproxy_backends: []
-haproxy_conf: /etc/haproxy/haproxy.cfg
-haproxy_confd_dir: /etc/haproxy/conf.d
+haproxy_conf_dir: /etc/haproxy
+haproxy_conf: "{{ haproxy_conf_dir }}/haproxy.cfg"
+haproxy_confd_dir: "{{ haproxy_conf_dir }}/conf.d"
 haproxy_confd_files: []
 haproxy_dirs:
   - "{{ haproxy_confd_dir }}"
 haproxy_systemd_dropin: []
 
 haproxy_managed_dirs:
-  - "{{ haproxy_conf }}"
   - "{{ haproxy_confd_dir }}"
 haproxy_managed_files: []

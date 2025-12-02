@@ -1,20 +1,24 @@
 - name: Distribution specific variables
-  ansible.builtin.include_vars: "{{ item }}"
+  ansible.builtin.include_vars: "{{ postinstall_item }}"
   with_first_found:
     - "_{{ ansible_distribution | lower }}-{{ ansible_distribution_version | lower }}.yml"
     - "_{{ ansible_distribution | lower }}.yml"
     - "_{{ ansible_os_family | lower }}.yml"
   ignore_errors: true
   failed_when: false
+  loop_control:
+    loop_var: postinstall_item
 
 - name: Distribution specific tasks
   ansible.builtin.include_tasks:
-    file: "{{ item }}"
+    file: "{{ postinstall_item }}"
   with_first_found:
     - "_{{ ansible_distribution | lower }}-{{ ansible_distribution_version | lower }}.yml"
     - "_{{ ansible_distribution | lower }}.yml"
     - "_{{ ansible_os_family | lower }}.yml"
   ignore_errors: true
+  loop_control:
+    loop_var: postinstall_item
 
 - name: Set fqdn
   ansible.builtin.hostname:

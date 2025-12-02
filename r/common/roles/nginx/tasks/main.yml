@@ -1,20 +1,24 @@
 - name: Distribution specific variables
-  ansible.builtin.include_vars: "{{ item }}"
+  ansible.builtin.include_vars: "{{ nginx_item }}"
   with_first_found:
     - "_{{ ansible_distribution | lower }}-{{ ansible_distribution_version | lower }}.yml"
     - "_{{ ansible_distribution | lower }}.yml"
     - "_{{ ansible_os_family | lower }}.yml"
   ignore_errors: true
   failed_when: false
+  loop_control:
+    loop_var: nginx_item
 
 - name: Distribution specific tasks
   ansible.builtin.include_tasks:
-    file: "{{ item }}"
+    file: "{{ nginx_item }}"
   with_first_found:
     - "_{{ ansible_distribution | lower }}-{{ ansible_distribution_version | lower }}.yml"
     - "_{{ ansible_distribution | lower }}.yml"
     - "_{{ ansible_os_family | lower }}.yml"
   ignore_errors: true
+  loop_control:
+    loop_var: nginx_item
 
 - name: remove unmanaged files
   ansible.builtin.include_tasks:

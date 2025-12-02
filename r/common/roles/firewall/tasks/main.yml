@@ -1,24 +1,30 @@
 - name: Distribution specific variables
-  ansible.builtin.include_vars: "{{ item }}"
+  ansible.builtin.include_vars: "{{ firewall_item }}"
   with_first_found:
     - "_{{ ansible_distribution | lower }}-{{ ansible_distribution_version | lower }}.yml"
     - "_{{ ansible_distribution | lower }}.yml"
     - "_{{ ansible_os_family | lower }}.yml"
   ignore_errors: true
   failed_when: false
+  loop_control:
+    loop_var: firewall_item
 
 - name: Distribution specific tasks
   ansible.builtin.include_tasks:
-    file: "{{ item }}"
+    file: "{{ firewall_item }}"
   with_first_found:
     - "_{{ ansible_distribution | lower }}-{{ ansible_distribution_version | lower }}.yml"
     - "_{{ ansible_distribution | lower }}.yml"
     - "_{{ ansible_os_family | lower }}.yml"
   ignore_errors: true
+  loop_control:
+    loop_var: firewall_item
 
 - name: sysctl
   ansible.posix.sysctl:
-    name: "{{ item.name }}"
-    value: "{{ item.value }}"
+    name: "{{ firewall_item.name }}"
+    value: "{{ firewall_item.value }}"
   loop: "{{ firewall_default_sysctl + firewall_sysctl }}"
+  loop_control:
+    loop_var: firewall_item
   when: (firewall_default_sysctl + firewall_sysctl) != []

@@ -1,26 +1,30 @@
 - name: Distribution specific variables
-  ansible.builtin.include_vars: "{{ item }}"
+  ansible.builtin.include_vars: "{{ catrust_item }}"
   with_first_found:
     - "_{{ ansible_distribution | lower }}-{{ ansible_distribution_version | lower }}.yml"
     - "_{{ ansible_distribution | lower }}.yml"
     - "_{{ ansible_os_family | lower }}.yml"
   ignore_errors: true
   failed_when: false
+  loop_control:
+    loop_var: catrust_item
 
 - name: Distribution specific tasks
   ansible.builtin.include_tasks:
-    file: "{{ item }}"
+    file: "{{ catrust_item }}"
   with_first_found:
     - "_{{ ansible_distribution | lower }}-{{ ansible_distribution_version | lower }}.yml"
     - "_{{ ansible_distribution | lower }}.yml"
     - "_{{ ansible_os_family | lower }}.yml"
   ignore_errors: true
+  loop_control:
+    loop_var: catrust_item
 
 - name: Get ca certs from urls
   ansible.builtin.get_url:
     validate_certs: false
-    url: "{{ item.url }}"
-    dest: "{{ item.file | default(item.url|basename)}}"
+    url: "{{ catrust_item.url }}"
+    dest: "{{ catrust_item.file | default(catrust_item.url|basename)}}"
     owner: root
     group: root
     mode: "0644"
@@ -28,17 +32,19 @@
   register: getca_result
   when: catrust_cacert_urls != []
   notify: catrust update
+  loop_control:
+    loop_var: catrust_item
 
 - name: Copy ca certs
   ansible.builtin.copy:
-    src: "{{ cert }}"
+    src: "{{ catrust_item }}"
     dest: "{{ catrust_cacert_dir }}"
     owner: root
     group: root
     mode: "0644"
   loop: "{{ catrust_cacert_files }}"
   loop_control:
-    loop_var: cert
+    loop_var: catrust_item
   register: result
   when: catrust_cacert_files != []
   notify: catrust update

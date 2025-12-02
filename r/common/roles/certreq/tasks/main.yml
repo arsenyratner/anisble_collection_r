@@ -31,7 +31,7 @@
   loop_control:
     loop_var: certreq_item
 
-- name: Create key
+- name: Create key {{ certreq_csr_cn }}
   community.crypto.openssl_privatekey:
     force: "{{ certreq_key_force | default(false) }}"
     owner: "{{ certreq_default_owner }}"
@@ -45,7 +45,7 @@
   register: certreq_key_result
   when: certreq_csr_cn != ""
 
-- name: Create csr
+- name: Create csr {{ certreq_csr_cn }}
   community.crypto.openssl_csr:
     privatekey_path: "{{ certreq_key_file }}"
     common_name: "{{ certreq_csr_cn | default(certreq_csr_cn) }}"
@@ -63,12 +63,12 @@
   changed_when: false
   when: certreq_csr_cn != ""
 
-- name: Stat crt
+- name: Stat crt {{ certreq_csr_cn }}
   ansible.builtin.stat:
     path: "{{ certreq_crt_file }}"
   register: certreq_crt_stat
 
-- name: Get crt info
+- name: Get crt info {{ certreq_csr_cn }}
   community.crypto.x509_certificate_info:
     path: "{{ certreq_crt_file }}"
     valid_at:
@@ -76,23 +76,20 @@
   register: certreq_crt_info
   when: certreq_crt_stat.stat.exists
 
-# - debug:
-#     msg:
-#     - "{{ certreq_csr_cn != '' }} or"
-#     - "{{ certreq_force }} or"
-#     - "{{ 
-#         (
-#           not certreq_crt_stat.stat.exists and
-#           not certreq_crt_info.valid_at.tendays | default(true) and
-#           certreq_csr_san | sort | lower != certreq_crt_info.subject_alt_name | default([]) | sort | lower
-#         ) 
-#       }}"
+- debug:
+    msg:
+    - "Issue conditions are:"
+    - "{{ 'CN specified' if certreq_csr_cn != '' else 'CN NOT specified' }}"
+    - "{{ 'Issue FORCED' if certreq_force  else 'Issue NOT forced' }}"
+    - "{{ 'CRT file not exist' if not certreq_crt_stat.stat.exists  else 'CRT file exists' }}"
+    - "{{ 'CRT expired in 10 days' if not certreq_crt_info.valid_at.tendays | default(true)  else 'CRT not expired in 10 days' }}"
+    - "{{ 'SAN list changed' if certreq_csr_san | sort | lower != certreq_crt_info.subject_alt_name | default([]) | sort | lower  else 'SAN list not chaged' }}"
 
-- name: Create certificate
+- name: Create certificate {{ certreq_csr_cn }}
   ansible.builtin.include_tasks:
     file: "provider_{{ certreq_provider }}.yml"
   ignore_errors: true
-  when: 
+  when:
     certreq_csr_cn != '' or
     certreq_force or 
     (
@@ -101,7 +98,7 @@
       certreq_csr_san | sort | lower != certreq_crt_info.subject_alt_name | default([]) | sort | lower
     )
 
-- name: Fetch crt
+- name: Fetch crt {{ certreq_csr_cn }}
   delegate_to: localhost
   ansible.builtin.copy:
     mode: "{{ certreq_default_file_mode }}"
@@ -110,7 +107,7 @@
     backup: true
   when: certreq_fetch_crt
 
-- name: Fetch csr
+- name: Fetch csr {{ certreq_csr_cn }}
   delegate_to: localhost
   ansible.builtin.copy:
     mode: "{{ certreq_default_file_mode }}"
@@ -119,7 +116,7 @@
     backup: true
   when: certreq_fetch_csr
 
-- name: Fetch key
+- name: Fetch key {{ certreq_csr_cn }}
   delegate_to: localhost
   ansible.builtin.copy:
     mode: "{{ certreq_default_file_mode }}"

@@ -1,0 +1,80 @@
+- name: Create key {{ certreq_csr_cn }}
+  community.crypto.openssl_privatekey:
+    force: "{{ certreq_key_force | default(false) }}"
+    owner: "{{ certreq_default_owner }}"
+    group: "{{ certreq_default_group }}"
+    mode: '0600'
+    path: "{{ certreq_key_file }}"
+    size: "{{ certreq_key_size }}"
+    type: "{{ certreq_key_type }}"
+    return_content: true
+    backup: true
+  register: certreq_key_result
+  when: certreq_csr_cn != ""
+
+- name: Create csr {{ certreq_csr_cn }}
+  community.crypto.openssl_csr:
+    privatekey_path: "{{ certreq_key_file }}"
+    common_name: "{{ certreq_csr_cn | default(certreq_csr_cn) }}"
+    subject_alt_name: "{{ certreq_csr_san | default(certreq_csr_san) }}"
+    organizational_unit_name: "{{ certreq_csr_organizational_unit_name | default(certreq_csr_organizational_unit_name) }}"
+    organization_name: "{{ certreq_csr_organization_name | default(certreq_csr_organization_name) }}"
+    locality_name: "{{ certreq_csr_locality_name | default(certreq_csr_locality_name) }}"
+    country_name: "{{ certreq_csr_country_name | default(certreq_csr_country_name) }}"
+    email_address: "{{ certreq_csr_email_address | default(certreq_csr_email_address) }}"
+    key_usage: "{{ certreq_csr_key_usage | default(certreq_csr_key_usage) }}"
+    extended_key_usage: "{{ certreq_csr_extended_key_usage | default(certreq_csr_extended_key_usage) }}"
+    path: "{{ certreq_csr_file }}"
+    return_content: true
+  register: certreq_csr_result
+  changed_when: false
+  when: certreq_csr_cn != ""
+
+- name: Stat crt {{ certreq_csr_cn }}
+  ansible.builtin.stat:
+    path: "{{ certreq_crt_file }}"
+  register: certreq_crt_stat
+
+- name: Get crt info {{ certreq_csr_cn }}
+  community.crypto.x509_certificate_info:
+    path: "{{ certreq_crt_file }}"
+    valid_at:
+      tendays: "+10d"
+  register: certreq_crt_info
+  when: certreq_crt_stat.stat.exists
+
+- name: Checking the issue conditions
+  when: certreq_csr_cn != ''
+  ### block start
+  block:
+    - name: if forced
+      ansible.builtin.set_fact:
+        certreq_issue: true
+        certreq_issue_msg: "issue certificate, forced by certreq_force"
+      when:
+        - certreq_force
+        - certreq_issue is false
+    - name: if crt file does not exists
+      ansible.builtin.set_fact:
+        certreq_issue: true
+        certreq_issue_msg: "issue certificate, crt file does not exists"
+      when:
+        - not certreq_crt_stat.stat.exists
+        - certreq_issue is false
+    - name: if not valid in 10 days
+      ansible.builtin.set_fact:
+        certreq_issue: true
+        certreq_issue_msg: "issue certificate, expire in 10 days"
+      when:
+        - not certreq_crt_info.valid_at.tendays | default(false)
+        - certreq_issue is false
+    - name: if SAN differs
+      ansible.builtin.set_fact:
+        certreq_issue: true
+        certreq_issue_msg: "issue certificate, SAN are differ"
+      when:
+        - certreq_csr_san | sort | lower != certreq_crt_info.subject_alt_name | default([]) | sort | lower
+        - certreq_issue is false
+    - ansible.builtin.debug:
+        msg: "{{ certreq_issue_msg }}"
+  ### block end

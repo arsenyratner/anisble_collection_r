@@ -1,0 +1,4 @@
+- name: install packages
+  ansible.builtin.dnf:
+    name: "{{ certreq_packages }}"
+    state: present

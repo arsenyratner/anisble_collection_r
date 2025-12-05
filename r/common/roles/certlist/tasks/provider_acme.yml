@@ -20,7 +20,6 @@
   ansible.builtin.copy:
     dest: /etc/ansible/facts.d/certreq_acme_account_uri.fact
     content: "{{ certreq_acme_step0_result.account_uri | to_nice_json }}"
-    mode: "{{ certreq_default_file_mode }}"
   when: certreq_acme_step0_result.changed
 
 - name: Re-read facts certreq_acme_account_uri
@@ -40,7 +39,6 @@
   ansible.builtin.copy:
     dest: /etc/ansible/facts.d/certreq_acme_step1.fact
     content: "{{ certreq_acme_step1_result | to_nice_json }}"
-    mode: "{{ certreq_default_file_mode }}"
   when: certreq_acme_step1_result.changed
 
 - name: Re-read facts certreq_acme_step1
@@ -61,7 +59,6 @@
   ansible.builtin.copy:
     dest: "{{ certreq_acme_webroot }}/{{ certreq_item.challenges['http-01']['resource'] }}"
     content: "{{ certreq_item.challenges['http-01']['resource_value'] }}"
-    mode: "{{ certreq_default_file_mode }}"
   loop_control:
     loop_var: certreq_item
     label: '{{ certreq_item.identifier }}'
@@ -83,7 +80,6 @@
   ansible.builtin.copy:
     dest: /etc/ansible/facts.d/certreq_acme_step2.fact
     content: "{{ certreq_acme_step2_result | to_nice_json }}"
-    mode: "{{ certreq_default_file_mode }}"
   when: certreq_acme_step2_result.changed
 
 - name: Re-read facts certreq_acme_step2
@@ -109,7 +105,6 @@
     remote_src: true
     src: "{{ certreq_crt_dir }}/{{ certreq_csr_cn }}.pem"
     dest: "{{ certreq_crt_file }}"
-    mode: "{{ certreq_default_file_mode }}"
   notify: "{{ certreq_notify }}"
 
 - name: clear tmp files

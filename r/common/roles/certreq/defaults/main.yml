@@ -104,3 +104,21 @@ certreq_acme_account_key: ""
 certreq_acme_directory: "https://acme-staging-v02.api.letsencrypt.org/directory"
 certreq_acme_version: 2
 certreq_acme_challenge: http-01
+
+certreq_certbot_root_dir: "/etc/letsencrypt"
+certreq_certbot_webroot: "/var/www/html"
+certreq_certbot_plugin: --standalone # --webroot -w {{ certreq_certbot_webroot }}
+
+certreq_certbot_create_cmd: >-
+  /usr/bin/certbot certonly --agree-tos -n
+  --email {{ certreq_csr_email_address }}
+  -d {{ certreq_csr_cn }}
+  {% if certreq_csr_san != [] %}
+  {% for san in certreq_csr_san %}
+  {{ '-d '(san | split(':'))[1] if (san | split(':'))[0] | lower == 'dns' else '' }}
+  {% endfor %}
+  {% endif %}
+  {{ certreq_certbot_plugin }}
+  --dry-run
+
+certreq_certbot_renew_cmd: ""

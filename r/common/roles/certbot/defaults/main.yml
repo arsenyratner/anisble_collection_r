@@ -15,7 +15,7 @@ certbot_certificates: []
 certbot_plugin: standalone
 certbot_stopped_services:
   - nginx
-certbot_deploy_services: 
+certbot_deploy_services:
   - nginx
   - ocserv
 ## webroot

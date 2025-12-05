@@ -1,0 +1,15 @@
+- name: set facts
+  ansible.builtin.set_facts:
+    certreq_key_file: "{{ certreq_certbot_root_dir }}/live/{{ certreq_csr_cn }}/privkey.pem"
+    certreq_csr_file: ""
+    certreq_crt_file: "{{ certreq_certbot_root_dir }}/live/{{ certreq_csr_cn }}/cert.pem"
+    certreq_fullchain_file: "{{ certreq_certbot_root_dir }}/live/{{ certreq_csr_cn }}/fullchain.pem"
+    certreq_chain_file: "{{ certreq_certbot_root_dir }}/live/{{ certreq_csr_cn }}/chain.pem"
+
+# - name: use webroot if port 80/tcp is listen
+
+- name: request cert
+  ansible.builtin.debug:
+    msg: "{{ certreq_certbot_create_cmd }}"
+
+# - name: create renew job

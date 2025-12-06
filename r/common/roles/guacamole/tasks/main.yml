@@ -1,0 +1,48 @@
+- name: install build dependencies
+  ansible.builtin.apt:
+    package:
+      - ${MYSQLPKG} 
+      - ${TOMCAT_VERSION}
+      - ${JPEGTURBO}
+      - ${LIBPNG}
+      - ${FREERDP}
+      - ufw
+      - pwgen
+      - expect
+      - build-essential
+      - libcairo2-dev
+      - libtool-bin
+      - uuid-dev
+      - libavcodec-dev
+      - libavformat-dev
+      - libavutil-dev
+      - libswscale-dev
+      - libpango1.0-dev
+      - libssh2-1-dev
+      - libtelnet-dev
+      - libvncserver-dev
+      - libwebsockets-dev
+      - libpulse-dev
+      - libssl-dev
+      - libvorbis-dev
+      - libwebp-dev
+      - ghostscript
+
+- name: install packages
+  ansible.builtin.apt:
+    package:
+      - postfix
+      - mailutils
+
+- name: download guacamole files
+  ansible.builtin.get_url:
+    - ${GUAC_SOURCE_LINK}/source/guacamole-server-${GUAC_VERSION}.tar.gz
+    - ${GUAC_SOURCE_LINK}/binary/guacamole-${GUAC_VERSION}.war
+    - ${MYSQLJCON_SOURCE_LINK}
+    - ${GUAC_SOURCE_LINK}/binary/guacamole-auth-jdbc-${GUAC_VERSION}.tar.gz
+    - ${GUAC_SOURCE_LINK}/binary/guacamole-auth-totp-${GUAC_VERSION}.tar.gz
+    - ${GUAC_SOURCE_LINK}/binary/guacamole-auth-duo-${GUAC_VERSION}.tar.gz
+    - ${GUAC_SOURCE_LINK}/binary/guacamole-auth-ldap-${GUAC_VERSION}.tar.gz
+    - ${GUAC_SOURCE_LINK}/binary/guacamole-auth-quickconnect-${GUAC_VERSION}.tar.gz
+    - ${GUAC_SOURCE_LINK}/binary/guacamole-history-recording-storage-${GUAC_VERSION}.tar.gz
+

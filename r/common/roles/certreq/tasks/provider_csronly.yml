@@ -1,3 +1,8 @@
+- name: Common tasks
+  ansible.builtin.include_tasks:
+    file: "provider_common.yml"
+  ignore_errors: true
+
 - name: csr {{ certreq_csr_cn }}
   ansible.builtin.debug:
     msg:

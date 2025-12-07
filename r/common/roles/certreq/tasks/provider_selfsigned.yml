@@ -1,3 +1,8 @@
+- name: Common tasks
+  ansible.builtin.include_tasks:
+    file: "provider_common.yml"
+  ignore_errors: true
+
 - name: Create self signed crt {{ certreq_csr_cn }}
   community.crypto.x509_certificate:
     path: "{{ certreq_crt_file }}"

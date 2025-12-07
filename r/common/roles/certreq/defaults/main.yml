@@ -82,7 +82,7 @@ certreq_fetch_csr: false
 certreq_fetch_key: false
 certreq_notify: []
 
-certreq_provider: "selfsigned" # csronly acme ownca selfsigned
+certreq_provider: "selfsigned" # csronly acme ownca selfsigned certbot
 
 certreq_key_size: 2048
 certreq_key_type: RSA
@@ -107,18 +107,29 @@ certreq_acme_challenge: http-01
 
 certreq_certbot_root_dir: "/etc/letsencrypt"
 certreq_certbot_webroot: "/var/www/html"
-certreq_certbot_plugin: --standalone # --webroot -w {{ certreq_certbot_webroot }}
-
+certreq_certbot_plugins:
+  standalone: --standalone 
+  webroot: --webroot -w {{ certreq_certbot_webroot }}
+certreq_certbot_useplugin: webroot
+certreq_certbot_deployhook_reloadservices: []
 certreq_certbot_create_cmd: >-
-  /usr/bin/certbot certonly --agree-tos -n
+  /usr/bin/certbot certonly --agree-tos -n -q
   --email {{ certreq_csr_email_address }}
   -d {{ certreq_csr_cn }}
   {% if certreq_csr_san != [] %}
-  {% for san in certreq_csr_san %}
-  {{ '-d '(san | split(':'))[1] if (san | split(':'))[0] | lower == 'dns' else '' }}
+  {%- for san in certreq_csr_san -%}
+  {{ '-d '+ (san | split(':'))[1] if (san | split(':'))[0] | lower == 'dns' else '' }}
   {% endfor %}
+  {%- endif -%}
+  {{ certreq_certbot_plugins[certreq_certbot_useplugin] }}
+  {% if certreq_certbot_deployhook_reloadservices != [] %}
+  --deploy-hook "systemctl reload {{ certreq_certbot_deployhook_reloadservices | join(' ') }}"
   {% endif %}
-  {{ certreq_certbot_plugin }}
+  --expand
   --dry-run
-
-certreq_certbot_renew_cmd: ""
+certreq_certbot_renew_cmd: >-
+  /usr/bin/certbot renew --agree-tos -n -q
+  {% if certreq_certbot_deployhook_reloadservices != [] %}
+  --deploy-hook "systemctl reload {{ certreq_certbot_deployhook_reloadservices | join(' ') }}"
+  {% endif %}
+  --expand

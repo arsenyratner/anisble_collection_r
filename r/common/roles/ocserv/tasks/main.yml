@@ -51,11 +51,11 @@
     mode: '0644'
   notify: ocserv restart
 
-- name: "{{ ocserv_users_file }}"
+- name: "{{ ocserv_passwd_file }}"
   ansible.builtin.template:
     backup: true
     src: ocpasswd.j2
-    dest: "{{ ocserv_users_file }}"
+    dest: "{{ ocserv_passwd_file }}"
     owner: root
     group: root
     mode: '0644'

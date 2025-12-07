@@ -1,4 +1,4 @@
-auth = plain[passwd={{ ocserv_users_file }}]
+auth = plain[passwd={{ ocserv_passwd_file }}]
 {% if ocserv_cacert != "" %}
 enable-auth = certificate
 ca-cert = {{ ocserv_cacert }}

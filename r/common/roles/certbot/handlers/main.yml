@@ -1,2 +1,0 @@
-# - name: catrust update
-#   ansible.builtin.command: "{{ certbot_update_cmd }}"

@@ -3,7 +3,7 @@ ocserv_conf_dir: "/etc/ocserv"
 ocserv_configpergroup_dir: "{{ ocserv_conf_dir }}/group.d"
 ocserv_configperuser_dir: "{{ ocserv_conf_dir }}/user.d"
 ocserv_conf_file: "{{ ocserv_conf_dir }}/ocserv.conf"
-ocserv_users_file: "{{ ocserv_conf_dir }}/ocpasswd"
+ocserv_passwd_file: "{{ ocserv_conf_dir }}/ocpasswd"
 ocserv_profile_file: "{{ ocserv_conf_dir }}/profile.xml"
 ocserv_listen_host: "{{ ansible_default_ipv4.address }}"
 ocserv_tcp_port: 443
@@ -24,6 +24,7 @@ ocserv_sysctl:
     value: 1
 ocserv_routes: []
 ocserv_noroutes: []
+ocserv_vhosts: []
 # ocserv_groups: []
 ocserv_peruser_config: []
 ocserv_pergroup_config:
@@ -51,5 +52,5 @@ ocserv_managed_dirs:
 
 ocserv_managed_files:
   - "{{ ocserv_conf_file }}"
-  - "{{ ocserv_users_file }}"
+  - "{{ ocserv_passwd_file }}"
   - "{{ ocserv_profile_file }}"

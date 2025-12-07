@@ -21,22 +21,26 @@
     certreq_certbot_useplugin: standalone
   when: certreq_result.failed
 
-# - name: debug
-#   ansible.builtin.debug:
-#     msg: 
-#       - "{{ certreq_result }}"
-#       - "{{ certreq_fullchain_file if not certreq_force else '' }}"
-#       - "{{ certreq_certbot_create_cmd }}"
-#       - "{{ certreq_certbot_renew_cmd }}"
-
 - name: certbot certonly
   ansible.builtin.command: 
     cmd: "{{ certreq_certbot_create_cmd }}"
     creates: "{{ certreq_fullchain_file if not certreq_force }}"
+  register: certreq_result
+  notify: "{{ certreq_notify }}"
 
-- name: Creates cron job
+- name: debug
+  ansible.builtin.debug:
+    msg: 
+      - "{{ certreq_result }}"
+      - "{{ certreq_force }}"
+      - "{{ certreq_fullchain_file if not certreq_force else '' }}"
+      - "{{ certreq_certbot_create_cmd }}"
+      - "{{ certreq_certbot_renew_cmd }}"
+- pause: 
+
+- name: renew cron job
   ansible.builtin.cron:
-    name: "certreq_certbot_renew"
+    name: "renew {{ certreq_csr_cn }}"
     weekday: "*"
     minute: "*"
     hour: "5"

@@ -115,6 +115,7 @@ certreq_certbot_deployhook_reloadservices: []
 certreq_certbot_create_cmd: >-
   /usr/bin/certbot certonly --agree-tos -n -q
   --email {{ certreq_csr_email_address }}
+  --cert-name {{ certreq_csr_cn }}
   -d {{ certreq_csr_cn }}
   {% if certreq_csr_san != [] %}
   {%- for san in certreq_csr_san -%}
@@ -129,6 +130,7 @@ certreq_certbot_create_cmd: >-
 
 certreq_certbot_renew_cmd: >-
   /usr/bin/certbot renew --agree-tos -n -q
+  --cert-name {{ certreq_csr_cn }}
   {% if certreq_certbot_deployhook_reloadservices != [] %}
   --deploy-hook "systemctl reload {{ certreq_certbot_deployhook_reloadservices | join(' ') }}"
   {% endif %}

@@ -28,15 +28,15 @@
   register: certreq_result
   notify: "{{ certreq_notify }}"
 
-- name: debug
-  ansible.builtin.debug:
-    msg: 
-      - "{{ certreq_result }}"
-      - "{{ certreq_force }}"
-      - "{{ certreq_fullchain_file if not certreq_force else '' }}"
-      - "{{ certreq_certbot_create_cmd }}"
-      - "{{ certreq_certbot_renew_cmd }}"
-- pause: 
+# - name: debug
+#   ansible.builtin.debug:
+#     msg: 
+#       - "{{ certreq_result }}"
+#       - "{{ certreq_force }}"
+#       - "{{ certreq_fullchain_file if not certreq_force else '' }}"
+#       - "{{ certreq_certbot_create_cmd }}"
+#       - "{{ certreq_certbot_renew_cmd }}"
+# - pause: 
 
 - name: renew cron job
   ansible.builtin.cron:

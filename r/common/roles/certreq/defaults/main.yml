@@ -126,7 +126,7 @@ certreq_certbot_create_cmd: >-
   --deploy-hook "systemctl reload {{ certreq_certbot_deployhook_reloadservices | join(' ') }}"
   {% endif %}
   --expand
-  --dry-run
+
 certreq_certbot_renew_cmd: >-
   /usr/bin/certbot renew --agree-tos -n -q
   {% if certreq_certbot_deployhook_reloadservices != [] %}

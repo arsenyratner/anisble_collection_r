@@ -23,7 +23,7 @@ certreq_csr_country_name: "RU"
 certreq_csr_email_address: "arsenyratner@gmail.com"
 certreq_csr_cn: ""
 certreq_csr_san:
-  - "DNS:{{ inventory_hostname }}"
+  - "DNS:{{ certreq_csr_cn }}"
   # - "IP:{{ ansible_default_ipv4.address }}" # для certbot не подойдёт
 certreq_csr_key_usage:
   # (цифровая подпись)
@@ -108,7 +108,7 @@ certreq_acme_challenge: http-01
 certreq_certbot_root_dir: "/etc/letsencrypt"
 certreq_certbot_webroot: "/var/www/html"
 certreq_certbot_plugins:
-  standalone: --standalone 
+  standalone: --standalone
   webroot: --webroot -w {{ certreq_certbot_webroot }}
 certreq_certbot_useplugin: webroot
 certreq_certbot_deployhook_reloadservices: []
@@ -117,11 +117,9 @@ certreq_certbot_create_cmd: >-
   --email {{ certreq_csr_email_address }}
   --cert-name {{ certreq_csr_cn }}
   -d {{ certreq_csr_cn }}
-  {% if certreq_csr_san != [] %}
-  {%- for san in certreq_csr_san -%}
-  {{ '-d '+ (san | split(':'))[1] if (san | split(':'))[0] | lower == 'dns' else '' }}
-  {% endfor %}
-  {%- endif -%}
+  {% if certreq_csr_san != [] %}{%- for san in certreq_csr_san -%}
+  {{ '-d ' + (san | split(':'))[1] if (san | split(':'))[0] | lower == 'dns' else '' }}
+  {% endfor %}{%- endif -%}
   {{ certreq_certbot_plugins[certreq_certbot_useplugin] }}
   {% if certreq_certbot_deployhook_reloadservices != [] %}
   --deploy-hook "systemctl reload {{ certreq_certbot_deployhook_reloadservices | join(' ') }}"

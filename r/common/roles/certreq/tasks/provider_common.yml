@@ -40,4 +40,3 @@
   register: certreq_csr_result
   changed_when: false
   when: certreq_csr_file != ""
-

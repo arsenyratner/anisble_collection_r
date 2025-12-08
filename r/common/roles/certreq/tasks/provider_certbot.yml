@@ -22,7 +22,7 @@
   when: certreq_result.failed
 
 - name: certbot certonly
-  ansible.builtin.command: 
+  ansible.builtin.command:
     cmd: "{{ certreq_certbot_create_cmd }}"
     creates: "{{ certreq_fullchain_file if not certreq_force }}"
   register: certreq_result
@@ -30,13 +30,13 @@
 
 # - name: debug
 #   ansible.builtin.debug:
-#     msg: 
+#     msg:
 #       - "{{ certreq_result }}"
 #       - "{{ certreq_force }}"
 #       - "{{ certreq_fullchain_file if not certreq_force else '' }}"
 #       - "{{ certreq_certbot_create_cmd }}"
 #       - "{{ certreq_certbot_renew_cmd }}"
-# - pause: 
+# - pause:
 
 - name: renew cron job
   ansible.builtin.cron:

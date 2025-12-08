@@ -15,7 +15,7 @@ nginx_default_ssl_listen: 443
 nginx_default_listen: 80
 nginx_service_enabled: true
 
-nginx_dirs: 
+nginx_dirs:
   - "{{ nginx_conf_dir }}"
   - "{{ nginx_confd_dir }}"
   - "{{ nginx_log_dir }}"
@@ -28,7 +28,7 @@ nginx_dirs:
 
 nginx_snippets: []
   # - filename:
-  #   content:  
+  #   content:
 nginx_servers: []
 nginx_default_server:
   - server_name: _
@@ -37,7 +37,7 @@ nginx_default_server:
     linkname: 00-default
     enabled: true
     snippets: true
-    listens: 
+    listens:
       - "80"
       - "[::]:80"
     root: "{{ nginx_default_root }}"

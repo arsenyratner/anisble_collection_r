@@ -3,3 +3,4 @@ certreq_packages:
   - python3-cryptography
   - acme-tiny
   - certbot
+  - cron

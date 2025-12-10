@@ -28,10 +28,10 @@
   register: certreq_result
   notify: "{{ certreq_notify }}"
 
-# - name: debug
-#   ansible.builtin.debug:
-#     msg:
-#       - "{{ certreq_result }}"
+- name: debug
+  ansible.builtin.debug:
+    msg:
+      - "{{ certreq_result }}"
 #       - "{{ certreq_force }}"
 #       - "{{ certreq_fullchain_file if not certreq_force else '' }}"
 #       - "{{ certreq_certbot_create_cmd }}"

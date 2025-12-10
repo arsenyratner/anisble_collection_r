@@ -21,7 +21,7 @@
     certreq_certbot_useplugin: standalone
   when: certreq_result.failed
 
-- name: certbot certonly
+- name: certbot certonly {{ certreq_csr_cn }}
   ansible.builtin.command:
     cmd: "{{ certreq_certbot_create_cmd }}"
     creates: "{{ certreq_fullchain_file if not certreq_force }}"

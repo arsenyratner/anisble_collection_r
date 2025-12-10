@@ -9,7 +9,7 @@
     recurse: true
     path: /etc/ansible/facts.d
 
-- name: Step 0. Create Account. Agree TOS
+- name: Step 0. Create Account. Agree TOS {{ certreq_csr_cn }}
   community.crypto.acme_account:
     acme_directory: "{{ certreq_acme_directory }}"
     acme_version: "{{ certreq_acme_version }}"
@@ -32,7 +32,7 @@
   ansible.builtin.setup:
     filter: ansible_local
 
-- name: Step 1. Create chalanges
+- name: Step 1. Create chalanges {{ certreq_csr_cn }}
   community.crypto.acme_certificate_order_create:
     acme_directory: "{{ certreq_acme_directory }}"
     acme_version: "{{ certreq_acme_version }}"
@@ -73,7 +73,7 @@
   loop: "{{ ansible_local.certreq_acme_step1.challenge_data }}"
   when: "'http-01' in certreq_item.challenges"
 
-- name: Step 2. Validate chalenges
+- name: Step 2. Validate chalenges {{ certreq_csr_cn }}
   delegate_to: "{{ certreq_acme_step2_host if certreq_acme_step2_host != '' else omit }}"
   community.crypto.acme_certificate_order_validate:
     acme_directory: "{{ certreq_acme_directory }}"

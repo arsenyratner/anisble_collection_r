@@ -1,0 +1,50 @@
+- name: set facts
+  ansible.builtin.set_fact:
+    certreq_key_file: "{{ certreq_certbot_root_dir }}/live/{{ certreq_csr_cn }}/privkey.pem"
+    certreq_csr_file: ""
+    certreq_crt_file: "{{ certreq_certbot_root_dir }}/live/{{ certreq_csr_cn }}/cert.pem"
+    certreq_fullchain_file: "{{ certreq_certbot_root_dir }}/live/{{ certreq_csr_cn }}/fullchain.pem"
+    certreq_chain_file: "{{ certreq_certbot_root_dir }}/live/{{ certreq_csr_cn }}/chain.pem"
+
+- name: Check 80/tcp
+  ansible.builtin.wait_for:
+    host: "{{ ansible_host }}" # Or specify a different host if checking from another machine
+    port: 80
+    state: started # Ensures the port is listening
+    delay: 3 # Maximum time to wait in seconds
+    timeout: 5 # Maximum time to wait in seconds
+  register: certreq_result
+  ignore_errors: true
+
+- name: use webroot if port 80/tcp is listen
+  ansible.builtin.set_fact:
+    certreq_certbot_useplugin: standalone
+  when: certreq_result.failed
+
+- name: certbot certonly {{ certreq_csr_cn }}
+  ansible.builtin.command:
+    cmd: "{{ certreq_certbot_create_cmd }}"
+    creates: "{{ certreq_fullchain_file if not certreq_force }}"
+  register: certreq_result
+  notify: "{{ certreq_notify }}"
+
+- name: debug
+  ansible.builtin.debug:
+    msg:
+      - "{{ certreq_result }}"
+#       - "{{ certreq_force }}"
+#       - "{{ certreq_fullchain_file if not certreq_force else '' }}"
+#       - "{{ certreq_certbot_create_cmd }}"
+#       - "{{ certreq_certbot_renew_cmd }}"
+# - pause:
+
+- name: renew cron job
+  ansible.builtin.cron:
+    name: "renew {{ certreq_csr_cn }}"
+    weekday: "*"
+    minute: "*"
+    hour: "5"
+    user: root
+    job: "{{ certreq_certbot_renew_cmd }}"
+    cron_file: "certreq_certbot_renew"
+    disabled: false

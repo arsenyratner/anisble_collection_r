@@ -1,0 +1,31 @@
+- debug:
+    msg:
+      - "{{ certreq_fetch_crt }}"
+      - "{{ certreq_fetch_csr }}"
+      - "{{ certreq_fetch_key }}"
+- name: 90 Fetch crt {{ certreq_csr_cn }}
+  delegate_to: localhost
+  ansible.builtin.copy:
+    mode: "{{ certreq_default_file_mode }}"
+    content: "{{ certreq_crt_result.certificate }}"
+    dest: "{{ certreq_fetch_dir }}/{{ certreq_csr_cn }}.crt"
+    backup: true
+  when: certreq_fetch_crt
+
+- name: 90 Fetch csr {{ certreq_csr_cn }}
+  delegate_to: localhost
+  ansible.builtin.copy:
+    mode: "{{ certreq_default_file_mode }}"
+    content: "{{ certreq_csr_result.csr }}"
+    dest: "{{ certreq_fetch_dir }}/{{ certreq_csr_cn }}.csr"
+    backup: true
+  when: certreq_fetch_csr
+
+- name: 90 Fetch key {{ certreq_csr_cn }}
+  delegate_to: localhost
+  ansible.builtin.copy:
+    mode: "{{ certreq_default_file_mode }}"
+    content: "{{ certreq_key_result.privatekey }}"
+    dest: "{{ certreq_fetch_dir }}/{{ certreq_csr_cn }}.key"
+    backup: true
+  when: certreq_fetch_key

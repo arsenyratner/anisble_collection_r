@@ -1,0 +1,6 @@
+certreq_packages:
+  - openssl
+  - python3-cryptography
+  - acme-tiny
+  - certbot
+  - cron

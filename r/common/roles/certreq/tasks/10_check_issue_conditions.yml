@@ -11,48 +11,44 @@
   register: certreq_crt_info
   when: certreq_crt_stat.stat.exists
 
-- name: Checking the issue conditions
-  ### block start
-  block:
-    - name: if certbot {{ certreq_csr_cn }}
-      ansible.builtin.set_fact:
-        certreq_issue: true
-        certreq_issue_msg: "issue certificate by certbot"
-      when:
-        - certreq_provider == "certbot"
-        - certreq_issue is false
+- name: if certbot {{ certreq_csr_cn }}
+  ansible.builtin.set_fact:
+    certreq_issue: true
+    certreq_issue_msg: "issue {{ certreq_csr_cn }} certificate by certbot"
+  when:
+    - certreq_provider == "certbot"
+    - certreq_issue is false
 
-    - name: if forced {{ certreq_csr_cn }}
-      ansible.builtin.set_fact:
-        certreq_issue: true
-        certreq_issue_msg: "issue certificate, forced by certreq_force"
-      when:
-        - certreq_force
-        - certreq_issue is false
+- name: if forced {{ certreq_csr_cn }}
+  ansible.builtin.set_fact:
+    certreq_issue: true
+    certreq_issue_msg: "issue {{ certreq_csr_cn }} certificate, forced by certreq_force"
+  when:
+    - certreq_force
+    - certreq_issue is false
 
-    - name: if crt file does not exists {{ certreq_csr_cn }}
-      ansible.builtin.set_fact:
-        certreq_issue: true
-        certreq_issue_msg: "issue certificate, crt file does not exists"
-      when:
-        - not certreq_crt_stat.stat.exists
-        - certreq_issue is false
+- name: if crt file does not exists {{ certreq_csr_cn }}
+  ansible.builtin.set_fact:
+    certreq_issue: true
+    certreq_issue_msg: "issue {{ certreq_csr_cn }} certificate, crt file does not exists"
+  when:
+    - not certreq_crt_stat.stat.exists
+    - certreq_issue is false
 
-    - name: if not valid in 10 days {{ certreq_csr_cn }}
-      ansible.builtin.set_fact:
-        certreq_issue: true
-        certreq_issue_msg: "issue certificate, expire in 10 days"
-      when:
-        - not certreq_crt_info.valid_at.tendays | default(false)
-        - certreq_issue is false
+- name: if not valid in 10 days {{ certreq_csr_cn }}
+  ansible.builtin.set_fact:
+    certreq_issue: true
+    certreq_issue_msg: "issue {{ certreq_csr_cn }} certificate, expire in 10 days"
+  when:
+    - not certreq_crt_info.valid_at.tendays | default(false)
+    - certreq_issue is false
 
-    - name: if SAN differs {{ certreq_csr_cn }}
-      ansible.builtin.set_fact:
-        certreq_issue: true
-        certreq_issue_msg: "issue certificate, SAN are differ"
-      when:
-        - certreq_csr_san | sort | lower != certreq_crt_info.subject_alt_name | default([]) | sort | lower
-        - certreq_issue is false
-    - ansible.builtin.debug:
-        msg: "{{ certreq_issue_msg }}"
-  ### block end
+- name: if SAN differs {{ certreq_csr_cn }}
+  ansible.builtin.set_fact:
+    certreq_issue: true
+    certreq_issue_msg: "issue {{ certreq_csr_cn }} certificate, SAN are differ"
+  when:
+    - certreq_csr_san | sort | lower != certreq_crt_info.subject_alt_name | default([]) | sort | lower
+    - certreq_issue is false
+- ansible.builtin.debug:
+    msg: "{{ certreq_issue_msg }}"

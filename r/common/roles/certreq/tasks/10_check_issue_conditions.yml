@@ -1,0 +1,58 @@
+- name: Stat crt {{ certreq_csr_cn }}
+  ansible.builtin.stat:
+    path: "{{ certreq_crt_file }}"
+  register: certreq_crt_stat
+
+- name: Get crt info {{ certreq_csr_cn }}
+  community.crypto.x509_certificate_info:
+    path: "{{ certreq_crt_file }}"
+    valid_at:
+      tendays: "+10d"
+  register: certreq_crt_info
+  when: certreq_crt_stat.stat.exists
+
+- name: Checking the issue conditions
+  ### block start
+  block:
+    - name: if certbot {{ certreq_csr_cn }}
+      ansible.builtin.set_fact:
+        certreq_issue: true
+        certreq_issue_msg: "issue certificate by certbot"
+      when:
+        - certreq_provider == "certbot"
+        - certreq_issue is false
+
+    - name: if forced {{ certreq_csr_cn }}
+      ansible.builtin.set_fact:
+        certreq_issue: true
+        certreq_issue_msg: "issue certificate, forced by certreq_force"
+      when:
+        - certreq_force
+        - certreq_issue is false
+
+    - name: if crt file does not exists {{ certreq_csr_cn }}
+      ansible.builtin.set_fact:
+        certreq_issue: true
+        certreq_issue_msg: "issue certificate, crt file does not exists"
+      when:
+        - not certreq_crt_stat.stat.exists
+        - certreq_issue is false
+
+    - name: if not valid in 10 days {{ certreq_csr_cn }}
+      ansible.builtin.set_fact:
+        certreq_issue: true
+        certreq_issue_msg: "issue certificate, expire in 10 days"
+      when:
+        - not certreq_crt_info.valid_at.tendays | default(false)
+        - certreq_issue is false
+
+    - name: if SAN differs {{ certreq_csr_cn }}
+      ansible.builtin.set_fact:
+        certreq_issue: true
+        certreq_issue_msg: "issue certificate, SAN are differ"
+      when:
+        - certreq_csr_san | sort | lower != certreq_crt_info.subject_alt_name | default([]) | sort | lower
+        - certreq_issue is false
+    - ansible.builtin.debug:
+        msg: "{{ certreq_issue_msg }}"
+  ### block end

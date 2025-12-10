@@ -20,95 +20,22 @@
   loop_control:
     loop_var: certreq_item
 
-- name: Stat crt {{ certreq_csr_cn }}
-  ansible.builtin.stat:
-    path: "{{ certreq_crt_file }}"
-  register: certreq_crt_stat
-
-- name: Get crt info {{ certreq_csr_cn }}
-  community.crypto.x509_certificate_info:
-    path: "{{ certreq_crt_file }}"
-    valid_at:
-      tendays: "+10d"
-  register: certreq_crt_info
-  when: certreq_crt_stat.stat.exists
-
-- name: Checking the issue conditions
-  when: certreq_csr_cn != ''
-  ### block start
-  block:
-    - name: if certbot
-      ansible.builtin.set_fact:
-        certreq_issue: true
-        certreq_issue_msg: "issue certificate by certbot"
-      when:
-        - certreq_provider == "certbot"
-        - certreq_issue is false
-
-    - name: if forced
-      ansible.builtin.set_fact:
-        certreq_issue: true
-        certreq_issue_msg: "issue certificate, forced by certreq_force"
-      when:
-        - certreq_force
-        - certreq_issue is false
-
-    - name: if crt file does not exists
-      ansible.builtin.set_fact:
-        certreq_issue: true
-        certreq_issue_msg: "issue certificate, crt file does not exists"
-      when:
-        - not certreq_crt_stat.stat.exists
-        - certreq_issue is false
-
-    - name: if not valid in 10 days
-      ansible.builtin.set_fact:
-        certreq_issue: true
-        certreq_issue_msg: "issue certificate, expire in 10 days"
-      when:
-        - not certreq_crt_info.valid_at.tendays | default(false)
-        - certreq_issue is false
-
-    - name: if SAN differs
-      ansible.builtin.set_fact:
-        certreq_issue: true
-        certreq_issue_msg: "issue certificate, SAN are differ"
-      when:
-        - certreq_csr_san | sort | lower != certreq_crt_info.subject_alt_name | default([]) | sort | lower
-        - certreq_issue is false
-    - ansible.builtin.debug:
-        msg: "{{ certreq_issue_msg }}"
-  ### block end
-
-- name: Create certificate {{ certreq_csr_cn }}
+- name: 10 Checking the issue conditions {{ certreq_csr_cn }}
   ansible.builtin.include_tasks:
-    file: "provider_{{ certreq_provider }}.yml"
+    file: "10_check_issue_conditions.yml"
+  when: certreq_csr_cn != ''
+  ignore_errors: true
+
+- name: 30 Create certificate {{ certreq_csr_cn }}
+  ansible.builtin.include_tasks:
+    file: "35_provider_{{ certreq_provider }}.yml"
   ignore_errors: true
   when: certreq_issue
 
-- name: Fetch crt {{ certreq_csr_cn }}
-  delegate_to: localhost
-  ansible.builtin.copy:
-    mode: "{{ certreq_default_file_mode }}"
-    content: "{{ certreq_crt_result.certificate }}"
-    dest: "{{ certreq_fetch_dir }}/{{ certreq_csr_cn }}.crt"
-    backup: true
-  when: certreq_fetch_crt
-
-- name: Fetch csr {{ certreq_csr_cn }}
-  delegate_to: localhost
-  ansible.builtin.copy:
-    mode: "{{ certreq_default_file_mode }}"
-    content: "{{ certreq_csr_result.csr }}"
-    dest: "{{ certreq_fetch_dir }}/{{ certreq_csr_cn }}.csr"
-    backup: true
-  when: certreq_fetch_csr
-
-- name: Fetch key {{ certreq_csr_cn }}
-  delegate_to: localhost
-  ansible.builtin.copy:
-    mode: "{{ certreq_default_file_mode }}"
-    content: "{{ certreq_key_result.privatekey }}"
-    dest: "{{ certreq_fetch_dir }}/{{ certreq_csr_cn }}.key"
-    backup: true
-  when: certreq_fetch_key
+- name: 90 Fetch {{ certreq_csr_cn }}
+  ansible.builtin.include_tasks:
+    file: "90_fetch.yml"
+  when: certreq_fetch_crt or
+        certreq_fetch_csr or
+        certreq_fetch_key
+  ignore_errors: true

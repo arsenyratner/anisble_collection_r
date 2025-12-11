@@ -1,4 +1,4 @@
 - name: Install packages
   community.general.pkgng:
-    name: "{{ certreq_packages }}"
+    name: "{{ certificates_packages }}"
     state: present

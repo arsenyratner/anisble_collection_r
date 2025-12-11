@@ -1,4 +1,4 @@
-certreq_packages:
+certificates_packages:
   - openssl
   - python3-cryptography
   - acme-tiny

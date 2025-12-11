@@ -1,0 +1,76 @@
+- name: Reset to defaults
+  ansible.builtin.set_fact:
+    certificates_default_csr_cn: "{{ certificates_cert.csr_cn }}"
+    certificates_issue: false
+    certificates_key_result: {}
+    certificates_csr_result: {}
+    certificates_crt_result: {}
+    certificates_crt_info: {}
+    certificates_default_fetch_crt: false
+    certificates_default_fetch_csr: false
+    certificates_default_fetch_key: false
+
+- name: Stat crt {{ certificates_cert.csr_cn }}
+  ansible.builtin.stat:
+    path: "{{ certificates_cert.crt_file | default(certificates_default_crt_file) }}"
+  register: certificates_crt_stat
+
+- name: Get crt info {{ certificates_cert.csr_cn }}
+  community.crypto.x509_certificate_info:
+    path: "{{ certificates_cert.crt_file | default(certificates_default_crt_file) }}"
+    valid_at:
+      tendays: "+10d"
+  register: certificates_crt_info
+  when: certificates_crt_stat.stat.exists
+
+- name: Checking the issue conditions
+  ### block start
+  block:
+    - name: if certbot {{ certificates_cert.csr_cn }}
+      ansible.builtin.set_fact:
+        certificates_issue: true
+        certificates_issue_msg: "issue certificate by certbot"
+      when:
+        - certificates_cert.provider == "certbot"
+        - certificates_issue is false
+
+    - name: if csronly {{ certificates_cert.csr_cn }}
+      ansible.builtin.set_fact:
+        certificates_issue: true
+        certificates_issue_msg: "Create CSR only"
+      when:
+        - certificates_cert.provider == "csronly"
+        - certificates_issue is false
+
+    - name: if forced {{ certificates_cert.csr_cn }}
+      ansible.builtin.set_fact:
+        certificates_issue: true
+        certificates_issue_msg: "issue certificate forced"
+      when:
+        - certificates_cert.force | default(certificates_force)
+        - certificates_issue is false
+
+    - name: if crt file does not exists {{ certificates_cert.csr_cn }}
+      ansible.builtin.set_fact:
+        certificates_issue: true
+        certificates_issue_msg: "issue certificate, crt file does not exists"
+      when:
+        - not certificates_crt_stat.stat.exists
+        - certificates_issue is false
+
+    - name: if not valid in 10 days {{ certificates_cert.csr_cn }}
+      ansible.builtin.set_fact:
+        certificates_issue: true
+        certificates_issue_msg: "issue certificate, expire in 10 days"
+      when:
+        - not certificates_crt_info.valid_at.tendays | default(false)
+        - certificates_issue is false
+
+    - name: if SAN differs {{ certificates_cert.csr_cn }}
+      ansible.builtin.set_fact:
+        certificates_issue: true
+        certificates_issue_msg: "issue certificate, SAN are differ"
+      when:
+        - certificates_cert.csr_san | default(certificates_default_csr_san) | sort | lower != certificates_crt_info.subject_alt_name | default([]) | sort | lower
+        - certificates_issue is false
+  ### block end

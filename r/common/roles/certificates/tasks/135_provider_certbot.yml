@@ -1,0 +1,71 @@
+- name: set facts
+  ansible.builtin.set_fact:
+    certificates_key_file: "{{ certificates_certbot_root_dir }}/live/{{ certificates_item.csr_cn }}/privkey.pem"
+    certificates_csr_file: ""
+    certificates_crt_file: "{{ certificates_certbot_root_dir }}/live/{{ certificates_item.csr_cn }}/cert.pem"
+    certificates_fullchain_file: "{{ certificates_certbot_root_dir }}/live/{{ certificates_item.csr_cn }}/fullchain.pem"
+    certificates_chain_file: "{{ certificates_certbot_root_dir }}/live/{{ certificates_item.csr_cn }}/chain.pem"
+    certificates_certbot_create_cmd: >-
+      /usr/bin/certbot certonly --agree-tos -n -q
+      --email {{ certificates_default_csr_email_address }}
+      --cert-name {{ certificates_default_csr_cn }}
+      -d {{ certificates_default_csr_cn }}
+      {% if certificates_default_csr_san != [] %}{%- for san in certificates_default_csr_san -%}
+      {{ '-d ' + (san | split(':'))[1] if (san | split(':'))[0] | lower == 'dns' else '' }}
+      {% endfor %}{%- endif -%}
+      {{ certificates_default_certbot_plugins[certificates_default_certbot_useplugin] }}
+      {% if certificates_default_certbot_deployhook_reloadservices != [] %}
+      --deploy-hook "systemctl reload {{ certificates_default_certbot_deployhook_reloadservices | join(' ') }}"
+      {% endif %}
+      --expand
+
+    certificates_certbot_renew_cmd: >-
+      /usr/bin/certbot renew --agree-tos -n -q
+      --cert-name {{ certificates_default_csr_cn }}
+      {% if certificates_default_certbot_deployhook_reloadservices != [] %}
+      --deploy-hook "systemctl reload {{ certificates_default_certbot_deployhook_reloadservices | join(' ') }}"
+      {% endif %}
+      --expand
+
+- name: Check 80/tcp
+  ansible.builtin.wait_for:
+    host: "{{ ansible_host }}" # Or specify a different host if checking from another machine
+    port: 80
+    state: started # Ensures the port is listening
+    delay: 3 # Maximum time to wait in seconds
+    timeout: 5 # Maximum time to wait in seconds
+  register: certificates_result
+  ignore_errors: true
+
+- name: use webroot if port 80/tcp is listen
+  ansible.builtin.set_fact:
+    certificates_certbot_useplugin: standalone
+  when: certificates_result.failed
+
+- name: certbot certonly {{ certificates_item.csr_cn }}
+  ansible.builtin.command:
+    cmd: "{{ certificates_certbot_create_cmd }}"
+    creates: "{{ certificates_fullchain_file if not certificates_force }}"
+  register: certificates_result
+  notify: "{{ certificates_notify }}"
+
+- name: debug
+  ansible.builtin.debug:
+    msg:
+      - "{{ certificates_result }}"
+#       - "{{ certificates_force }}"
+#       - "{{ certificates_fullchain_file if not certificates_force else '' }}"
+#       - "{{ certificates_certbot_create_cmd }}"
+#       - "{{ certificates_certbot_renew_cmd }}"
+# - pause:
+
+- name: renew cron job
+  ansible.builtin.cron:
+    name: "renew {{ certificates_item.csr_cn }}"
+    weekday: "*"
+    minute: "*"
+    hour: "5"
+    user: root
+    job: "{{ certificates_certbot_renew_cmd }}"
+    cron_file: "certificates_certbot_renew"
+    disabled: false

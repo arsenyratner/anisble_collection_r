@@ -1,0 +1,144 @@
+- name: Common tasks
+  ansible.builtin.include_tasks:
+    file: "30_provider_common.yml"
+  ignore_errors: true
+
+- name: Create directory for ansible custom facts
+  ansible.builtin.file:
+    state: directory
+    recurse: true
+    path: /etc/ansible/facts.d
+
+- name: Step 0. Create Account. Agree TOS {{ certificates_item.csr_cn }}
+  community.crypto.acme_account:
+    acme_directory: "{{ certificates_acme_directory }}"
+    acme_version: "{{ certificates_acme_version }}"
+    account_key_content: "{{ certificates_acme_account_key }}"
+    state: present
+    terms_agreed: true
+    contact:
+      - mailto:{{ certificates_csr_email_address }}
+  register: certificates_acme_step0_result
+  changed_when: certificates_acme_step0_result.account_uri != ansible_local.certificates_acme_account_uri | default('')
+
+- name: Save account_uri result to fact
+  ansible.builtin.copy:
+    dest: /etc/ansible/facts.d/certificates_acme_account_uri.fact
+    content: "{{ certificates_acme_step0_result.account_uri | to_nice_json }}"
+    mode: "{{ certificates_default_file_mode }}"
+  when: certificates_acme_step0_result.changed
+
+- name: Re-read facts certificates_acme_account_uri
+  ansible.builtin.setup:
+    filter: ansible_local
+
+- name: Step 1. Create chalanges {{ certificates_item.csr_cn }}
+  community.crypto.acme_certificate_order_create:
+    acme_directory: "{{ certificates_acme_directory }}"
+    acme_version: "{{ certificates_acme_version }}"
+    account_key_content: "{{ certificates_acme_account_key }}"
+    csr_content: "{{ certificates_csr_result.csr }}"
+  register: certificates_acme_step1_result
+  when: not ansible_local.certificates_acme_step1 is defined
+
+- name: Save step1 result to fact
+  ansible.builtin.copy:
+    dest: /etc/ansible/facts.d/certificates_acme_step1.fact
+    content: "{{ certificates_acme_step1_result | to_nice_json }}"
+    mode: "{{ certificates_default_file_mode }}"
+  when: certificates_acme_step1_result.changed
+
+- name: Re-read facts certificates_acme_step1
+  ansible.builtin.setup:
+    filter: ansible_local
+  when: certificates_acme_step1_result.changed
+
+- name: create webroot dir
+  ansible.builtin.file:
+    state: directory
+    path: "{{ certificates_acme_webroot }}/.well-known/acme-challenge"
+    owner: "{{ certificates_default_owner }}"
+    group: "{{ certificates_default_group }}"
+    mode: "{{ certificates_default_dir_mode }}"
+
+- name: Save http-01 challenges
+  delegate_to: "{{ certificates_acme_step2_host if certificates_acme_step2_host != '' else omit }}"
+  ansible.builtin.copy:
+    dest: "{{ certificates_acme_webroot }}/{{ certificates_item.challenges['http-01']['resource'] }}"
+    content: "{{ certificates_item.challenges['http-01']['resource_value'] }}"
+    mode: "{{ certificates_default_file_mode }}"
+  loop_control:
+    loop_var: certificates_item
+    label: '{{ certificates_item.identifier }}'
+  loop: "{{ ansible_local.certificates_acme_step1.challenge_data }}"
+  when: "'http-01' in certificates_item.challenges"
+
+- name: Step 2. Validate chalenges {{ certificates_item.csr_cn }}
+  delegate_to: "{{ certificates_acme_step2_host if certificates_acme_step2_host != '' else omit }}"
+  community.crypto.acme_certificate_order_validate:
+    acme_directory: "{{ certificates_acme_directory }}"
+    acme_version: "{{ certificates_acme_version }}"
+    account_key_content: "{{ certificates_acme_account_key }}"
+    challenge: "{{ certificates_acme_challenge }}"
+    order_uri: "{{ ansible_local.certificates_acme_step1.order_uri }}"
+  register: certificates_acme_step2_result
+  when: not ansible_local.certificates_acme_step2 is defined
+
+- name: Save step2 result to fact
+  ansible.builtin.copy:
+    dest: /etc/ansible/facts.d/certificates_acme_step2.fact
+    content: "{{ certificates_acme_step2_result | to_nice_json }}"
+    mode: "{{ certificates_default_file_mode }}"
+  when: certificates_acme_step2_result.changed
+
+- name: Re-read facts certificates_acme_step2
+  ansible.builtin.setup:
+    filter: ansible_local
+  when: certificates_acme_step2_result.changed
+
+- name: Step 3. Get certificates {{ certificates_item.csr_cn }}
+  community.crypto.acme_certificate_order_finalize:
+    acme_directory: "{{ certificates_acme_directory }}"
+    acme_version: "{{ certificates_acme_version }}"
+    account_key_content: "{{ certificates_acme_account_key }}"
+    csr_content: "{{ certificates_csr_result.csr }}"
+    order_uri: "{{ ansible_local.certificates_acme_step1.order_uri }}"
+    cert_dest: "{{ certificates_crt_dir }}/{{ certificates_item.csr_cn }}.pem"
+    fullchain_dest: "{{ certificates_fullchain_file }}"
+    chain_dest: "{{ certificates_chain_file }}"
+  register: certificates_acme_step3_result
+
+- name: Copy pem to crt {{ certificates_item.csr_cn }}
+  ansible.builtin.copy:
+    backup: true
+    remote_src: true
+    src: "{{ certificates_crt_dir }}/{{ certificates_item.csr_cn }}.pem"
+    dest: "{{ certificates_crt_file }}"
+    mode: "{{ certificates_default_file_mode }}"
+  notify: "{{ certificates_notify }}"
+
+- name: clear tmp files
+  when:
+    - certificates_acme_step3_result.changed
+    - not certificates_acme_step3_result.failed
+  ### block start
+  block:
+    - name: clear chalanges
+      ansible.builtin.file:
+        state: absent
+        path: "{{ certificates_acme_webroot }}/{{ certificates_item.challenges['http-01']['resource'] }}"
+      loop_control:
+        loop_var: certificates_item
+        label: '{{ certificates_item.identifier }}'
+      loop: "{{ ansible_local.certificates_acme_step1.challenge_data }}"
+
+    - name: clear local facts
+      ansible.builtin.file:
+        state: absent
+        path: "/etc/ansible/facts.d/{{ certificates_item }}.fact"
+      loop_control:
+        loop_var: certificates_item
+      loop:
+        - certificates_acme_step1
+        - certificates_acme_step2
+  ### block end

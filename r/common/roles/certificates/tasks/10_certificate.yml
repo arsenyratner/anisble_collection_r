@@ -1,0 +1,27 @@
+- name: 110 Checking the issue conditions {{ certificates_cert.csr_cn }}
+  ansible.builtin.include_tasks:
+    file: "110_check_issue_conditions.yml"
+  when: certificates_cert.csr_cn != ''
+  ignore_errors: true
+
+# - debug: 
+#     msg:
+#       - "{{ certificates_cert.provider }}"
+#       - "{{ certificates_cert.csr_cn }}"
+#       - "{{ certificates_issue_msg }}"
+#       - "{{ certificates_issue }}"
+#       - "{{ certificates_cert.crt_file | default(certificates_default_crt_file) }}"
+
+- name: 130 Create certificate {{ certificates_cert.csr_cn }}
+  ansible.builtin.include_tasks:
+    file: "135_provider_{{ certificates_cert.provider }}.yml"
+  ignore_errors: true
+  when: certificates_issue
+
+- name: 190 Fetch {{ certificates_cert.csr_cn }}
+  ansible.builtin.include_tasks:
+    file: "190_fetch.yml"
+  when: certificates_cert.fetch_crt | default(certificates_default_fetch_crt) or
+        certificates_cert.fetch_csr | default(certificates_default_fetch_csr) or
+        certificates_cert.fetch_key | default(certificates_default_fetch_key)
+  ignore_errors: true

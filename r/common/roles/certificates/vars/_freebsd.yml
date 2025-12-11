@@ -1,5 +1,5 @@
-certreq_packages:
+certificates_packages:
   - openssl
   - py311-cryptography
-certreq_default_owner: root
-certreq_default_group: wheel
+certificates_default_owner: root
+certificates_default_group: wheel

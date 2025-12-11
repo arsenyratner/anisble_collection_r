@@ -1,4 +1,4 @@
 - name: install packages
   ansible.builtin.dnf:
-    name: "{{ certreq_packages }}"
+    name: "{{ certificates_packages }}"
     state: present

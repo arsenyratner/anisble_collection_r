@@ -1,31 +1,88 @@
-certreq_default_owner: root
-certreq_default_group: root
-certreq_default_file_mode: '0644'
-certreq_default_dir_mode: '0755'
-certreq_force: false
-certreq_issue: false
-certreq_issue_msg: certificate issue is skipping
+# certificates_
+certificates_list:
+    - csr_cn: test1.test1.test1
+      provider: ownca
+    - csr_cn: test2.test1.test1
+      provider: ownca
+    - csr_cn: test3.test1.test1
+      provider: ownca
+  # certbot:
+  #   - csr_cn: csr_cn1.certbot.certificates_list
+  # csronly:
+  #   - csr_cn: csr_cn1.csronly.certificates_list
+  # ownca:
+  #   - csr_cn: csr_cn1.ownca.certificates_list
+  # selfsigned:
+  #   - csr_cn: csr_cn1.selfsigned.certificates_list
 
-certreq_root_dir: "/usr/local/etc/pki/{{ certreq_csr_cn }}"
-certreq_key_dir: "{{ certreq_root_dir }}"
-certreq_csr_dir: "{{ certreq_root_dir }}"
-certreq_crt_dir: "{{ certreq_root_dir }}"
-certreq_dirs:
-  - path: "{{ certreq_root_dir }}"
-  - path: "{{ certreq_key_dir }}"
-  - path: "{{ certreq_csr_dir }}"
-  - path: "{{ certreq_crt_dir }}"
+certificates_default_owner: root
+certificates_default_group: root
+certificates_default_file_mode: '0644'
+certificates_default_dir_mode: '0755'
+certificates_force: false
+certificates_issue: false
+certificates_issue_msg: skip certificate issue
 
-certreq_csr_organizational_unit_name: "IT"
-certreq_csr_organization_name: "R"
-certreq_csr_locality_name: "MSK"
-certreq_csr_country_name: "RU"
-certreq_csr_email_address: "arsenyratner@gmail.com"
-certreq_csr_cn: ""
-certreq_csr_san:
-  - "DNS:{{ certreq_csr_cn }}"
+certificates_default_root_dir: "/usr/local/etc/pki/{{ certificates_default_csr_cn }}"
+certificates_default_key_dir: "{{ certificates_default_root_dir }}"
+certificates_default_csr_dir: "{{ certificates_default_root_dir }}"
+certificates_default_crt_dir: "{{ certificates_default_root_dir }}"
+certificates_dirs:
+  - path: "{{ certificates_default_root_dir }}"
+  - path: "{{ certificates_default_key_dir }}"
+  - path: "{{ certificates_default_csr_dir }}"
+  - path: "{{ certificates_default_crt_dir }}"
+
+certificates_default_key_file: "{{ certificates_default_key_dir }}/{{ certificates_default_csr_cn }}.key"
+certificates_default_csr_file: "{{ certificates_default_csr_dir }}/{{ certificates_default_csr_cn }}.csr"
+certificates_default_crt_file: "{{ certificates_default_crt_dir }}/{{ certificates_default_csr_cn }}.crt"
+certificates_default_fullchain_file: "{{ certificates_default_crt_dir }}/{{ certificates_default_csr_cn }}-fullchain.pem"
+certificates_default_chain_file: "{{ certificates_default_crt_dir }}/{{ certificates_default_csr_cn }}-chain.pem"
+
+certificates_default_csr_organizational_unit_name: "IT"
+certificates_default_csr_organization_name: "R"
+certificates_default_csr_locality_name: "MSK"
+certificates_default_csr_country_name: "RU"
+certificates_default_csr_email_address: "arsenyratner@gmail.com"
+certificates_default_csr_cn: ""
+certificates_default_csr_san:
+  - "DNS:{{ certificates_default_csr_cn }}"
   # - "IP:{{ ansible_default_ipv4.address }}" # для certbot не подойдёт
-certreq_csr_key_usage:
+
+
+certificates_default_fetch_dir: "files/pki/{{ certificates_default_csr_cn }}"
+certificates_default_fetch_crt: false
+certificates_default_fetch_csr: false
+certificates_default_fetch_key: false
+certificates_default_notify: []
+
+certificates_default_provider: "selfsigned" # csronly acme ownca selfsigned certbot
+
+certificates_default_key_size: 2048
+certificates_default_key_type: RSA
+
+certificates_default_ownca_host: "localhost"
+certificates_default_ownca_root_dir: "/opt/ca/localhost"
+certificates_default_ownca_cacert: "{{ certificates_default_ownca_root_dir }}/localhost.crt"
+certificates_default_ownca_cakey: "{{ certificates_default_ownca_root_dir }}/localhost.key"
+
+certificates_default_acme_step2_host: ""
+certificates_default_acme_webroot: "/var/www/html"  # + /.well-known/acme-challenge/
+certificates_default_acme_account_key: ""
+# certificates_default_acme_directory: "https://acme-v02.api.letsencrypt.org/directory"
+certificates_default_acme_directory: "https://acme-staging-v02.api.letsencrypt.org/directory"
+certificates_default_acme_version: 2
+certificates_default_acme_challenge: http-01
+
+certificates_default_certbot_root_dir: "/etc/letsencrypt"
+certificates_default_certbot_webroot: "/var/www/html"
+certificates_default_certbot_plugins:
+  standalone: --standalone
+  webroot: --webroot -w {{ certificates_default_certbot_webroot }}
+certificates_default_certbot_useplugin: webroot
+certificates_default_certbot_deployhook_reloadservices: []
+
+certificates_default_csr_key_usage:
   # (цифровая подпись)
   - digitalSignature
   # (неотказуемость, используется в основном для электронной почты и электронного документооборота)
@@ -44,7 +101,7 @@ certreq_csr_key_usage:
   # - encipherOnly
   # (только расшифрование, используется только в сочетании с keyAgreement)
   # - decipherOnly
-certreq_csr_extended_key_usage:
+certificates_default_csr_extended_key_usage:
   # (Аутентификация сервера TLS)
   - serverAuth
   # (Аутентификация клиента TLS)
@@ -75,61 +132,3 @@ certreq_csr_extended_key_usage:
   # - eapOverPPP
   # (EAP через LAN)
   # - eapOverLAN
-
-certreq_fetch_dir: "files/pki/{{ certreq_csr_cn }}"
-certreq_fetch_crt: false
-certreq_fetch_csr: false
-certreq_fetch_key: false
-certreq_notify: []
-
-certreq_provider: "selfsigned" # csronly acme ownca selfsigned certbot
-
-certreq_key_size: 2048
-certreq_key_type: RSA
-certreq_key_file: "{{ certreq_key_dir }}/{{ certreq_csr_cn }}.key"
-certreq_csr_file: "{{ certreq_csr_dir }}/{{ certreq_csr_cn }}.csr"
-certreq_crt_file: "{{ certreq_crt_dir }}/{{ certreq_csr_cn }}.crt"
-certreq_fullchain_file: "{{ certreq_crt_dir }}/{{ certreq_csr_cn }}-fullchain.pem"
-certreq_chain_file: "{{ certreq_crt_dir }}/{{ certreq_csr_cn }}-chain.pem"
-
-certreq_ownca_host: "localhost"
-certreq_ownca_root_dir: "/opt/ca/localhost"
-certreq_ownca_cacert: "{{ certreq_ownca_root_dir }}/localhost.crt"
-certreq_ownca_cakey: "{{ certreq_ownca_root_dir }}/localhost.key"
-
-certreq_acme_step2_host: ""
-certreq_acme_webroot: "/var/www/html"  # + /.well-known/acme-challenge/
-certreq_acme_account_key: ""
-# certreq_acme_directory: "https://acme-v02.api.letsencrypt.org/directory"
-certreq_acme_directory: "https://acme-staging-v02.api.letsencrypt.org/directory"
-certreq_acme_version: 2
-certreq_acme_challenge: http-01
-
-certreq_certbot_root_dir: "/etc/letsencrypt"
-certreq_certbot_webroot: "/var/www/html"
-certreq_certbot_plugins:
-  standalone: --standalone
-  webroot: --webroot -w {{ certreq_certbot_webroot }}
-certreq_certbot_useplugin: webroot
-certreq_certbot_deployhook_reloadservices: []
-certreq_certbot_create_cmd: >-
-  /usr/bin/certbot certonly --agree-tos -n -q
-  --email {{ certreq_csr_email_address }}
-  --cert-name {{ certreq_csr_cn }}
-  -d {{ certreq_csr_cn }}
-  {% if certreq_csr_san != [] %}{%- for san in certreq_csr_san -%}
-  {{ '-d ' + (san | split(':'))[1] if (san | split(':'))[0] | lower == 'dns' else '' }}
-  {% endfor %}{%- endif -%}
-  {{ certreq_certbot_plugins[certreq_certbot_useplugin] }}
-  {% if certreq_certbot_deployhook_reloadservices != [] %}
-  --deploy-hook "systemctl reload {{ certreq_certbot_deployhook_reloadservices | join(' ') }}"
-  {% endif %}
-  --expand
-
-certreq_certbot_renew_cmd: >-
-  /usr/bin/certbot renew --agree-tos -n -q
-  --cert-name {{ certreq_csr_cn }}
-  {% if certreq_certbot_deployhook_reloadservices != [] %}
-  --deploy-hook "systemctl reload {{ certreq_certbot_deployhook_reloadservices | join(' ') }}"
-  {% endif %}
-  --expand

@@ -1,5 +1,5 @@
 - name: install packages
   community.general.apt_rpm:
-    pkg: "{{ certreq_packages }}"
+    pkg: "{{ certificates_packages }}"
     state: present_not_latest
     update_cache: true

@@ -1,41 +1,29 @@
-- name: Distribution specific variables
-  ansible.builtin.include_vars: "{{ certreq_item }}"
-  with_first_found:
-    - "_{{ ansible_distribution | lower }}-{{ ansible_distribution_version | lower }}.yml"
-    - "_{{ ansible_distribution | lower }}.yml"
-    - "_{{ ansible_os_family | lower }}.yml"
-  ignore_errors: true
-  failed_when: false
+# - name: Distribution specific variables
+#   ansible.builtin.include_vars: "{{ certificates_item }}"
+#   with_first_found:
+#     - "_{{ ansible_distribution | lower }}-{{ ansible_distribution_version | lower }}.yml"
+#     - "_{{ ansible_distribution | lower }}.yml"
+#     - "_{{ ansible_os_family | lower }}.yml"
+#   ignore_errors: true
+#   failed_when: false
+#   loop_control:
+#     loop_var: certificates_item
+
+# - name: Distribution specific tasks
+#   ansible.builtin.include_tasks:
+#     file: "{{ certificates_item }}"
+#   with_first_found:
+#     - "_{{ ansible_distribution | lower }}-{{ ansible_distribution_version | lower }}.yml"
+#     - "_{{ ansible_distribution | lower }}.yml"
+#     - "_{{ ansible_os_family | lower }}.yml"
+#   ignore_errors: true
+#   loop_control:
+#     loop_var: certificates_item
+
+- name: Isuue certificates 
+  ansible.builtin.include_tasks:
+    file: "10_certificate.yml"
+  loop: "{{ certificates_list }}"
   loop_control:
-    loop_var: certreq_item
-
-- name: Distribution specific tasks
-  ansible.builtin.include_tasks:
-    file: "{{ certreq_item }}"
-  with_first_found:
-    - "_{{ ansible_distribution | lower }}-{{ ansible_distribution_version | lower }}.yml"
-    - "_{{ ansible_distribution | lower }}.yml"
-    - "_{{ ansible_os_family | lower }}.yml"
-  ignore_errors: true
-  loop_control:
-    loop_var: certreq_item
-
-- name: 10 Checking the issue conditions {{ certreq_csr_cn }}
-  ansible.builtin.include_tasks:
-    file: "10_check_issue_conditions.yml"
-  when: certreq_csr_cn != ''
-  ignore_errors: true
-
-- name: 30 Create certificate {{ certreq_csr_cn }}
-  ansible.builtin.include_tasks:
-    file: "35_provider_{{ certreq_provider }}.yml"
-  ignore_errors: true
-  when: certreq_issue
-
-- name: 90 Fetch {{ certreq_csr_cn }}
-  ansible.builtin.include_tasks:
-    file: "90_fetch.yml"
-  when: certreq_fetch_crt or
-        certreq_fetch_csr or
-        certreq_fetch_key
-  ignore_errors: true
+    loop_var: certificates_cert
+    label: "{{ certificates_cert.csr_cn }}"

@@ -1,0 +1,26 @@
+- name: Common tasks
+  ansible.builtin.include_tasks:
+    file: "130_provider_common.yml"
+  ignore_errors: true
+
+- name: Create crt and sign {{ certificates_cert.csr_cn }}
+  delegate_to: "{{ certificates_cert.ownca_host }}"
+  community.crypto.x509_certificate:
+    path: "{{ certificates_cert.ownca_root_dir }}/pki/crt/{{ certificates_cert.csr_cn }}.crt"
+    csr_content: "{{ certificates_csr_result.csr }}"
+    ownca_path: "{{ certificates_cert.ownca_cacert }}"
+    ownca_privatekey_path: "{{ certificates_cert.ownca_cakey }}"
+    provider: ownca
+    return_content: true
+    backup: true
+  register: certificates_crt_result
+
+- name: save crt {{ certificates_cert.csr_cn }}
+  ansible.builtin.copy:
+    dest: "{{ certificates_cert.crt_file | default(certificates_default_crt_file) }}"
+    content: "{{ certificates_crt_result.certificate }}"
+    owner: "{{ certificates_default_owner }}"
+    group: "{{ certificates_default_group }}"
+    mode: "{{ certificates_default_file_mode }}"
+    backup: true
+  notify: "{{ certificates_cert.notify | default([]) }}"

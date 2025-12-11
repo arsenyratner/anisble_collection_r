@@ -1,2 +1,2 @@
-certreq_packages:
+certificates_packages:
   - openssl

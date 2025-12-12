@@ -1,4 +1,5 @@
-- name: set facts
+- name: 135 set facts
+  register: certificates_result
   ansible.builtin.set_fact:
     certificates_key_file: "{{ certificates_default_certbot_root_dir }}/live/{{ certificates_csr_cn }}/privkey.pem"
     certificates_csr_file: ""
@@ -9,16 +10,18 @@
       /usr/bin/certbot certonly --agree-tos -n -q
       --email {{ certificates_csr_email_address }}
       --cert-name {{ certificates_csr_cn }}
-      -d {{ certificates_csr_cn }}
-      {% if certificates_csr_san != [] %}{%- for san in certificates_csr_san -%}
+      {% if certificates_csr_san != [] %}
+      {%- for san in certificates_csr_san -%}
       {{ '-d ' + (san | split(':'))[1] if (san | split(':'))[0] | lower == 'dns' else '' }}
-      {% endfor %}{%- endif -%}
+      {% endfor %}
+      {%- else -%}
+      -d {{ certificates_csr_cn }}
+      {% endif %}
       {{ certificates_certbot_plugins[certificates_certbot_useplugin] }}
       {% if certificates_default_certbot_deployhook_reloadservices != [] %}
       --deploy-hook "systemctl reload {{ certificates_certbot_deployhook_reloadservices | join(' ') }}"
       {% endif %}
       --expand
-
     certificates_certbot_renew_cmd: >-
       /usr/bin/certbot renew --agree-tos -n -q
       --cert-name {{ certificates_csr_cn }}
@@ -26,7 +29,22 @@
       --deploy-hook "systemctl reload {{ certificates_certbot_deployhook_reloadservices | join(' ') }}"
       {% endif %}
 
-- name: Check 80/tcp
+- name: 135 Get crt info {{ certificates_csr_cn }}
+  community.crypto.x509_certificate_info:
+    path: "{{ certificates_crt_file }}"
+    valid_at:
+      tendays: "+10d"
+  register: certificates_crt_info
+  when: certificates_crt_stat.stat.exists
+
+- name: 135 if SAN differs {{ certificates_csr_cn }}
+  ansible.builtin.set_fact:
+    certificates_issue_msg: "issue certificate, SAN are differ"
+    certificates_force: true
+  when:
+    - certificates_csr_san | default(certificates_default_csr_san) | sort | lower != certificates_crt_info.subject_alt_name | default([]) | sort | lower
+
+- name: 135 Check 80/tcp
   ansible.builtin.wait_for:
     host: "{{ ansible_host }}" # Or specify a different host if checking from another machine
     port: 80
@@ -36,35 +54,25 @@
   register: certificates_result
   ignore_errors: true
 
-- name: use webroot if port 80/tcp is listen
+- name: 135 use webroot if port 80/tcp is listen
   ansible.builtin.set_fact:
     certificates_certbot_useplugin: standalone
   when: certificates_result.failed
 
-- name: certbot certonly {{ certificates_csr_cn }}
-  ansible.builtin.command:
-    cmd: "{{ certificates_certbot_create_cmd }}"
-    creates: "{{ certificates_fullchain_file if not certificates_force }}"
-  register: certificates_result
-  notify: "{{ certificates_notify }}"
+# - name: 135 certbot certonly {{ certificates_csr_cn }}
+#   ansible.builtin.command:
+#     cmd: "{{ certificates_certbot_create_cmd }}"
+#     creates: "{{ certificates_fullchain_file if not certificates_force else '' }}"
+#   register: certificates_result
+#   notify: "{{ certificates_notify }}"
 
-- name: debug
-  ansible.builtin.debug:
-    msg:
-      - "{{ certificates_result }}"
-#       - "{{ certificates_force }}"
-#       - "{{ certificates_fullchain_file if not certificates_force else '' }}"
-#       - "{{ certificates_certbot_create_cmd }}"
-#       - "{{ certificates_certbot_renew_cmd }}"
-# - pause:
-
-- name: renew cron job
-  ansible.builtin.cron:
-    name: "renew {{ certificates_csr_cn }}"
-    weekday: "*"
-    minute: "*"
-    hour: "5"
-    user: root
-    job: "{{ certificates_certbot_renew_cmd }}"
-    cron_file: "certificates_certbot_renew"
-    disabled: false
+# - name: 135 renew cron job
+#   ansible.builtin.cron:
+#     name: "renew {{ certificates_csr_cn }}"
+#     weekday: "*"
+#     minute: "*"
+#     hour: "5"
+#     user: root
+#     job: "{{ certificates_certbot_renew_cmd }}"
+#     cron_file: "certificates_certbot_renew"
+#     disabled: false

@@ -1,4 +1,4 @@
-- name: Create dirs
+- name: 130 Create dirs
   ansible.builtin.file:
     state: directory
     path: "{{ certificates_item.path }}"
@@ -9,13 +9,13 @@
   loop_control:
     loop_var: certificates_item
 
-# - name: Get key info
+# - name: 130 Get key info
 #   community.crypto.openssl_privatekey_info:
 #     path: "{{ certificates_key_file }}"
 #   register: certificates_key_result
 #   ignore_errors: true
 
-- name: Create key {{ certificates_csr_cn }}
+- name: 130 Create key {{ certificates_csr_cn }}
   community.crypto.openssl_privatekey:
     force: "{{certificates_key_force }}"
     owner: "{{ certificates_owner }}"
@@ -29,7 +29,7 @@
   register: certificates_key_result
   when: certificates_key_file != ""
 
-- name: Create csr {{ certificates_csr_cn }}
+- name: 130 Create csr {{ certificates_csr_cn }}
   community.crypto.openssl_csr:
     privatekey_path: "{{ certificates_key_file }}"
     common_name: "{{ certificates_csr_cn }}"

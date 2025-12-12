@@ -1,16 +1,73 @@
-- name: 110 Checking the issue conditions {{ certificates_csr_cn }}
+- name: Set facts
+  ansible.builtin.set_fact:
+    # defaults
+    certificates_default_csr_san:
+      - 'DNS:{{ certificates_cert.csr_cn | default(certificates_default_csr_cn) }}'
+    # files
+    certificates_owner: '{{ certificates_cert.owner | default(certificates_default_owner) }}'
+    certificates_group: '{{ certificates_cert.group | default(certificates_default_group) }}'
+    certificates_file_mode: '{{ certificates_cert.file_mode | default(certificates_default_file_mode) }}'
+    certificates_dir_mode: '{{ certificates_cert.dir_mode | default(certificates_default_dir_mode) }}'
+    certificates_key_file: '{{ certificates_cert.key_file | default(certificates_default_key_file) }}'
+    certificates_csr_file: '{{ certificates_cert.csr_file | default(certificates_default_csr_file) }}'
+    certificates_crt_file: '{{ certificates_cert.crt_file | default(certificates_default_crt_file) }}'
+    certificates_fullchain_file: '{{ certificates_cert.fullchain_file | default(certificates_default_fullchain_file) }}'
+    certificates_chain_file: '{{ certificates_cert.chain_file | default(certificates_default_chain_file) }}'
+    # csr
+    certificates_csr_organizational_unit_name: '{{ certificates_cert.csr_organizational_unit_name | default(certificates_default_csr_organizational_unit_name) }}'
+    certificates_csr_organization_name: '{{ certificates_cert.csr_organization_name | default(certificates_default_csr_organization_name) }}'
+    certificates_csr_locality_name: '{{ certificates_cert.csr_locality_name | default(certificates_default_csr_locality_name) }}'
+    certificates_csr_country_name: '{{ certificates_cert.csr_country_name | default(certificates_default_csr_country_name) }}'
+    certificates_csr_email_address: '{{ certificates_cert.csr_email_address | default(certificates_default_csr_email_address) }}'
+    certificates_csr_cn: '{{ certificates_cert.csr_cn | default(certificates_default_csr_cn) }}'
+    certificates_csr_san: '{{ certificates_cert.csr_san | default(certificates_default_csr_san) }}'
+    certificates_csr_key_usage: '{{ certificates_cert.csr_key_usage | default(certificates_default_csr_key_usage) }}'
+    certificates_csr_extended_key_usage: '{{ certificates_cert.csr_extended_key_usage | default(certificates_default_csr_extended_key_usage) }}'
+    # fetch
+    certificates_fetch_dir: '{{ certificates_cert.fetch_dir | default(certificates_default_fetch_dir) }}'
+    certificates_fetch_crt: '{{ certificates_cert.fetch_crt | default(certificates_default_fetch_crt) }}'
+    certificates_fetch_csr: '{{ certificates_cert.fetch_csr | default(certificates_default_fetch_csr) }}'
+    certificates_fetch_key: '{{ certificates_cert.fetch_key | default(certificates_default_fetch_key) }}'
+    # misc
+    certificates_force: "{{ certificates_default_force }}"
+    certificates_notify: '{{ certificates_cert.notify | default(certificates_default_notify) }}'
+    # key
+    certificates_key_size: '{{ certificates_cert.key_size | default(certificates_default_key_size) }}'
+    certificates_key_type: '{{ certificates_cert.key_type | default(certificates_default_key_type) }}'
+    certificates_key_force: '{{ certificates_cert.key_force | default(false) }}'
+    # providers
+    certificates_provider: '{{ certificates_cert.provider | default(certificates_default_provider) }}'
+    ## provider ownca
+    certificates_ownca_host: '{{ certificates_cert.ownca_host | default(certificates_default_ownca_host) }}'
+    certificates_ownca_root_dir: '{{ certificates_cert.ownca_root_dir | default(certificates_default_ownca_root_dir) }}'
+    certificates_ownca_cacert: '{{ certificates_cert.ownca_cacert | default(certificates_default_ownca_cacert) }}'
+    certificates_ownca_cakey: '{{ certificates_cert.ownca_cakey | default(certificates_default_ownca_cakey) }}'
+    certificates_ownca_force: '{{ certificates_cert.ownca_force | default(false) }}'
+    ## provider acme
+    certificates_acme_step2_host: '{{ certificates_cert.acme_step2_host | default(certificates_default_acme_step2_host) }}'
+    certificates_acme_webroot: '{{ certificates_cert.acme_webroot | default(certificates_default_acme_webroot) }}'
+    certificates_acme_account_key: '{{ certificates_cert.acme_account_key | default(certificates_default_acme_account_key) }}'
+    certificates_acme_directory: '{{ certificates_cert.acme_directory | default(certificates_default_acme_directory) }}'
+    certificates_acme_version: '{{ certificates_cert.acme_version | default(certificates_default_acme_version) }}'
+    certificates_acme_challenge: '{{ certificates_cert.acme_challenge | default(certificates_default_acme_challenge) }}'
+    ## provider certbot
+    certificates_certbot_webroot: '{{ certificates_cert.certbot_webroot | default(certificates_default_certbot_webroot) }}'
+    certificates_certbot_useplugin: '{{ certificates_cert.certbot_useplugin | default(certificates_default_certbot_useplugin) }}'
+    certificates_certbot_deployhook_reloadservices: '{{ certificates_cert.certbot_deployhook_reloadservices | default(certificates_default_certbot_deployhook_reloadservices) }}'
+
+- name: 10 Checking the issue conditions {{ certificates_csr_cn }}
   ansible.builtin.include_tasks:
     file: "110_check_issue_conditions.yml"
   when: certificates_csr_cn != ''
   ignore_errors: true
 
-- name: 130 Create certificate {{ certificates_csr_cn }}
+- name: 10 Create certificate {{ certificates_csr_cn }}
   ansible.builtin.include_tasks:
     file: "135_provider_{{ certificates_provider }}.yml"
   ignore_errors: true
   when: certificates_issue
 
-- name: 190 Fetch {{ certificates_csr_cn }}
+- name: 10 Fetch {{ certificates_csr_cn }}
   ansible.builtin.include_tasks:
     file: "190_fetch.yml"
   when: certificates_fetch_crt or

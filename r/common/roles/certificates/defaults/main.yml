@@ -1,15 +1,18 @@
 # certificates_
 certificates_list:
-    - csr_cn: test1.test1.test1
-      provider: ownca
+    # - csr_cn: "{{ inventory_hostname }}"
+    #   csr_san:
+    #     - "DNS:{{ inventory_hostname }}"
+    #     - "DNS:prx.r.ratners.ru"
+    #   provider: certbot
+    # - csr_cn: "prx.r.ratners.ru"
+    #   provider: certbot
+    # - csr_cn: "aaa.r.ratners.ru"
+    #   provider: certbot
+    - csr_cn: "bbb.r.ratners.ru"
+      provider: certbot
       csr_san:
-        - DNS:test1.test1.test1
-        - IP:1.1.1.1
-    - csr_cn: test2.test1.test1
-      provider: ownca
-    - csr_cn: test3.test1.test1
-      provider: ownca
-  # certbot:
+        - "DNS:{{ inventory_hostname }}"  # certbot:
   #   - csr_cn: csr_cn1.certbot.certificates_list
   # csronly:
   #   - csr_cn: csr_cn1.csronly.certificates_list
@@ -26,21 +29,16 @@ certificates_default_force: false
 certificates_issue: false
 certificates_issue_msg: skip certificate issue
 
-certificates_default_root_dir: "/usr/local/etc/pki/{{ certificates_default_csr_cn }}"
-certificates_default_key_dir: "{{ certificates_default_root_dir }}"
-certificates_default_csr_dir: "{{ certificates_default_root_dir }}"
-certificates_default_crt_dir: "{{ certificates_default_root_dir }}"
+certificates_default_root_dir: "/usr/local/etc/pki"
 certificates_dirs:
   - path: "{{ certificates_default_root_dir }}"
-  - path: "{{ certificates_default_key_dir }}"
-  - path: "{{ certificates_default_csr_dir }}"
-  - path: "{{ certificates_default_crt_dir }}"
+  - path: "{{ certificates_default_root_dir }}/{{ certificates_default_csr_cn }}"
 
-certificates_default_key_file: "{{ certificates_default_key_dir }}/{{ certificates_default_csr_cn }}.key"
-certificates_default_csr_file: "{{ certificates_default_csr_dir }}/{{ certificates_default_csr_cn }}.csr"
-certificates_default_crt_file: "{{ certificates_default_crt_dir }}/{{ certificates_default_csr_cn }}.crt"
-certificates_default_fullchain_file: "{{ certificates_default_crt_dir }}/{{ certificates_default_csr_cn }}-fullchain.pem"
-certificates_default_chain_file: "{{ certificates_default_crt_dir }}/{{ certificates_default_csr_cn }}-chain.pem"
+certificates_default_key_file:       "{{ certificates_default_root_dir }}/{{ certificates_default_csr_cn }}/{{ certificates_default_csr_cn }}.key"
+certificates_default_csr_file:       "{{ certificates_default_root_dir }}/{{ certificates_default_csr_cn }}/{{ certificates_default_csr_cn }}.csr"
+certificates_default_crt_file:       "{{ certificates_default_root_dir }}/{{ certificates_default_csr_cn }}/{{ certificates_default_csr_cn }}.crt"
+certificates_default_fullchain_file: "{{ certificates_default_root_dir }}/{{ certificates_default_csr_cn }}/{{ certificates_default_csr_cn }}-fullchain.pem"
+certificates_default_chain_file:     "{{ certificates_default_root_dir }}/{{ certificates_default_csr_cn }}/{{ certificates_default_csr_cn }}-chain.pem"
 
 certificates_default_csr_organizational_unit_name: "IT"
 certificates_default_csr_organization_name: "R"
@@ -48,9 +46,7 @@ certificates_default_csr_locality_name: "MSK"
 certificates_default_csr_country_name: "RU"
 certificates_default_csr_email_address: "arsenyratner@gmail.com"
 certificates_default_csr_cn: ""
-certificates_default_csr_san:
-  - "DNS:{{ certificates_default_csr_cn }}"
-  # - "IP:{{ ansible_default_ipv4.address }}" # для certbot не подойдёт
+certificates_default_csr_san: []
 
 certificates_default_fetch_dir: "files/pki/{{ certificates_default_csr_cn }}"
 certificates_default_fetch_crt: false

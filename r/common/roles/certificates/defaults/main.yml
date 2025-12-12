@@ -2,6 +2,9 @@
 certificates_list:
     - csr_cn: test1.test1.test1
       provider: ownca
+      csr_san:
+        - DNS:test1.test1.test1
+        - IP:1.1.1.1
     - csr_cn: test2.test1.test1
       provider: ownca
     - csr_cn: test3.test1.test1
@@ -19,7 +22,7 @@ certificates_default_owner: root
 certificates_default_group: root
 certificates_default_file_mode: '0644'
 certificates_default_dir_mode: '0755'
-certificates_force: false
+certificates_default_force: false
 certificates_issue: false
 certificates_issue_msg: skip certificate issue
 
@@ -76,7 +79,7 @@ certificates_default_acme_challenge: http-01
 
 certificates_default_certbot_root_dir: "/etc/letsencrypt"
 certificates_default_certbot_webroot: "/var/www/html"
-certificates_default_certbot_plugins:
+certificates_certbot_plugins:
   standalone: --standalone
   webroot: --webroot -w {{ certificates_default_certbot_webroot }}
 certificates_default_certbot_useplugin: webroot

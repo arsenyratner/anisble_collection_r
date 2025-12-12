@@ -2,41 +2,47 @@
   ansible.builtin.file:
     state: directory
     path: "{{ certificates_item.path }}"
-    owner: "{{ certificates_item.owner | default(certificates_default_owner) }}"
-    group: "{{ certificates_item.group | default(certificates_default_group) }}"
-    mode: "{{ certificates_item.mode | default(certificates_default_dir_mode) }}"
+    owner: "{{ certificates_owner }}"
+    group: "{{ certificates_group }}"
+    mode: "{{ certificates_dir_mode }}"
   loop: "{{ certificates_dirs }}"
   loop_control:
     loop_var: certificates_item
 
-- name: Create key {{ certificates_cert.csr_cn }}
+# - name: Get key info
+#   community.crypto.openssl_privatekey_info:
+#     path: "{{ certificates_key_file }}"
+#   register: certificates_key_result
+#   ignore_errors: true
+
+- name: Create key {{ certificates_csr_cn }}
   community.crypto.openssl_privatekey:
-    force: "{{ certificates_cert.key_force | default(false) }}"
-    owner: "{{ certificates_cert.owner | default(certificates_default_owner) }}"
-    group: "{{ certificates_cert.group | default(certificates_default_group) }}"
+    force: "{{certificates_key_force }}"
+    owner: "{{ certificates_owner }}"
+    group: "{{ certificates_group }}"
     mode: '0600'
-    path: "{{ certificates_cert.key_file | default(certificates_default_key_file) }}"
-    size: "{{ certificates_cert.key_size | default(certificates_default_key_size) }}"
-    type: "{{ certificates_cert.key_type | default(certificates_default_key_type) }}"
+    path: "{{ certificates_key_file }}"
+    size: "{{ certificates_key_size }}"
+    type: "{{ certificates_key_type }}"
     return_content: true
     backup: true
   register: certificates_key_result
-  when: certificates_cert.key_file | default(certificates_default_key_file) != ""
+  when: certificates_key_file != ""
 
-- name: Create csr {{ certificates_cert.csr_cn }}
+- name: Create csr {{ certificates_csr_cn }}
   community.crypto.openssl_csr:
-    privatekey_path: "{{ certificates_cert.key_file | default(certificates_default_key_file) }}"
-    common_name: "{{ certificates_cert.csr_cn }}"
-    subject_alt_name: "{{ certificates_cert.csr_san | default(certificates_default_csr_san) }}"
-    organizational_unit_name: "{{ certificates_cert.csr_organizational_unit_name | default(certificates_default_csr_organizational_unit_name) }}"
-    organization_name: "{{ certificates_cert.csr_organization_name | default(certificates_default_csr_organization_name) }}"
-    locality_name: "{{ certificates_cert.csr_locality_name | default(certificates_default_csr_locality_name) }}"
-    country_name: "{{ certificates_cert.csr_country_name | default(certificates_default_csr_country_name) }}"
-    email_address: "{{ certificates_cert.csr_email_address | default(certificates_default_csr_email_address) }}"
-    key_usage: "{{ certificates_cert.csr_key_usage | default(certificates_default_csr_key_usage) }}"
-    extended_key_usage: "{{ certificates_cert.csr_extended_key_usage | default(certificates_default_csr_extended_key_usage) }}"
-    path: "{{ certificates_cert.csr_file | default(certificates_default_csr_file) }}"
+    privatekey_path: "{{ certificates_key_file }}"
+    common_name: "{{ certificates_csr_cn }}"
+    subject_alt_name: "{{ certificates_csr_san }}"
+    organizational_unit_name: "{{ certificates_csr_organizational_unit_name }}"
+    organization_name: "{{ certificates_csr_organization_name }}"
+    locality_name: "{{ certificates_csr_locality_name }}"
+    country_name: "{{ certificates_csr_country_name }}"
+    email_address: "{{ certificates_csr_email_address }}"
+    key_usage: "{{ certificates_csr_key_usage }}"
+    extended_key_usage: "{{ certificates_csr_extended_key_usage }}"
+    path: "{{ certificates_csr_file }}"
     return_content: true
   register: certificates_csr_result
   changed_when: false
-  when: certificates_csr_file | default(certificates_default_csr_file) != ""
+  when: certificates_csr_file != ""

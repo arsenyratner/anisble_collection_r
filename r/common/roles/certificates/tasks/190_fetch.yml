@@ -4,29 +4,29 @@
       - "{{ certificates_fetch_csr }}"
       - "{{ certificates_fetch_key }}"
 
-- name: 190 Fetch crt {{ certificates_cert.csr_cn }}
+- name: 190 Fetch crt {{ certificates_csr_cn }}
   delegate_to: localhost
   ansible.builtin.copy:
     mode: "{{ certificates_default_file_mode }}"
     content: "{{ certificates_crt_result.certificate }}"
-    dest: "{{ certificates_default_fetch_dir }}/{{ certificates_cert.csr_cn }}.crt"
+    dest: "{{ certificates_fetch_dir }}/{{ certificates_csr_cn }}.crt"
     backup: true
-  when: certificates_cert.fetch_crt
+  when: certificates_fetch_crt
 
-- name: 190 Fetch csr {{ certificates_cert.csr_cn }}
+- name: 190 Fetch csr {{ certificates_csr_cn }}
   delegate_to: localhost
   ansible.builtin.copy:
     mode: "{{ certificates_default_file_mode }}"
     content: "{{ certificates_csr_result.csr }}"
-    dest: "{{ certificates_default_fetch_dir }}/{{ certificates_cert.csr_cn }}.csr"
+    dest: "{{ certificates_fetch_dir }}/{{ certificates_csr_cn }}.csr"
     backup: true
-  when: certificates_cert.fetch_csr
+  when: certificates_fetch_csr
 
-- name: 190 Fetch key {{ certificates_cert.csr_cn }}
+- name: 190 Fetch key {{ certificates_csr_cn }}
   delegate_to: localhost
   ansible.builtin.copy:
     mode: "{{ certificates_default_file_mode }}"
     content: "{{ certificates_key_result.privatekey }}"
-    dest: "{{ certificates_default_fetch_dir }}/{{ certificates_cert.csr_cn }}.key"
+    dest: "{{ certificates_fetch_dir }}/{{ certificates_csr_cn }}.key"
     backup: true
-  when: certificates_cert.fetch_key
+  when: certificates_fetch_key

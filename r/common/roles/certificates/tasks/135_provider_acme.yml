@@ -1,6 +1,6 @@
 - name: Common tasks
   ansible.builtin.include_tasks:
-    file: "30_provider_common.yml"
+    file: "130_provider_common.yml"
   ignore_errors: true
 
 - name: Create directory for ansible custom facts
@@ -9,7 +9,7 @@
     recurse: true
     path: /etc/ansible/facts.d
 
-- name: Step 0. Create Account. Agree TOS {{ certificates_item.csr_cn }}
+- name: Step 0. Create Account. Agree TOS {{ certificates_csr_cn }}
   community.crypto.acme_account:
     acme_directory: "{{ certificates_acme_directory }}"
     acme_version: "{{ certificates_acme_version }}"
@@ -32,7 +32,7 @@
   ansible.builtin.setup:
     filter: ansible_local
 
-- name: Step 1. Create chalanges {{ certificates_item.csr_cn }}
+- name: Step 1. Create chalanges {{ certificates_csr_cn }}
   community.crypto.acme_certificate_order_create:
     acme_directory: "{{ certificates_acme_directory }}"
     acme_version: "{{ certificates_acme_version }}"
@@ -73,7 +73,7 @@
   loop: "{{ ansible_local.certificates_acme_step1.challenge_data }}"
   when: "'http-01' in certificates_item.challenges"
 
-- name: Step 2. Validate chalenges {{ certificates_item.csr_cn }}
+- name: Step 2. Validate chalenges {{ certificates_csr_cn }}
   delegate_to: "{{ certificates_acme_step2_host if certificates_acme_step2_host != '' else omit }}"
   community.crypto.acme_certificate_order_validate:
     acme_directory: "{{ certificates_acme_directory }}"
@@ -96,23 +96,23 @@
     filter: ansible_local
   when: certificates_acme_step2_result.changed
 
-- name: Step 3. Get certificates {{ certificates_item.csr_cn }}
+- name: Step 3. Get certificates {{ certificates_csr_cn }}
   community.crypto.acme_certificate_order_finalize:
     acme_directory: "{{ certificates_acme_directory }}"
     acme_version: "{{ certificates_acme_version }}"
     account_key_content: "{{ certificates_acme_account_key }}"
     csr_content: "{{ certificates_csr_result.csr }}"
     order_uri: "{{ ansible_local.certificates_acme_step1.order_uri }}"
-    cert_dest: "{{ certificates_crt_dir }}/{{ certificates_item.csr_cn }}.pem"
+    cert_dest: "{{ certificates_crt_dir }}/{{ certificates_csr_cn }}.pem"
     fullchain_dest: "{{ certificates_fullchain_file }}"
     chain_dest: "{{ certificates_chain_file }}"
   register: certificates_acme_step3_result
 
-- name: Copy pem to crt {{ certificates_item.csr_cn }}
+- name: Copy pem to crt {{ certificates_csr_cn }}
   ansible.builtin.copy:
     backup: true
     remote_src: true
-    src: "{{ certificates_crt_dir }}/{{ certificates_item.csr_cn }}.pem"
+    src: "{{ certificates_crt_dir }}/{{ certificates_csr_cn }}.pem"
     dest: "{{ certificates_crt_file }}"
     mode: "{{ certificates_default_file_mode }}"
   notify: "{{ certificates_notify }}"

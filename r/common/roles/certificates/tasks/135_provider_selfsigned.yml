@@ -3,13 +3,13 @@
     file: "130_provider_common.yml"
   ignore_errors: true
 
-- name: Create self signed crt {{ certificates_cert.csr_cn }}
+- name: Create self signed crt {{ certificates_csr_cn }}
   community.crypto.x509_certificate:
-    path: "{{ certificates_cert.crt_file | default(certificates_default_crt_file) }}"
+    path: "{{ certificates_crt_file }}"
     csr_content: "{{ certificates_csr_result.csr }}"
-    privatekey_path: "{{ certificates_cert.key_file | default(certificates_default_key_file) }}"
+    privatekey_path: "{{ certificates_key_file }}"
     provider: selfsigned
     return_content: true
     backup: true
   register: certificates_crt_result
-  notify: "{{ certificates_cert.notify | default([]) }}"
+  notify: "{{ certificates_notify }}"

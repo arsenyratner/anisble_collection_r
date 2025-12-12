@@ -1,31 +1,30 @@
 - name: set facts
   ansible.builtin.set_fact:
-    certificates_key_file: "{{ certificates_certbot_root_dir }}/live/{{ certificates_item.csr_cn }}/privkey.pem"
+    certificates_key_file: "{{ certificates_default_certbot_root_dir }}/live/{{ certificates_csr_cn }}/privkey.pem"
     certificates_csr_file: ""
-    certificates_crt_file: "{{ certificates_certbot_root_dir }}/live/{{ certificates_item.csr_cn }}/cert.pem"
-    certificates_fullchain_file: "{{ certificates_certbot_root_dir }}/live/{{ certificates_item.csr_cn }}/fullchain.pem"
-    certificates_chain_file: "{{ certificates_certbot_root_dir }}/live/{{ certificates_item.csr_cn }}/chain.pem"
+    certificates_crt_file: "{{ certificates_default_certbot_root_dir }}/live/{{ certificates_csr_cn }}/cert.pem"
+    certificates_fullchain_file: "{{ certificates_default_certbot_root_dir }}/live/{{ certificates_csr_cn }}/fullchain.pem"
+    certificates_chain_file: "{{ certificates_default_certbot_root_dir }}/live/{{ certificates_csr_cn }}/chain.pem"
     certificates_certbot_create_cmd: >-
       /usr/bin/certbot certonly --agree-tos -n -q
-      --email {{ certificates_default_csr_email_address }}
-      --cert-name {{ certificates_default_csr_cn }}
-      -d {{ certificates_default_csr_cn }}
-      {% if certificates_default_csr_san != [] %}{%- for san in certificates_default_csr_san -%}
+      --email {{ certificates_csr_email_address }}
+      --cert-name {{ certificates_csr_cn }}
+      -d {{ certificates_csr_cn }}
+      {% if certificates_csr_san != [] %}{%- for san in certificates_csr_san -%}
       {{ '-d ' + (san | split(':'))[1] if (san | split(':'))[0] | lower == 'dns' else '' }}
       {% endfor %}{%- endif -%}
-      {{ certificates_default_certbot_plugins[certificates_default_certbot_useplugin] }}
+      {{ certificates_certbot_plugins[certificates_certbot_useplugin] }}
       {% if certificates_default_certbot_deployhook_reloadservices != [] %}
-      --deploy-hook "systemctl reload {{ certificates_default_certbot_deployhook_reloadservices | join(' ') }}"
+      --deploy-hook "systemctl reload {{ certificates_certbot_deployhook_reloadservices | join(' ') }}"
       {% endif %}
       --expand
 
     certificates_certbot_renew_cmd: >-
       /usr/bin/certbot renew --agree-tos -n -q
-      --cert-name {{ certificates_default_csr_cn }}
+      --cert-name {{ certificates_csr_cn }}
       {% if certificates_default_certbot_deployhook_reloadservices != [] %}
-      --deploy-hook "systemctl reload {{ certificates_default_certbot_deployhook_reloadservices | join(' ') }}"
+      --deploy-hook "systemctl reload {{ certificates_certbot_deployhook_reloadservices | join(' ') }}"
       {% endif %}
-      --expand
 
 - name: Check 80/tcp
   ansible.builtin.wait_for:
@@ -42,7 +41,7 @@
     certificates_certbot_useplugin: standalone
   when: certificates_result.failed
 
-- name: certbot certonly {{ certificates_item.csr_cn }}
+- name: certbot certonly {{ certificates_csr_cn }}
   ansible.builtin.command:
     cmd: "{{ certificates_certbot_create_cmd }}"
     creates: "{{ certificates_fullchain_file if not certificates_force }}"
@@ -61,7 +60,7 @@
 
 - name: renew cron job
   ansible.builtin.cron:
-    name: "renew {{ certificates_item.csr_cn }}"
+    name: "renew {{ certificates_csr_cn }}"
     weekday: "*"
     minute: "*"
     hour: "5"

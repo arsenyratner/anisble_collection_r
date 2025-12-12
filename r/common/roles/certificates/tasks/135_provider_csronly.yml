@@ -3,8 +3,8 @@
     file: "130_provider_common.yml"
   ignore_errors: true
 
-- name: csr {{ certificates_cert.csr_cn }}
+- name: csr {{ certificates_csr_cn }}
   ansible.builtin.debug:
     msg:
-      - "look csr in file: {{ certificates_cert.csr_file | default(certificates_default_csr_file) }}"
+      - "look csr in file: {{ certificates_csr_file }}"
       - "look csr in var: certificates_csr_result.csr"

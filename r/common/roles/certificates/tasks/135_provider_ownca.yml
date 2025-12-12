@@ -4,12 +4,12 @@
   ignore_errors: true
 
 - name: Create crt and sign {{ certificates_cert.csr_cn }}
-  delegate_to: "{{ certificates_cert.ownca_host }}"
+  delegate_to: "{{ certificates_cert.ownca_host | default(certificates_default_ownca_host) }}"
   community.crypto.x509_certificate:
-    path: "{{ certificates_cert.ownca_root_dir }}/pki/crt/{{ certificates_cert.csr_cn }}.crt"
+    path: "{{ certificates_cert.ownca_root_dir | default(certificates_default_ownca_root_dir) }}/pki/crt/{{ certificates_cert.csr_cn }}.crt"
     csr_content: "{{ certificates_csr_result.csr }}"
-    ownca_path: "{{ certificates_cert.ownca_cacert }}"
-    ownca_privatekey_path: "{{ certificates_cert.ownca_cakey }}"
+    ownca_path: "{{ certificates_cert.ownca_cacert | default(certificates_default_ownca_cacert) }}"
+    ownca_privatekey_path: "{{ certificates_cert.ownca_cakey | default(certificates_default_ownca_cakey) }}"
     provider: ownca
     return_content: true
     backup: true

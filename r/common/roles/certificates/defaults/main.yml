@@ -52,7 +52,6 @@ certificates_default_csr_san:
   - "DNS:{{ certificates_default_csr_cn }}"
   # - "IP:{{ ansible_default_ipv4.address }}" # для certbot не подойдёт
 
-
 certificates_default_fetch_dir: "files/pki/{{ certificates_default_csr_cn }}"
 certificates_default_fetch_crt: false
 certificates_default_fetch_csr: false

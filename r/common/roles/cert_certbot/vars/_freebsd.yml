@@ -1,5 +1,5 @@
 cert_certbot_packages:
   - openssl
-  - py311-cryptography
+  - certbot
 cert_certbot_default_owner: root
 cert_certbot_default_group: wheel

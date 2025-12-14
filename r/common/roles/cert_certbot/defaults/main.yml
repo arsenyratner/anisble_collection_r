@@ -1,20 +1,20 @@
-# cert_certbot_
-cert_certbot_list:
-    # - csr_cn: "{{ inventory_hostname }}"
-    #   csr_san:
-    #     - "DNS:{{ inventory_hostname }}"
-    #     - "DNS:prx.r.ratners.ru"
-    # - csr_cn: "prx.r.ratners.ru"
-    # - csr_cn: "aaa.r.ratners.ru"
-    - csr_cn: "bbb.r.ratners.ru"
-      csr_san:
-        - "DNS:{{ inventory_hostname }}"  # certbot:
+cert_certbot_list: []
+  # - cn: "bbb.r.ratners.ru"
+  #   san:
+  #     - "DNS:bbb.r.ratners.ru"
+  #     - "DNS:{{ inventory_hostname }}"
+  #   force: false
+  #   notify: 
+  #     - nginx
+  #   reloadservices:
+  #     - nginx
+  #   webroot: "/var/www/html"
+  #   email_address: "arsenyratner@gmail.com"
 
 cert_certbot_default_owner: root
 cert_certbot_default_group: root
 cert_certbot_default_file_mode: '0644'
 cert_certbot_default_dir_mode: '0755'
-cert_certbot_default_force: false
 cert_certbot_issue: false
 cert_certbot_issue_msg: skip certificate issue
 
@@ -23,19 +23,21 @@ cert_certbot_default_webroot: "/var/www/html"
 cert_certbot_dirs:
   - path: "{{ cert_certbot_default_root_dir }}"
 
-cert_certbot_default_plugins:
+cert_certbot_useplugin: webroot
+cert_certbot_plugins:
   standalone: --standalone
   webroot: --webroot -w {{ cert_certbot_default_webroot }}
 
-cert_certbot_default_email_address: "arsenyratner@gmail.com"
-cert_certbot_default_csr_cn: ""
-cert_certbot_default_csr_san: []
+cert_certbot_default_email_address: ""
+cert_certbot_default_cn: ""
+cert_certbot_default_san: []
 
-cert_certbot_default_fetch_dir: "files/pki/{{ cert_certbot_default_csr_cn }}"
+cert_certbot_default_fetch_dir: "files/pki/{{ cert_certbot_default_cn }}"
 cert_certbot_default_fetch_crt: false
 cert_certbot_default_fetch_csr: false
 cert_certbot_default_fetch_key: false
 cert_certbot_default_notify: []
+cert_certbot_default_reloadservices: []
 
 cert_certbot_default_key_size: 2048
 cert_certbot_default_key_type: RSA
@@ -43,54 +45,3 @@ cert_certbot_default_key_type: RSA
 cert_certbot_default_certbot_root_dir: "/etc/letsencrypt"
 cert_certbot_default_certbot_useplugin: webroot
 cert_certbot_default_certbot_deployhook_reloadservices: []
-
-cert_certbot_default_csr_key_usage:
-  # (цифровая подпись)
-  - digitalSignature
-  # (неотказуемость, используется в основном для электронной почты и электронного документооборота)
-  # - nonRepudiation
-  # (шифрование ключа, используется для обмена сессионными ключами, например в старых версиях TLS)
-  # - keyEncipherment
-  # (шифрование данных, прямое шифрование пользовательских данных)
-  # - dataEncipherment
-  # (подпись сертификатов, необходимо для удостоверяющих центров/CA)
-  # - keyCertSign
-  # (подпись списков отзыва сертификатов, необходимо для управления списками CRL)
-  # - cRLSign
-  # (согласование ключа, используется в алгоритмах, таких как Диффи-Хеллман, для генерации общего секрета)
-  # - keyAgreement
-  # (только шифрование, используется только в сочетании с keyAgreement)
-  # - encipherOnly
-  # (только расшифрование, используется только в сочетании с keyAgreement)
-  # - decipherOnly
-cert_certbot_default_csr_extended_key_usage:
-  # (Аутентификация сервера TLS)
-  - serverAuth
-  # (Аутентификация клиента TLS)
-  # - clientAuth
-  # (Подпись кода)
-  # - codeSigning
-  # (Защита электронной почты)
-  # - emailProtection
-  # (Штамп времени)
-  # - timeStamping
-  # (Подпись OCSP)
-  # - ocspSigning
-  # (Конечная система IPSec)
-  # - ipsecEndSystem
-  # (Туннель IPSec)
-  # - ipsecTunnel
-  # (Пользователь IPSec)
-  # - ipsecUser
-  # (Биометрическая информация)
-  # - biometricInfo
-  # (Система управления распределенными версиями)
-  # - dvcs
-  # (Авторизация сервера SGBP)
-  # - sbgpCertAAServerAuth
-  # (Протокол проверки состояния сертификата)
-  # - scvpServer
-  # (EAP через PPP)
-  # - eapOverPPP
-  # (EAP через LAN)
-  # - eapOverLAN

@@ -1,5 +1,4 @@
 cert_certbot_packages:
   - openssl
-  - python3-cryptography
   - certbot
   - cron

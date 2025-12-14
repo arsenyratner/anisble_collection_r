@@ -1,0 +1,225 @@
+- name: 10 Set facts
+  ansible.builtin.set_fact:
+    # certbot
+    ## provider certbot
+    cert_certbot_webroot: '{{ certlist_certbot_item.certbot_webroot | default(cert_certbot_default_certbot_webroot) }}'
+    cert_certbot_useplugin: '{{ certlist_certbot_item.certbot_useplugin | default(cert_certbot_default_certbot_useplugin) }}'
+    cert_certbot_reloadservices: '{{ certlist_certbot_item.certbot_deployhook_reloadservices | default(cert_certbot_default_certbot_deployhook_reloadservices) }}'
+    cert_certbot_key_file: "{{ cert_certbot_default_certbot_root_dir }}/live/{{ cert_certbot_csr_cn }}/privkey.pem"
+    cert_certbot_csr_file: ""
+    cert_certbot_crt_file: "{{ cert_certbot_default_certbot_root_dir }}/live/{{ cert_certbot_csr_cn }}/cert.pem"
+    cert_certbot_fullchain_file: "{{ cert_certbot_default_certbot_root_dir }}/live/{{ cert_certbot_csr_cn }}/fullchain.pem"
+    cert_certbot_chain_file: "{{ cert_certbot_default_certbot_root_dir }}/live/{{ cert_certbot_csr_cn }}/chain.pem"
+    cert_certbot_create_cmd: >-
+      /usr/bin/certbot certonly --agree-tos -n -q
+      --email {{ cert_certbot_csr_email_address }}
+      --cert-name {{ cert_certbot_csr_cn }}
+      {% if cert_certbot_csr_san != [] %}
+      {%- for san in cert_certbot_csr_san -%}
+      {{ '-d ' + (san | split(':'))[1] if (san | split(':'))[0] | lower == 'dns' else '' }}
+      {% endfor %}
+      {%- else -%}
+      -d {{ cert_certbot_csr_cn }}
+      {% endif %}
+      {{ cert_certbot_plugins[cert_certbot_useplugin] }}
+      {% if cert_certbot_default_certbot_deployhook_reloadservices != [] %}
+      --deploy-hook "systemctl reload {{ cert_certbot_deployhook_reloadservices | join(' ') }}"
+      {% endif %}
+      --expand
+    cert_certbot_renew_cmd: >-
+      /usr/bin/certbot renew --agree-tos -n -q
+      --cert-name {{ cert_certbot_csr_cn }}
+      {% if cert_certbot_default_certbot_deployhook_reloadservices != [] %}
+      --deploy-hook "systemctl reload {{ cert_certbot_deployhook_reloadservices | join(' ') }}"
+      {% endif %}
+    # defaults
+    cert_certbot_default_csr_san:
+      - 'DNS:{{ certlist_certbot_item.csr_cn | default(cert_certbot_default_csr_cn) }}'
+    # files
+    cert_certbot_owner: '{{ certlist_certbot_item.owner | default(cert_certbot_default_owner) }}'
+    cert_certbot_group: '{{ certlist_certbot_item.group | default(cert_certbot_default_group) }}'
+    cert_certbot_file_mode: '{{ certlist_certbot_item.file_mode | default(cert_certbot_default_file_mode) }}'
+    cert_certbot_dir_mode: '{{ certlist_certbot_item.dir_mode | default(cert_certbot_default_dir_mode) }}'
+    # csr
+    cert_certbot_csr_organizational_unit_name: '{{ certlist_certbot_item.csr_organizational_unit_name | default(cert_certbot_default_csr_organizational_unit_name) }}'
+    cert_certbot_csr_organization_name: '{{ certlist_certbot_item.csr_organization_name | default(cert_certbot_default_csr_organization_name) }}'
+    cert_certbot_csr_locality_name: '{{ certlist_certbot_item.csr_locality_name | default(cert_certbot_default_csr_locality_name) }}'
+    cert_certbot_csr_country_name: '{{ certlist_certbot_item.csr_country_name | default(cert_certbot_default_csr_country_name) }}'
+    cert_certbot_csr_email_address: '{{ certlist_certbot_item.csr_email_address | default(cert_certbot_default_csr_email_address) }}'
+    cert_certbot_csr_cn: '{{ certlist_certbot_item.csr_cn | default(cert_certbot_default_csr_cn) }}'
+    cert_certbot_csr_san: '{{ certlist_certbot_item.csr_san | default(cert_certbot_default_csr_san) }}'
+    cert_certbot_csr_key_usage: '{{ certlist_certbot_item.csr_key_usage | default(cert_certbot_default_csr_key_usage) }}'
+    cert_certbot_csr_extended_key_usage: '{{ certlist_certbot_item.csr_extended_key_usage | default(cert_certbot_default_csr_extended_key_usage) }}'
+    # fetch
+    cert_certbot_fetch_dir: '{{ certlist_certbot_item.fetch_dir | default(cert_certbot_default_fetch_dir) }}'
+    cert_certbot_fetch_crt: '{{ certlist_certbot_item.fetch_crt | default(cert_certbot_default_fetch_crt) }}'
+    cert_certbot_fetch_csr: '{{ certlist_certbot_item.fetch_csr | default(cert_certbot_default_fetch_csr) }}'
+    cert_certbot_fetch_key: '{{ certlist_certbot_item.fetch_key | default(cert_certbot_default_fetch_key) }}'
+    # misc
+    cert_certbot_force: "{{ cert_certbot_default_force }}"
+    cert_certbot_notify: '{{ certlist_certbot_item.notify | default(cert_certbot_default_notify) }}'
+    # key
+    cert_certbot_key_size: '{{ certlist_certbot_item.key_size | default(cert_certbot_default_key_size) }}'
+    cert_certbot_key_type: '{{ certlist_certbot_item.key_type | default(cert_certbot_default_key_type) }}'
+    cert_certbot_key_force: '{{ certlist_certbot_item.key_force | default(false) }}'
+
+- name: 10 Reset to defaults
+  ansible.builtin.set_fact:
+    cert_certbot_key_result: {}
+    cert_certbot_csr_result: {}
+    cert_certbot_crt_result: {}
+    cert_certbot_crt_info: {}
+    cert_certbot_result: {}
+
+- name: 10 Stat crt {{ cert_certbot_csr_cn }}
+  ansible.builtin.stat:
+    path: "{{ cert_certbot_crt_file }}"
+  register: cert_certbot_crt_stat
+
+- name: 10 Get crt info {{ cert_certbot_csr_cn }}
+  community.crypto.x509_certificate_info:
+    path: "{{ cert_certbot_crt_file }}"
+    valid_at:
+      tendays: "+10d"
+  register: cert_certbot_crt_info
+  when: cert_certbot_crt_stat.stat.exists
+
+- name: 10 Checking the issue conditions
+  when: cert_certbot_csr_cn != ''
+  ### block start
+  block:
+    - name: 10 if certbot {{ cert_certbot_csr_cn }}
+      ansible.builtin.set_fact:
+        cert_certbot_issue: true
+        cert_certbot_issue_msg: "issue certificate by certbot"
+      when:
+        - cert_certbot_provider == "certbot"
+        - cert_certbot_issue is false
+
+    - name: 10 if csronly {{ cert_certbot_csr_cn }}
+      ansible.builtin.set_fact:
+        cert_certbot_issue: true
+        cert_certbot_issue_msg: "Create CSR only"
+      when:
+        - cert_certbot_provider == "csronly"
+        - cert_certbot_issue is false
+
+    - name: 10 if forced {{ cert_certbot_csr_cn }}
+      ansible.builtin.set_fact:
+        cert_certbot_issue: true
+        cert_certbot_issue_msg: "issue certificate forced"
+      when:
+        - cert_certbot_force
+        - cert_certbot_issue is false
+
+    - name: 10 if crt file does not exists {{ cert_certbot_csr_cn }}
+      ansible.builtin.set_fact:
+        cert_certbot_issue: true
+        cert_certbot_issue_msg: "issue certificate, crt file does not exists"
+      when:
+        - not cert_certbot_crt_stat.stat.exists
+        - cert_certbot_issue is false
+
+    - name: 10 if not valid in 10 days {{ cert_certbot_csr_cn }}
+      ansible.builtin.set_fact:
+        cert_certbot_issue: true
+        cert_certbot_issue_msg: "issue certificate, expire in 10 days"
+      when:
+        - not cert_certbot_crt_info.valid_at.tendays | default(false)
+        - cert_certbot_issue is false
+
+    - name: 10 if SAN differs {{ cert_certbot_csr_cn }}
+      ansible.builtin.set_fact:
+        cert_certbot_issue: true
+        cert_certbot_issue_msg: "issue certificate, SAN are differ"
+      when:
+        - cert_certbot_csr_san | default(cert_certbot_default_csr_san) | sort | lower != cert_certbot_crt_info.subject_alt_name | default([]) | sort | lower
+        - cert_certbot_issue is false
+  ### block end
+
+- name: 135 set facts
+  register: cert_certbot_result
+  ansible.builtin.set_fact:
+
+- name: 135 Get crt info {{ cert_certbot_csr_cn }}
+  community.crypto.x509_certificate_info:
+    path: "{{ cert_certbot_crt_file }}"
+    valid_at:
+      tendays: "+10d"
+  register: cert_certbot_crt_info
+  when: cert_certbot_crt_stat.stat.exists
+
+- name: 135 if SAN differs {{ cert_certbot_csr_cn }}
+  ansible.builtin.set_fact:
+    cert_certbot_issue_msg: "issue certificate, SAN are differ"
+    cert_certbot_force: true
+  when:
+    - cert_certbot_csr_san | default(cert_certbot_default_csr_san) | sort | lower != cert_certbot_crt_info.subject_alt_name | default([]) | sort | lower
+
+- name: 135 Check 80/tcp
+  ansible.builtin.wait_for:
+    host: "{{ ansible_host }}" # Or specify a different host if checking from another machine
+    port: 80
+    state: started # Ensures the port is listening
+    delay: 3 # Maximum time to wait in seconds
+    timeout: 5 # Maximum time to wait in seconds
+  register: cert_certbot_result
+  ignore_errors: true
+
+- name: 135 use webroot if port 80/tcp is listen
+  ansible.builtin.set_fact:
+    cert_certbot_useplugin: standalone
+  when: cert_certbot_result.failed
+
+# - name: 135 certbot certonly {{ cert_certbot_csr_cn }}
+#   ansible.builtin.command:
+#     cmd: "{{ cert_certbot_create_cmd }}"
+#     creates: "{{ cert_certbot_fullchain_file if not cert_certbot_force else '' }}"
+#   register: cert_certbot_result
+#   notify: "{{ cert_certbot_notify }}"
+
+# - name: 135 renew cron job
+#   ansible.builtin.cron:
+#     name: "renew {{ cert_certbot_csr_cn }}"
+#     weekday: "*"
+#     minute: "*"
+#     hour: "5"
+#     user: root
+#     job: "{{ cert_certbot_renew_cmd }}"
+#     cron_file: "cert_certbot_renew"
+#     disabled: false
+
+- debug:
+    msg:
+      - "{{ cert_certbot_create_cmd }}"
+      - "{{ cert_certbot_renew_cmd }}"
+      - "{{ cert_certbot_fetch_crt }}"
+      - "{{ cert_certbot_fetch_csr }}"
+      - "{{ cert_certbot_fetch_key }}"
+
+- name: 190 Fetch crt {{ cert_certbot_csr_cn }}
+  delegate_to: localhost
+  ansible.builtin.copy:
+    mode: "{{ cert_certbot_default_file_mode }}"
+    content: "{{ cert_certbot_crt_result.certificate }}"
+    dest: "{{ cert_certbot_fetch_dir }}/{{ cert_certbot_csr_cn }}.crt"
+    backup: true
+  when: cert_certbot_fetch_crt
+
+- name: 190 Fetch csr {{ cert_certbot_csr_cn }}
+  delegate_to: localhost
+  ansible.builtin.copy:
+    mode: "{{ cert_certbot_default_file_mode }}"
+    content: "{{ cert_certbot_csr_result.csr }}"
+    dest: "{{ cert_certbot_fetch_dir }}/{{ cert_certbot_csr_cn }}.csr"
+    backup: true
+  when: cert_certbot_fetch_csr
+
+- name: 190 Fetch key {{ cert_certbot_csr_cn }}
+  delegate_to: localhost
+  ansible.builtin.copy:
+    mode: "{{ cert_certbot_default_file_mode }}"
+    content: "{{ cert_certbot_key_result.privatekey }}"
+    dest: "{{ cert_certbot_fetch_dir }}/{{ cert_certbot_csr_cn }}.key"
+    backup: true
+  when: cert_certbot_fetch_key

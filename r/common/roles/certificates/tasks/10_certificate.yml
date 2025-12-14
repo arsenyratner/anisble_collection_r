@@ -1,4 +1,4 @@
-- name: Set facts
+- name: 10 Set facts
   ansible.builtin.set_fact:
     # defaults
     certificates_default_csr_san:

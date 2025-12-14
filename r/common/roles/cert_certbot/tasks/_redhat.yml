@@ -1,0 +1,4 @@
+- name: install packages
+  ansible.builtin.dnf:
+    name: "{{ cert_certbot_packages }}"
+    state: present

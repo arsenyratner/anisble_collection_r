@@ -1,0 +1,4 @@
+- name: Install packages
+  community.general.pkgng:
+    name: "{{ cert_certbot_packages }}"
+    state: present

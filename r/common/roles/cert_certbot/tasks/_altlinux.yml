@@ -1,0 +1,5 @@
+- name: install packages
+  community.general.apt_rpm:
+    pkg: "{{ cert_certbot_packages }}"
+    state: present_not_latest
+    update_cache: true

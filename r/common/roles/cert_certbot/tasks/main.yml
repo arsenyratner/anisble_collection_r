@@ -1,0 +1,29 @@
+# - name: Distribution specific variables
+#   ansible.builtin.include_vars: "{{ cert_certbot_item }}"
+#   with_first_found:
+#     - "_{{ ansible_distribution | lower }}-{{ ansible_distribution_version | lower }}.yml"
+#     - "_{{ ansible_distribution | lower }}.yml"
+#     - "_{{ ansible_os_family | lower }}.yml"
+#   ignore_errors: true
+#   failed_when: false
+#   loop_control:
+#     loop_var: cert_certbot_item
+
+# - name: Distribution specific tasks
+#   ansible.builtin.include_tasks:
+#     file: "{{ cert_certbot_item }}"
+#   with_first_found:
+#     - "_{{ ansible_distribution | lower }}-{{ ansible_distribution_version | lower }}.yml"
+#     - "_{{ ansible_distribution | lower }}.yml"
+#     - "_{{ ansible_os_family | lower }}.yml"
+#   ignore_errors: true
+#   loop_control:
+#     loop_var: cert_certbot_item
+
+- name: Isuue certificates 
+  ansible.builtin.include_tasks:
+    file: "certbot"
+  loop: "{{ cert_certbot_list }}"
+  loop_control:
+    loop_var: certbot_item
+    label: "{{ cert_certbot_item.csr_cn }}"

@@ -13,7 +13,7 @@
         state: directory
         path: "{{ server.root }}"
 
-    - name: "index.html {{ server.root }}"
+    - name: "index.html"
       ansible.builtin.copy:
         owner: root
         group: root

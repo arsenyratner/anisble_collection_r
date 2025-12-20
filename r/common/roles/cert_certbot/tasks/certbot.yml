@@ -86,7 +86,7 @@
       -d {{ cert_certbot_cn }}
       {% endif %}
       {{ cert_certbot_plugins[cert_certbot_useplugin] }}
-      {% if cert_certbot_default_certbot_deployhook_reloadservices != [] %}
+      {% if cert_certbot_default_reloadservices != [] %}
       --deploy-hook "systemctl reload {{ cert_certbot_deployhook_reloadservices | join(' ') }}"
       {% endif %}
       --expand
@@ -94,7 +94,7 @@
       /usr/bin/certbot renew --agree-tos -n -q
       --cert-name {{ cert_certbot_cn }}
       {{ cert_certbot_plugins['webroot'] }}
-      {% if cert_certbot_default_certbot_deployhook_reloadservices != [] %}
+      {% if cert_certbot_default_reloadservices != [] %}
       --deploy-hook "systemctl reload {{ cert_certbot_deployhook_reloadservices | join(' ') }}"
       {% endif %}
 

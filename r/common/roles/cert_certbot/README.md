@@ -52,8 +52,5 @@ cert_certbot_default_reloadservices: []
 cert_certbot_default_key_size: 2048
 cert_certbot_default_key_type: RSA
 
-cert_certbot_default_certbot_root_dir: "/etc/letsencrypt"
-cert_certbot_default_certbot_useplugin: webroot
-cert_certbot_default_certbot_deployhook_reloadservices: []
 
 ```

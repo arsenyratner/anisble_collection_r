@@ -41,4 +41,3 @@ cert_certbot_default_reloadservices: []
 
 cert_certbot_default_key_size: 2048
 cert_certbot_default_key_type: RSA
-

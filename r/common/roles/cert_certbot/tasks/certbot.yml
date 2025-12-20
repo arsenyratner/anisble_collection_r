@@ -20,7 +20,7 @@
   register: cert_certbot_crt_info
   when: cert_certbot_crt_stat.stat.exists
 
-- name: Checking the issue conditions
+- name: Set cert_certbot_issue to true if
   when: cert_certbot_cn != ''
   ### block start
   block:
@@ -63,7 +63,7 @@
     host: "{{ ansible_host }}" # Or specify a different host if checking from another machine
     port: 80
     state: started # Ensures the port is listening
-    delay: 3 # Maximum time to wait in seconds
+    delay: 1 # start check after delay
     timeout: 5 # Maximum time to wait in seconds
   register: cert_certbot_result
   ignore_errors: true
@@ -73,7 +73,7 @@
     cert_certbot_useplugin: standalone
   when: cert_certbot_result.failed
 
-- name: reset vars
+- name: set command line
   ansible.builtin.set_fact:
     cert_certbot_create_cmd: >-
       /usr/bin/certbot certonly --agree-tos -n -q
@@ -87,16 +87,16 @@
       -d {{ cert_certbot_cn }}
       {% endif %}
       {{ cert_certbot_plugins[cert_certbot_useplugin] }}
-      {% if cert_certbot_default_reloadservices != [] %}
-      --deploy-hook "systemctl reload {{ cert_certbot_deployhook_reloadservices | join(' ') }}"
+      {% if cert_certbot_reloadservices | default(cert_certbot_default_reloadservices) != [] %}
+      --deploy-hook "systemctl reload {{ cert_certbot_reloadservices | join(' ') }}"
       {% endif %}
       --expand
     cert_certbot_renew_cmd: >-
       /usr/bin/certbot renew --agree-tos -n -q
       --cert-name {{ cert_certbot_cn }}
       {{ cert_certbot_plugins['webroot'] }}
-      {% if cert_certbot_default_reloadservices != [] %}
-      --deploy-hook "systemctl reload {{ cert_certbot_deployhook_reloadservices | join(' ') }}"
+      {% if cert_certbot_reloadservices | default(cert_certbot_default_reloadservices) != [] %}
+      --deploy-hook "systemctl reload {{ cert_certbot_reloadservices | join(' ') }}"
       {% endif %}
 
 - name: certbot certonly {{ cert_certbot_cn }}

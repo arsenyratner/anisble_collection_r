@@ -53,6 +53,7 @@
         cert_certbot_issue: true
         cert_certbot_issue_msg: "issue certificate, SAN are differ"
       when:
+        - cert_certbot_san | default(cert_certbot_default_san) != []
         - cert_certbot_san | default(cert_certbot_default_san) | sort | lower != cert_certbot_crt_info.subject_alt_name | default([]) | sort | lower
         - cert_certbot_issue is false
   ### block end

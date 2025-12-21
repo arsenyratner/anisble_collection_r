@@ -1,0 +1,89 @@
+- name: 135 Create dirs
+  ansible.builtin.file:
+    state: directory
+    path: "{{ cert_ownca_dir.path }}"
+    owner: "{{ cert_ownca_owner }}"
+    group: "{{ cert_ownca_group }}"
+    mode: "{{ cert_ownca_dir_mode }}"
+  loop: "{{ cert_ownca_dirs }}"
+  loop_control:
+    loop_var: cert_ownca_dir
+
+- name: 135 Create key {{ cert_ownca_csr_cn }}
+  community.crypto.openssl_privatekey:
+    force: "{{cert_ownca_key_force }}"
+    owner: "{{ cert_ownca_owner }}"
+    group: "{{ cert_ownca_group }}"
+    mode: '0600'
+    path: "{{ cert_ownca_key_file }}"
+    size: "{{ cert_ownca_key_size }}"
+    type: "{{ cert_ownca_key_type }}"
+    return_content: true
+    backup: true
+  register: cert_ownca_key_result
+  when: cert_ownca_key_file != ""
+
+- name: 135 Create csr {{ cert_ownca_csr_cn }}
+  community.crypto.openssl_csr:
+    privatekey_path: "{{ cert_ownca_key_file }}"
+    common_name: "{{ cert_ownca_csr_cn }}"
+    subject_alt_name: "{{ cert_ownca_csr_san }}"
+    organizational_unit_name: "{{ cert_ownca_csr_organizational_unit_name }}"
+    organization_name: "{{ cert_ownca_csr_organization_name }}"
+    locality_name: "{{ cert_ownca_csr_locality_name }}"
+    country_name: "{{ cert_ownca_csr_country_name }}"
+    email_address: "{{ cert_ownca_csr_email_address }}"
+    key_usage: "{{ cert_ownca_csr_key_usage }}"
+    extended_key_usage: "{{ cert_ownca_csr_extended_key_usage }}"
+    path: "{{ cert_ownca_csr_file }}"
+    return_content: true
+  register: cert_ownca_csr_result
+  changed_when: false
+  when: cert_ownca_csr_file != ""
+
+- name: 135 Create crt and sign {{ cert_ownca_csr_cn }}
+  delegate_to: "{{ cert_ownca_ca_host }}"
+  community.crypto.x509_certificate:
+    path: "{{ cert_ownca_ca_root_dir }}/pki/crt/{{ cert_ownca_csr_cn }}.crt"
+    csr_content: "{{ cert_ownca_csr_result.csr }}"
+    ownca_path: "{{ cert_ownca_ca_cacert }}"
+    ownca_privatekey_path: "{{ cert_ownca_ca_cakey }}"
+    provider: ownca
+    return_content: true
+    backup: true
+    force: "{{ cert_ownca_force }}"
+  register: cert_ownca_crt_result
+
+- name: 135 save crt {{ cert_ownca_csr_cn }}
+  ansible.builtin.copy:
+    dest: "{{ cert_ownca_crt_file }}"
+    content: "{{ cert_ownca_crt_result.certificate }}"
+    owner: "{{ cert_ownca_owner }}"
+    group: "{{ cert_ownca_group }}"
+    mode: "{{ cert_ownca_file_mode }}"
+    backup: true
+  notify: "{{ cert_ownca_notify }}"
+
+# - name: Complete the certificate chain
+#   community.crypto.certificate_complete_chain:
+#     certificate: "{{ leaf_cert_pem_content }}"
+#     untrusted_certificates: "{{ intermediate_certs_list_of_pem_content }}"
+#     # Optional: root_certificates: "{{ root_certs_list_of_pem_content }}"
+#     dest: "/path/to/fullchain.pem"
+
+# - name: Find root certificate
+#   community.crypto.certificate_complete_chain:
+#     input_chain: "{{ lookup('ansible.builtin.file', '/etc/ssl/csr/www.ansible.com.pem') }}"
+#     intermediate_certificates:
+#       - /etc/ssl/csr/www.ansible.com-chain.pem
+#     root_certificates:
+#       - /etc/ca-certificates/
+#   register: www_ansible_com
+# - name: Write complete chain to disk
+#   ansible.builtin.copy:
+#     dest: /etc/ssl/csr/www.ansible.com-completechain.pem
+#     content: "{{ ''.join(www_ansible_com.complete_chain) }}"
+# - name: Write root chain (intermediates and root) to disk
+#   ansible.builtin.copy:
+#     dest: /etc/ssl/csr/www.ansible.com-rootchain.pem
+#     content: "{{ ''.join(www_ansible_com.chain) }}"

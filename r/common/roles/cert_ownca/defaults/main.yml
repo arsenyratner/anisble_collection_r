@@ -1,0 +1,94 @@
+cert_ownca_list: []
+  #   - csr_cn: "{{ inventory_hostname }}"
+  #     csr_san:
+  #       - "DNS:{{ inventory_hostname }}"
+  #       - "DNS:prx.r.ratners.ru"
+  #   - csr_cn: "prx.r.ratners.ru"
+  #   - csr_cn: "aaa.r.ratners.ru"
+  #     provider: certbot
+  #   - csr_cn: "bbb.r.ratners.ru"
+  #     csr_san:
+  #       - "DNS:{{ inventory_hostname }}"  # certbot:
+  #   - csr_cn: csr_cn1.certbot.cert_ownca_list
+
+cert_ownca_default_owner: root
+cert_ownca_default_group: root
+cert_ownca_default_file_mode: '0644'
+cert_ownca_default_dir_mode: '0755'
+cert_ownca_force: false
+cert_ownca_issue: false
+cert_ownca_issue_msg: skip certificate issue
+
+cert_ownca_root_dir: "/usr/local/etc/pki"
+
+cert_ownca_default_csr_organizational_unit_name: "IT"
+cert_ownca_default_csr_organization_name: "R"
+cert_ownca_default_csr_locality_name: "MSK"
+cert_ownca_default_csr_country_name: "RU"
+cert_ownca_default_csr_email_address: "arsenyratner@gmail.com"
+cert_ownca_default_csr_san: []
+
+cert_ownca_default_fetch_dir: "files/pki/{{ inventory_hostname }}"
+cert_ownca_default_fetch_crt: false
+cert_ownca_default_fetch_csr: false
+cert_ownca_default_fetch_key: false
+cert_ownca_default_notify: []
+
+cert_ownca_default_key_size: 2048
+cert_ownca_default_key_type: RSA
+
+cert_ownca_default_ca_host: "localhost"
+cert_ownca_default_ca_root_dir: "/opt/ca/localhost"
+cert_ownca_default_ca_cacert: "{{ cert_ownca_default_ca_root_dir }}/localhost.crt"
+cert_ownca_default_ca_cakey: "{{ cert_ownca_default_ca_root_dir }}/localhost.key"
+
+cert_ownca_default_csr_key_usage:
+  # (цифровая подпись)
+  - digitalSignature
+  # (неотказуемость, используется в основном для электронной почты и электронного документооборота)
+  # - nonRepudiation
+  # (шифрование ключа, используется для обмена сессионными ключами, например в старых версиях TLS)
+  # - keyEncipherment
+  # (шифрование данных, прямое шифрование пользовательских данных)
+  # - dataEncipherment
+  # (подпись сертификатов, необходимо для удостоверяющих центров/CA)
+  # - keyCertSign
+  # (подпись списков отзыва сертификатов, необходимо для управления списками CRL)
+  # - cRLSign
+  # (согласование ключа, используется в алгоритмах, таких как Диффи-Хеллман, для генерации общего секрета)
+  # - keyAgreement
+  # (только шифрование, используется только в сочетании с keyAgreement)
+  # - encipherOnly
+  # (только расшифрование, используется только в сочетании с keyAgreement)
+  # - decipherOnly
+cert_ownca_default_csr_extended_key_usage:
+  # (Аутентификация сервера TLS)
+  - serverAuth
+  # (Аутентификация клиента TLS)
+  # - clientAuth
+  # (Подпись кода)
+  # - codeSigning
+  # (Защита электронной почты)
+  # - emailProtection
+  # (Штамп времени)
+  # - timeStamping
+  # (Подпись OCSP)
+  # - ocspSigning
+  # (Конечная система IPSec)
+  # - ipsecEndSystem
+  # (Туннель IPSec)
+  # - ipsecTunnel
+  # (Пользователь IPSec)
+  # - ipsecUser
+  # (Биометрическая информация)
+  # - biometricInfo
+  # (Система управления распределенными версиями)
+  # - dvcs
+  # (Авторизация сервера SGBP)
+  # - sbgpCertAAServerAuth
+  # (Протокол проверки состояния сертификата)
+  # - scvpServer
+  # (EAP через PPP)
+  # - eapOverPPP
+  # (EAP через LAN)
+  # - eapOverLAN

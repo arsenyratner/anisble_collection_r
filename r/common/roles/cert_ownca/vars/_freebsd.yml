@@ -1,0 +1,5 @@
+cert_ownca_packages:
+  - openssl
+  - py311-cryptography
+cert_ownca_default_owner: root
+cert_ownca_default_group: wheel

@@ -1,0 +1,3 @@
+cert_ownca_packages:
+  - openssl
+  - python3-cryptography

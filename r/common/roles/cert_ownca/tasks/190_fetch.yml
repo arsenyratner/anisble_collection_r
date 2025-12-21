@@ -1,0 +1,32 @@
+- debug:
+    msg:
+      - "{{ cert_ownca_fetch_crt }}"
+      - "{{ cert_ownca_fetch_csr }}"
+      - "{{ cert_ownca_fetch_key }}"
+
+- name: 190 Fetch crt {{ cert_ownca_csr_cn }}
+  delegate_to: localhost
+  ansible.builtin.copy:
+    mode: "{{ cert_ownca_default_file_mode }}"
+    content: "{{ cert_ownca_crt_result.certificate }}"
+    dest: "{{ cert_ownca_fetch_dir }}/{{ cert_ownca_csr_cn }}.crt"
+    backup: true
+  when: cert_ownca_fetch_crt
+
+- name: 190 Fetch csr {{ cert_ownca_csr_cn }}
+  delegate_to: localhost
+  ansible.builtin.copy:
+    mode: "{{ cert_ownca_default_file_mode }}"
+    content: "{{ cert_ownca_csr_result.csr }}"
+    dest: "{{ cert_ownca_fetch_dir }}/{{ cert_ownca_csr_cn }}.csr"
+    backup: true
+  when: cert_ownca_fetch_csr
+
+- name: 190 Fetch key {{ cert_ownca_csr_cn }}
+  delegate_to: localhost
+  ansible.builtin.copy:
+    mode: "{{ cert_ownca_default_file_mode }}"
+    content: "{{ cert_ownca_key_result.privatekey }}"
+    dest: "{{ cert_ownca_fetch_dir }}/{{ cert_ownca_csr_cn }}.key"
+    backup: true
+  when: cert_ownca_fetch_key

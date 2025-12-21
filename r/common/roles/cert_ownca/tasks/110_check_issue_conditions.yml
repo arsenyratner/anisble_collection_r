@@ -1,0 +1,56 @@
+- name: 110 Reset to defaults
+  ansible.builtin.set_fact:
+    cert_ownca_key_result: {}
+    cert_ownca_csr_result: {}
+    cert_ownca_crt_result: {}
+    cert_ownca_crt_info: {}
+    cert_ownca_result: {}
+
+- name: 110 Stat crt {{ cert_ownca_csr_cn }}
+  ansible.builtin.stat:
+    path: "{{ cert_ownca_crt_file }}"
+  register: cert_ownca_crt_stat
+
+- name: 110 Get crt info {{ cert_ownca_csr_cn }}
+  community.crypto.x509_certificate_info:
+    path: "{{ cert_ownca_crt_file }}"
+    valid_at:
+      tendays: "+10d"
+  register: cert_ownca_crt_info
+  when: cert_ownca_crt_stat.stat.exists
+
+- name: 110 Checking the issue conditions
+  ### block start
+  block:
+    - name: 110 if forced {{ cert_ownca_csr_cn }}
+      ansible.builtin.set_fact:
+        cert_ownca_issue: true
+        cert_ownca_issue_msg: "issue certificate forced"
+      when:
+        - cert_ownca_force
+        - cert_ownca_issue is false
+
+    - name: 110 if crt file does not exists {{ cert_ownca_csr_cn }}
+      ansible.builtin.set_fact:
+        cert_ownca_issue: true
+        cert_ownca_issue_msg: "issue certificate, crt file does not exists"
+      when:
+        - not cert_ownca_crt_stat.stat.exists
+        - cert_ownca_issue is false
+
+    - name: 110 if not valid in 10 days {{ cert_ownca_csr_cn }}
+      ansible.builtin.set_fact:
+        cert_ownca_issue: true
+        cert_ownca_issue_msg: "issue certificate, expire in 10 days"
+      when:
+        - not cert_ownca_crt_info.valid_at.tendays | default(false)
+        - cert_ownca_issue is false
+
+    - name: 110 if SAN differs {{ cert_ownca_csr_cn }}
+      ansible.builtin.set_fact:
+        cert_ownca_issue: true
+        cert_ownca_issue_msg: "issue certificate, SAN are differ"
+      when:
+        - cert_ownca_csr_san | default(cert_ownca_default_csr_san) | sort | lower != cert_ownca_crt_info.subject_alt_name | default([]) | sort | lower
+        - cert_ownca_issue is false
+  ### block end

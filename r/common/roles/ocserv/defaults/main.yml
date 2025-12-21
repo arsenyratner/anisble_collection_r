@@ -1,4 +1,4 @@
-ocserv_fqdn: "{{ ansible_nodename }}"
+ocserv_fqdn: "{{ inventory_hostname }}"
 ocserv_conf_dir: "/etc/ocserv"
 ocserv_configpergroup_dir: "{{ ocserv_conf_dir }}/group.d"
 ocserv_configperuser_dir: "{{ ocserv_conf_dir }}/user.d"

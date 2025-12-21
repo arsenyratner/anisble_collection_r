@@ -1,0 +1,41 @@
+# - name: Distribution specific variables
+#   ansible.builtin.include_vars: "{{ cert_ownca_item }}"
+#   with_first_found:
+#     - "_{{ ansible_distribution | lower }}-{{ ansible_distribution_version | lower }}.yml"
+#     - "_{{ ansible_distribution | lower }}.yml"
+#     - "_{{ ansible_os_family | lower }}.yml"
+#   ignore_errors: true
+#   failed_when: false
+#   loop_control:
+#     loop_var: cert_ownca_item
+
+# - name: Distribution specific tasks
+#   ansible.builtin.include_tasks:
+#     file: "{{ cert_ownca_item }}"
+#   with_first_found:
+#     - "_{{ ansible_distribution | lower }}-{{ ansible_distribution_version | lower }}.yml"
+#     - "_{{ ansible_distribution | lower }}.yml"
+#     - "_{{ ansible_os_family | lower }}.yml"
+#   ignore_errors: true
+#   loop_control:
+#     loop_var: cert_ownca_item
+
+- name: Isuue certificates
+  ansible.builtin.include_tasks:
+    file: "010_certificate.yml"
+  loop: "{{ cert_ownca_list }}"
+  loop_control:
+    loop_var: cert_ownca_item
+    label: "{{ cert_ownca_item.csr_cn }}"
+  vars:
+    cert_ownca_default_csr_san:
+      - 'DNS:{{ cert_ownca_item.csr_cn }}'
+    cert_ownca_default_key_file:       "{{ cert_ownca_root_dir }}/{{ cert_ownca_item.csr_cn }}/{{ cert_ownca_item.csr_cn }}.key"
+    cert_ownca_default_csr_file:       "{{ cert_ownca_root_dir }}/{{ cert_ownca_item.csr_cn }}/{{ cert_ownca_item.csr_cn }}.csr"
+    cert_ownca_default_crt_file:       "{{ cert_ownca_root_dir }}/{{ cert_ownca_item.csr_cn }}/{{ cert_ownca_item.csr_cn }}.crt"
+    cert_ownca_default_fullchain_file: "{{ cert_ownca_root_dir }}/{{ cert_ownca_item.csr_cn }}/{{ cert_ownca_item.csr_cn }}-fullchain.pem"
+    cert_ownca_default_chain_file:     "{{ cert_ownca_root_dir }}/{{ cert_ownca_item.csr_cn }}/{{ cert_ownca_item.csr_cn }}-chain.pem"
+    cert_ownca_default_pfx_file:       "{{ cert_ownca_root_dir }}/{{ cert_ownca_item.csr_cn }}/{{ cert_ownca_item.csr_cn }}.pfx"
+  when:
+    - cert_ownca_list != []
+    - cert_ownca_item.csr_cn is defined

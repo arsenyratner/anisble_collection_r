@@ -1,0 +1,64 @@
+- name: 010 Set facts
+  ansible.builtin.set_fact:
+    # dirs
+    cert_ownca_dirs:
+      - path: "{{ cert_ownca_root_dir }}"
+      - path: "{{ cert_ownca_root_dir }}"
+    # files
+    cert_ownca_owner: '{{ cert_ownca_item.owner | default(cert_ownca_default_owner) }}'
+    cert_ownca_group: '{{ cert_ownca_item.group | default(cert_ownca_default_group) }}'
+    cert_ownca_file_mode: '{{ cert_ownca_item.file_mode | default(cert_ownca_default_file_mode) }}'
+    cert_ownca_dir_mode: '{{ cert_ownca_item.dir_mode | default(cert_ownca_default_dir_mode) }}'
+    cert_ownca_key_file: '{{ cert_ownca_item.key_file | default(cert_ownca_default_key_file) }}'
+    cert_ownca_csr_file: '{{ cert_ownca_item.csr_file | default(cert_ownca_default_csr_file) }}'
+    cert_ownca_crt_file: '{{ cert_ownca_item.crt_file | default(cert_ownca_default_crt_file) }}'
+    cert_ownca_fullchain_file: '{{ cert_ownca_item.fullchain_file | default(cert_ownca_default_fullchain_file) }}'
+    cert_ownca_chain_file: '{{ cert_ownca_item.chain_file | default(cert_ownca_default_chain_file) }}'
+    cert_ownca_pfx_file: '{{ cert_ownca_item.pfx_file | default(cert_ownca_default_pfx_file) }}'
+    # csr
+    cert_ownca_csr_organizational_unit_name: '{{ cert_ownca_item.csr_organizational_unit_name | default(cert_ownca_default_csr_organizational_unit_name) }}'
+    cert_ownca_csr_organization_name: '{{ cert_ownca_item.csr_organization_name | default(cert_ownca_default_csr_organization_name) }}'
+    cert_ownca_csr_locality_name: '{{ cert_ownca_item.csr_locality_name | default(cert_ownca_default_csr_locality_name) }}'
+    cert_ownca_csr_country_name: '{{ cert_ownca_item.csr_country_name | default(cert_ownca_default_csr_country_name) }}'
+    cert_ownca_csr_email_address: '{{ cert_ownca_item.csr_email_address | default(cert_ownca_default_csr_email_address) }}'
+    cert_ownca_csr_cn: '{{ cert_ownca_item.csr_cn }}'
+    cert_ownca_csr_san: '{{ cert_ownca_item.csr_san | default(cert_ownca_default_csr_san) }}'
+    cert_ownca_csr_key_usage: '{{ cert_ownca_item.csr_key_usage | default(cert_ownca_default_csr_key_usage) }}'
+    cert_ownca_csr_extended_key_usage: '{{ cert_ownca_item.csr_extended_key_usage | default(cert_ownca_default_csr_extended_key_usage) }}'
+    # fetch
+    cert_ownca_fetch_dir: '{{ cert_ownca_item.fetch_dir | default(cert_ownca_default_fetch_dir) }}'
+    cert_ownca_fetch_crt: '{{ cert_ownca_item.fetch_crt | default(cert_ownca_default_fetch_crt) }}'
+    cert_ownca_fetch_csr: '{{ cert_ownca_item.fetch_csr | default(cert_ownca_default_fetch_csr) }}'
+    cert_ownca_fetch_key: '{{ cert_ownca_item.fetch_key | default(cert_ownca_default_fetch_key) }}'
+    # misc
+    cert_ownca_force: "{{ cert_ownca_item.force | default(false) }}"
+    cert_ownca_notify: '{{ cert_ownca_item.notify | default(cert_ownca_default_notify) }}'
+    # key
+    cert_ownca_key_size: '{{ cert_ownca_item.key_size | default(cert_ownca_default_key_size) }}'
+    cert_ownca_key_type: '{{ cert_ownca_item.key_type | default(cert_ownca_default_key_type) }}'
+    cert_ownca_key_force: '{{ cert_ownca_item.key_force | default(false) }}'
+    ## CA params
+    cert_ownca_ca_host: '{{ cert_ownca_item.ca_host | default(cert_ownca_default_ca_host) }}'
+    cert_ownca_ca_root_dir: '{{ cert_ownca_item.ca_root_dir | default(cert_ownca_default_ca_root_dir) }}'
+    cert_ownca_ca_cacert: '{{ cert_ownca_item.ca_cacert | default(cert_ownca_default_ca_cacert) }}'
+    cert_ownca_ca_cakey: '{{ cert_ownca_item.ca_cakey | default(cert_ownca_default_ca_cakey) }}'
+
+- name: 010 Checking the issue conditions {{ cert_ownca_csr_cn }}
+  ansible.builtin.include_tasks:
+    file: "110_check_issue_conditions.yml"
+  when: cert_ownca_csr_cn != ''
+  ignore_errors: true
+
+- name: 010 Create certificate {{ cert_ownca_csr_cn }}
+  ansible.builtin.include_tasks:
+    file: "135_provider_ownca.yml"
+  ignore_errors: true
+  when: cert_ownca_issue
+
+- name: 010 Fetch {{ cert_ownca_csr_cn }}
+  ansible.builtin.include_tasks:
+    file: "190_fetch.yml"
+  when: cert_ownca_fetch_crt or
+        cert_ownca_fetch_csr or
+        cert_ownca_fetch_key
+  ignore_errors: true

@@ -1,0 +1,4 @@
+- name: install packages
+  ansible.builtin.dnf:
+    name: "{{ cert_ownca_packages }}"
+    state: present

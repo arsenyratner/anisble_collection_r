@@ -36,6 +36,7 @@
     cert_ownca_default_fullchain_file: "{{ cert_ownca_root_dir }}/{{ cert_ownca_item.csr_cn }}/{{ cert_ownca_item.csr_cn }}-fullchain.pem"
     cert_ownca_default_chain_file:     "{{ cert_ownca_root_dir }}/{{ cert_ownca_item.csr_cn }}/{{ cert_ownca_item.csr_cn }}-chain.pem"
     cert_ownca_default_pfx_file:       "{{ cert_ownca_root_dir }}/{{ cert_ownca_item.csr_cn }}/{{ cert_ownca_item.csr_cn }}.pfx"
+    cert_ownca_default_pfx_pass: ""
   when:
     - cert_ownca_list != []
     - cert_ownca_item.csr_cn is defined

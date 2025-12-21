@@ -1,4 +1,4 @@
-- name: 135 Create dirs
+- name: 120 Create dirs
   ansible.builtin.file:
     state: directory
     path: "{{ cert_ownca_dir.path }}"
@@ -9,7 +9,7 @@
   loop_control:
     loop_var: cert_ownca_dir
 
-- name: 135 Create key {{ cert_ownca_csr_cn }}
+- name: 120 Create key {{ cert_ownca_csr_cn }}
   community.crypto.openssl_privatekey:
     force: "{{cert_ownca_key_force }}"
     owner: "{{ cert_ownca_owner }}"
@@ -23,11 +23,12 @@
   register: cert_ownca_key_result
   when: cert_ownca_key_file != ""
 
-- name: 135 Create csr {{ cert_ownca_csr_cn }}
+- name: 120 Create csr {{ cert_ownca_csr_cn }}
   community.crypto.openssl_csr:
     privatekey_path: "{{ cert_ownca_key_file }}"
     common_name: "{{ cert_ownca_csr_cn }}"
     subject_alt_name: "{{ cert_ownca_csr_san }}"
+    use_common_name_for_san: false
     organizational_unit_name: "{{ cert_ownca_csr_organizational_unit_name }}"
     organization_name: "{{ cert_ownca_csr_organization_name }}"
     locality_name: "{{ cert_ownca_csr_locality_name }}"
@@ -41,7 +42,7 @@
   changed_when: false
   when: cert_ownca_csr_file != ""
 
-- name: 135 Create crt and sign {{ cert_ownca_csr_cn }}
+- name: 120 Create crt and sign {{ cert_ownca_csr_cn }}
   delegate_to: "{{ cert_ownca_ca_host }}"
   community.crypto.x509_certificate:
     path: "{{ cert_ownca_ca_root_dir }}/pki/crt/{{ cert_ownca_csr_cn }}.crt"
@@ -54,10 +55,41 @@
     force: "{{ cert_ownca_force }}"
   register: cert_ownca_crt_result
 
-- name: 135 save crt {{ cert_ownca_csr_cn }}
+- name: 120 save crt {{ cert_ownca_csr_cn }}
   ansible.builtin.copy:
     dest: "{{ cert_ownca_crt_file }}"
     content: "{{ cert_ownca_crt_result.certificate }}"
+    owner: "{{ cert_ownca_owner }}"
+    group: "{{ cert_ownca_group }}"
+    mode: "{{ cert_ownca_file_mode }}"
+    backup: true
+  notify: "{{ cert_ownca_notify }}"
+
+- name: Generate PKCS#12 file
+  delegate_to: "{{ cert_ownca_ca_host }}"
+  community.crypto.openssl_pkcs12:
+    state: present
+    action: export
+    backup: true
+    force: "{{ cert_ownca_force }}"
+    passphrase: "{{ cert_ownca_pfx_pass }}"
+    path: "{{ cert_ownca_ca_root_dir }}/pki/crt/{{ cert_ownca_csr_cn }}.pfx"
+    friendly_name: "{{ cert_ownca_csr_cn }}"
+    privatekey_content: "{{ cert_ownca_key_result.privatekey }}"
+    certificate_content: "{{ cert_ownca_crt_result.certificate }}"
+    other_certificates_parse_all: true
+    other_certificates:
+      - "{{ cert_ownca_ca_cacert }}"
+    return_content: true
+  register: cert_ownca_pfx_result
+  when: 
+    - cert_ownca_pfx_file != ""
+    - cert_ownca_pfx_pass != ""
+- debug: "var=cert_ownca_pfx_result"
+- name: 120 save pfx {{ cert_ownca_csr_cn }}
+  ansible.builtin.copy:
+    dest: "{{ cert_ownca_pfx_file }}"
+    content: "{{ cert_ownca_pfx_result.pkcs12 }}"
     owner: "{{ cert_ownca_owner }}"
     group: "{{ cert_ownca_group }}"
     mode: "{{ cert_ownca_file_mode }}"

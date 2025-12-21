@@ -3,7 +3,7 @@
     # dirs
     cert_ownca_dirs:
       - path: "{{ cert_ownca_root_dir }}"
-      - path: "{{ cert_ownca_root_dir }}"
+      - path: "{{ cert_ownca_root_dir }}/{{ cert_ownca_item.csr_cn }}"
     # files
     cert_ownca_owner: '{{ cert_ownca_item.owner | default(cert_ownca_default_owner) }}'
     cert_ownca_group: '{{ cert_ownca_item.group | default(cert_ownca_default_group) }}'
@@ -15,6 +15,7 @@
     cert_ownca_fullchain_file: '{{ cert_ownca_item.fullchain_file | default(cert_ownca_default_fullchain_file) }}'
     cert_ownca_chain_file: '{{ cert_ownca_item.chain_file | default(cert_ownca_default_chain_file) }}'
     cert_ownca_pfx_file: '{{ cert_ownca_item.pfx_file | default(cert_ownca_default_pfx_file) }}'
+    cert_ownca_pfx_pass: '{{ cert_ownca_item.pfx_pass | default(cert_ownca_default_pfx_pass) }}'
     # csr
     cert_ownca_csr_organizational_unit_name: '{{ cert_ownca_item.csr_organizational_unit_name | default(cert_ownca_default_csr_organizational_unit_name) }}'
     cert_ownca_csr_organization_name: '{{ cert_ownca_item.csr_organization_name | default(cert_ownca_default_csr_organization_name) }}'
@@ -51,7 +52,7 @@
 
 - name: 010 Create certificate {{ cert_ownca_csr_cn }}
   ansible.builtin.include_tasks:
-    file: "135_provider_ownca.yml"
+    file: "120_provider_ownca.yml"
   ignore_errors: true
   when: cert_ownca_issue
 

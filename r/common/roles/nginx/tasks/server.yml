@@ -1,7 +1,7 @@
 # - debug: "var=server.server_name"
 # - debug: "var=server.redirect_to_https"
 
-- name: create server root
+- name: create server root {{ server.server_name }}
   ### block start
   when: server.root is defined
   block:
@@ -26,7 +26,7 @@
       changed_when: false
   ### block end
 
-- name: set default value
+- name: set default value {{ server.server_name }}
   ansible.builtin.set_fact:
     nginx_server_disabled: false
 
@@ -36,15 +36,15 @@
     - server.ssl.key is defined
   ### block start
   block:
-    - name: stat certificate
+    - name: stat certificate {{ server.server_name }}
       ansible.builtin.stat:
         path: "{{ server.ssl.certificate }}"
       register: nginx_server_cert_stat
-    - name: stat key
+    - name: stat key {{ server.server_name }}
       ansible.builtin.stat:
         path: "{{ server.ssl.key }}"
       register: nginx_server_key_stat
-    - name: set server enabled flag
+    - name: set server enabled flag {{ server.server_name }}
       ansible.builtin.set_fact:
         nginx_server_disabled: true
       when:
@@ -52,7 +52,7 @@
         - not nginx_server_key_stat.stat.exists
   ### block end
 
-- name: "site avalable"
+- name: "site avalable {{ server.server_name }}" 
   ansible.builtin.template:
     backup: true
     src: nginx-server.conf
@@ -62,7 +62,7 @@
     mode: '0644'
   notify: Nginx restart
 
-- name: "enable site"
+- name: "enable site {{ server.server_name }}"
   ansible.builtin.file:
     state: link
     src: "{{ nginx_sites_available_dir }}/{{ server.filename | default(server.server_name) }}"
@@ -72,7 +72,7 @@
     - not nginx_server_disabled
   notify: Nginx restart
 
-- name: "disable site"
+- name: "disable site {{ server.server_name }}"
   ansible.builtin.file:
     state: absent
     path: "{{ nginx_sites_enabled_dir }}/{{ server.linkname | default(server.server_name) }}"

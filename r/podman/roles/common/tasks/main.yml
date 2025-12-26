@@ -1,0 +1,16 @@
+- name: Install packages
+  ansible.builtin.package:
+    state: present
+    name: "{{ pdmn_packages }}"
+
+- name: Create dirs
+  ansible.builtin.file:
+    state: directory
+    owner: "{{ pdmn_cmn_item.owner | default(pdmn_default_owner) }}"
+    group: "{{ pdmn_cmn_item.group | default(pdmn_default_group) }}"
+    mode: "{{ pdmn_cmn_item.mode | default(pdmn_default_dir_mode) }}"
+    path: "{{ pdmn_cmn_item.path }}"
+  loop: "{{ pdmn_dirs }}"
+  loop_control:
+    loop_var: pdmn_cmn_item
+    label: "{{ pdmn_cmn_item.path }}"

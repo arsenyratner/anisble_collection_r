@@ -1,0 +1,21 @@
+# pdmn_gcml_
+pdmn_gcml_force: false
+pdmn_gcml_systemd_dir: /etc/systemd/system
+pdmn_gcml_podname: "guacamole"
+pdmn_gcml_podpublish:
+  # hostport:podport
+  - 127.0.0.1:8080:8080
+pdmn_gcml_release: "1.6.0"
+pdmn_gcml_localpath: "{{ pdmn_root_dir }}/{{ pdmn_gcml_podname }}"
+pdmn_gcml_db_name: "{{ pdmn_gcml_podname }}_db"
+pdmn_gcml_db_user: "{{ pdmn_gcml_podname }}_user"
+pdmn_gcml_db_pass: "{{ vault.pdmn_gcml_db_pass }}"
+
+pdmn_gcml_guacamole_image: "docker.io/guacamole/guacamole:{{ pdmn_gcml_release }}"
+pdmn_gcml_guacd_image: "docker.io/guacamole/guacd:{{ pdmn_gcml_release }}"
+pdmn_gcml_db_image: "docker.io/mysql:9.4.0"
+
+pdmn_gcml_pull_images:
+  - "{{ pdmn_gcml_guacamole_image }}"
+  - "{{ pdmn_gcml_guacd_image  }}"
+  - "{{ pdmn_gcml_db_image }}"

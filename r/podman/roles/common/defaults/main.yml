@@ -1,0 +1,11 @@
+pdmn_root_dir: /containers
+pdmn_default_owner: root
+pdmn_default_group: root
+pdmn_default_dir_mode: '0750'
+pdmn_default_file_mode: '0640'
+
+pdmn_packages:
+  - podman
+
+pdmn_dirs:
+  - path: "{{ pdmn_root_dir }}"

@@ -1,3 +1,18 @@
+- name: Get vm_info
+  community.proxmox.proxmox_vm_info:
+    api_user: "{{ createvm_api_user }}"
+    api_password: "{{ createvm_api_password }}"
+    api_token_id: "{{ createvm_api_password }}"
+    api_token_secret: "{{ createvm_api_token_secret }}"
+    api_host: "{{ createvm_api_host }}"
+    node: "{{ createvm_node }}"
+    name: "{{ createvm_name }}"
+    config: current
+  register: vm_info
+  retries: 3
+  delay: 3
+  until: vm_info.failed is false
+
 - name: Full clone
   # async: 0
   community.proxmox.proxmox_kvm:
@@ -15,8 +30,10 @@
     clone: "{{ createvm_template }}"
     storage: "{{ createvm_storage }}"
     format: "{{ createvm_format }}"
-  when: createvm_full is true
-  register: result_newvm
+  register: result_fullclone
+  when: 
+    - createvm_full
+    - vm_info.proxmox_vms == []
 
 - name: Linked clone 
   # async: 0
@@ -33,18 +50,27 @@
     node: "{{ createvm_node }}"
     name: "{{ createvm_name }}"
     clone: "{{ createvm_template }}"
-  when: createvm_full is false
-  register: result_newvm
+  register: result_linkedclone
+  when: 
+    - not createvm_full
+    - vm_info.proxmox_vms == []
+
+- set_fact:
+    createvm_vmid: "{{ 
+          result_linkedclone.vmid if result_linkedclone.vmid is defined else
+          result_fullclone.vmid if result_fullclone.vmid is defined else
+          vm_info.proxmox_vms[0].vmid
+        }}"
 
 - name: Get vm_info
-  community.general.proxmox_vm_info:
+  community.proxmox.proxmox_vm_info:
     api_user: "{{ createvm_api_user }}"
     api_password: "{{ createvm_api_password }}"
     api_token_id: "{{ createvm_api_password }}"
     api_token_secret: "{{ createvm_api_token_secret }}"
     api_host: "{{ createvm_api_host }}"
     node: "{{ createvm_node }}"
-    vmid: "{{ result_newvm.vmid }}"
+    vmid: "{{ createvm_vmid }}"
     config: current
   register: vm_info
   retries: 3
@@ -52,14 +78,14 @@
   until: vm_info.failed is false
 
 - name: Resize disk
-  community.general.proxmox_disk:
+  community.proxmox.proxmox_disk:
     state: resized
     api_user: "{{ createvm_api_user }}"
     api_password: "{{ createvm_api_password }}"
     api_token_id: "{{ createvm_api_password }}"
     api_token_secret: "{{ createvm_api_token_secret }}"
     api_host: "{{ createvm_api_host }}"
-    vmid: "{{ result_newvm.vmid }}"
+    vmid: "{{ createvm_vmid }}"
     disk: "{{ createvm_disk }}"
     size: "{{ createvm_size }}G"
   when: 
@@ -67,13 +93,13 @@
     - createvm_size >= ((vm_info.proxmox_vms[0].maxdisk / (1024 * 1024 * 1024)) | int)
 
 - name: Set nic mac 
-  community.general.proxmox_nic:
+  community.proxmox.proxmox_nic:
     api_user: "{{ createvm_api_user }}"
     api_password: "{{ createvm_api_password }}"
     api_token_id: "{{ createvm_api_password }}"
     api_token_secret: "{{ createvm_api_token_secret }}"
     api_host: "{{ createvm_api_host }}"
-    vmid: "{{ result_newvm.vmid }}"
+    vmid: "{{ createvm_vmid }}"
     interface: "{{ createvm_interface }}"
     bridge: "{{ createvm_bridge }}"
     model: "{{ createvm_model }}"
@@ -84,13 +110,13 @@
     - createvm_mac != ""
 
 - name: Set nic
-  community.general.proxmox_nic:
+  community.proxmox.proxmox_nic:
     api_user: "{{ createvm_api_user }}"
     api_password: "{{ createvm_api_password }}"
     api_token_id: "{{ createvm_api_password }}"
     api_token_secret: "{{ createvm_api_token_secret }}"
     api_host: "{{ createvm_api_host }}"
-    vmid: "{{ result_newvm.vmid }}"
+    vmid: "{{ createvm_vmid }}"
     interface: "{{ createvm_interface }}"
     bridge: "{{ createvm_bridge }}"
     model: "{{ createvm_model }}"
@@ -98,7 +124,7 @@
   when: 
     - createvm_mac is undefined or createvm_mac == omit or createvm_mac == ""
 
-- name: Set CPU, memory
+- name: Set CPU
   community.proxmox.proxmox_kvm:
     update: true
     api_user: "{{ createvm_api_user }}"
@@ -107,14 +133,32 @@
     api_token_secret: "{{ createvm_api_token_secret }}"
     api_host: "{{ createvm_api_host }}"
     node: "{{ createvm_node }}"
-    vmid: "{{ result_newvm.vmid }}"
+    vmid: "{{ createvm_vmid }}"
     cpu: "{{ createvm_cpu | default('host') }}" # cputype=host,flags=
     cores: "{{ createvm_cores }}"
     sockets: "{{ createvm_sockets }}"
+  register: result_cpu
+  when: 
+    - vm_info.proxmox_vms[0].config.cpu != createvm_cpu | default('host') or
+      vm_info.proxmox_vms[0].config.cores | int != createvm_cores | int or
+      vm_info.proxmox_vms[0].config.sockets | int != createvm_sockets | int
+
+- name: Set memory
+  community.proxmox.proxmox_kvm:
+    update: true
+    api_user: "{{ createvm_api_user }}"
+    api_password: "{{ createvm_api_password }}"
+    api_token_id: "{{ createvm_api_password }}"
+    api_token_secret: "{{ createvm_api_token_secret }}"
+    api_host: "{{ createvm_api_host }}"
+    node: "{{ createvm_node }}"
+    vmid: "{{ createvm_vmid }}"
     memory: "{{ createvm_memory }}"
     balloon: "{{ createvm_balloon }}"
-  register: result
-# - debug: "var=result"
+  register: result_memory
+  when:
+    - vm_info.proxmox_vms[0].config.memory | int != createvm_memory | int or
+      vm_info.proxmox_vms[0].config.balloon | int != createvm_balloon | int
 
 - name: Set cloud-init
   community.proxmox.proxmox_kvm:
@@ -124,7 +168,7 @@
     api_token_id: "{{ createvm_api_password }}"
     api_token_secret: "{{ createvm_api_token_secret }}"
     api_host: "{{ createvm_api_host }}"
-    vmid: "{{ result_newvm.vmid }}"
+    vmid: "{{ createvm_vmid }}"
     node: "{{ createvm_node }}"
     citype: "{{ createvm_citype }}"
     ciuser: "{{ createvm_ciuser }}"
@@ -134,9 +178,15 @@
       ipconfig0: '{{ createvm_ipconfig0 }}'
     nameservers: "{{ createvm_nameservers }}"
     searchdomains: "{{ createvm_searchdomains }}"
-  register: result
-# - debug: "var=result"
-# - pause: 
+  register: result_ci
+  when:
+    - vm_info.proxmox_vms[0].config.citype != createvm_citype or
+      vm_info.proxmox_vms[0].config.ciuser != createvm_ciuser or
+      vm_info.proxmox_vms[0].config.ipconfig0 != createvm_ipconfig0 or
+      vm_info.proxmox_vms[0].config.nameserver != createvm_nameservers | join(',') or
+      vm_info.proxmox_vms[0].config.searchdomain != createvm_searchdomains | join(',') or
+      vm_info.proxmox_vms[0].config.sshkeys | urldecode != createvm_sshkeys
+      # vm_info.proxmox_vms[0].config.cipassword != createvm_cipassword or
 
 - name: Set tags 
   community.proxmox.proxmox_kvm:
@@ -147,9 +197,12 @@
     api_token_secret: "{{ createvm_api_token_secret }}"
     api_host: "{{ createvm_api_host }}"
     node: "{{ createvm_node }}"
-    vmid: "{{ result_newvm.vmid }}"
+    vmid: "{{ createvm_vmid }}"
     tags: "{{ createvm_tags }}"
-  when: createvm_tags != []
+  register: result_tags
+  when: 
+    - createvm_tags != []
+    - vm_info.proxmox_vms[0].tags != createvm_tags | join(',')
 
 - name: Start VM 
   community.proxmox.proxmox_kvm:
@@ -160,6 +213,6 @@
     api_token_secret: "{{ createvm_api_token_secret }}"
     api_host: "{{ createvm_api_host }}"
     node: "{{ createvm_node }}"
-    vmid: "{{ result_newvm.vmid }}"
+    vmid: "{{ createvm_vmid }}"
   when: createvm_start is true
   ignore_errors: true

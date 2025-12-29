@@ -1,4 +1,4 @@
-- name: Get vm_info
+- name: Get vm_info current
   community.proxmox.proxmox_vm_info:
     api_user: "{{ createvm_api_user }}"
     api_password: "{{ createvm_api_password }}"
@@ -30,6 +30,20 @@
     clone: "{{ createvm_template }}"
     storage: "{{ createvm_storage }}"
     format: "{{ createvm_format }}"
+
+    # cpu: "{{ createvm_cpu | default('host') }}" # cputype=host,flags=
+    # cores: "{{ createvm_cores }}"
+    # sockets: "{{ createvm_sockets }}"
+    # memory: "{{ createvm_memory }}"
+    # balloon: "{{ createvm_balloon }}"
+    # citype: "{{ createvm_citype }}"
+    # ciuser: "{{ createvm_ciuser }}"
+    # cipassword: "{{ createvm_cipassword }}"
+    # sshkeys: "{{ createvm_sshkeys }}"
+    # ipconfig: 
+    #   ipconfig0: '{{ createvm_ipconfig0 }}'
+    # nameservers: "{{ createvm_nameservers }}"
+    # searchdomains: "{{ createvm_searchdomains }}"
   register: result_fullclone
   when: 
     - createvm_full
@@ -50,6 +64,20 @@
     node: "{{ createvm_node }}"
     name: "{{ createvm_name }}"
     clone: "{{ createvm_template }}"
+
+    # cpu: "{{ createvm_cpu | default('host') }}" # cputype=host,flags=
+    # cores: "{{ createvm_cores }}"
+    # sockets: "{{ createvm_sockets }}"
+    # memory: "{{ createvm_memory }}"
+    # balloon: "{{ createvm_balloon }}"
+    # citype: "{{ createvm_citype }}"
+    # ciuser: "{{ createvm_ciuser }}"
+    # cipassword: "{{ createvm_cipassword }}"
+    # sshkeys: "{{ createvm_sshkeys }}"
+    # ipconfig: 
+    #   ipconfig0: '{{ createvm_ipconfig0 }}'
+    # nameservers: "{{ createvm_nameservers }}"
+    # searchdomains: "{{ createvm_searchdomains }}"
   register: result_linkedclone
   when: 
     - not createvm_full
@@ -62,7 +90,7 @@
           vm_info.proxmox_vms[0].vmid
         }}"
 
-- name: Get vm_info
+- name: Get vm_info current
   community.proxmox.proxmox_vm_info:
     api_user: "{{ createvm_api_user }}"
     api_password: "{{ createvm_api_password }}"
@@ -159,7 +187,10 @@
   when:
     - vm_info.proxmox_vms[0].config.memory | int != createvm_memory | int or
       vm_info.proxmox_vms[0].config.balloon | int != createvm_balloon | int
-
+# - debug:
+#     msg:
+#       - "{{ vm_info.proxmox_vms }}"
+# - pause: 
 - name: Set cloud-init
   community.proxmox.proxmox_kvm:
     update: true
@@ -180,12 +211,12 @@
     searchdomains: "{{ createvm_searchdomains }}"
   register: result_ci
   when:
-    - vm_info.proxmox_vms[0].config.citype != createvm_citype or
-      vm_info.proxmox_vms[0].config.ciuser != createvm_ciuser or
-      vm_info.proxmox_vms[0].config.ipconfig0 != createvm_ipconfig0 or
-      vm_info.proxmox_vms[0].config.nameserver != createvm_nameservers | join(',') or
-      vm_info.proxmox_vms[0].config.searchdomain != createvm_searchdomains | join(',') or
-      vm_info.proxmox_vms[0].config.sshkeys | urldecode != createvm_sshkeys
+    - vm_info.proxmox_vms[0].config.citype | default('') != createvm_citype or
+      vm_info.proxmox_vms[0].config.ciuser | default('') != createvm_ciuser or
+      vm_info.proxmox_vms[0].config.ipconfig0 | default('') != createvm_ipconfig0 or
+      vm_info.proxmox_vms[0].config.nameserver | default('') != createvm_nameservers | join(',') or
+      vm_info.proxmox_vms[0].config.searchdomain | default('') != createvm_searchdomains | join(',') or
+      vm_info.proxmox_vms[0].config.sshkeys | default('') | urldecode != createvm_sshkeys
       # vm_info.proxmox_vms[0].config.cipassword != createvm_cipassword or
 
 - name: Set tags 

@@ -9,30 +9,30 @@ pdmn_owncloud_default_file_mode: '0640'
 pdmn_owncloud_trusted_proxies: 
   - 10.88.0.1
 pdmn_owncloud_overwriteprotocol: https
-pdmn_owncloud_overwritehost: owncloud.r.ratners.ru
+pdmn_owncloud_overwritehost: ""
 pdmn_owncloud_overwritewebroot: "/" #/owncloud
-pdmn_owncloud_domain: owncloud.r.ratners.ru
+pdmn_owncloud_domain: ""
 pdmn_owncloud_trusted_domains:
   - localhost
   - "{{ pdmn_owncloud_domain }}"
 pdmn_owncloud_db_type: mysql
 pdmn_owncloud_db_name: owncloud_db
 pdmn_owncloud_db_user: owncloud_user
-pdmn_owncloud_db_pass: yijCatOmmUdOkif4
+pdmn_owncloud_db_pass: ""
 pdmn_owncloud_db_host: 127.0.0.1
 pdmn_owncloud_redis_host: 127.0.0.1
 pdmn_owncloud_admin_user: admin
-pdmn_owncloud_admin_pass: ficewCevDoocoss?
+pdmn_owncloud_admin_pass: ""
 
+pdmn_owncloud_podname: owncloud
 pdmn_owncloud_pods: 
-  - name: owncloud
-    publish: 
-      - 127.0.0.2:8080:8080
-    rootdir: /containers/owncloud
+  - name: "{{ pdmn_owncloud_podname }}"
+    publish: "{{ pdmn_publish[pdmn_owncloud_podname] }}"
+    rootdir: /containers/{{ pdmn_owncloud_podname }}
 
 pdmn_owncloud_containers:
-  - name: owncloud-db
-    pod: owncloud
+  - name: "{{ pdmn_owncloud_podname }}-db"
+    pod: "{{ pdmn_owncloud_podname }}"
     image: docker.io/webhippie/mariadb
     release: latest
     restart: always
@@ -44,15 +44,15 @@ pdmn_owncloud_containers:
       MARIADB_MAX_ALLOWED_PACKET: 128M
       MARIADB_INNODB_LOG_FILE_SIZE: 64M
     volumes:
-      - /containers/owncloud/mysql:/var/lib/mysql:Z
-      - /containers/owncloud/backup:/var/lib/backup:Z
+      - /containers/{{ pdmn_owncloud_podname }}/mysql:/var/lib/mysql:Z
+      - /containers/{{ pdmn_owncloud_podname }}/backup:/var/lib/backup:Z
     healthcheck:
       test: ["CMD", "/usr/bin/healthcheck"]
       interval: 30s
       timeout: 10s
       retries: 5
-  - name: owncloud-redis
-    pod: owncloud
+  - name: "{{ pdmn_owncloud_podname }}-redis"
+    pod: "{{ pdmn_owncloud_podname }}"
     image: docker.io/webhippie/redis
     release: latest
     restart: always
@@ -65,14 +65,14 @@ pdmn_owncloud_containers:
       interval: 30s
       timeout: 10s
       retries: 5
-  - name: owncloud-server
-    pod: owncloud
+  - name: "{{ pdmn_owncloud_podname }}-server"
+    pod: "{{ pdmn_owncloud_podname }}"
     image: "docker.io/owncloud/server"
     release: "latest"
     restart: always
     requires:
-      - owncloud-db
-      - owncloud-redis
+      - "{{ pdmn_owncloud_podname }}-db"
+      - "{{ pdmn_owncloud_podname }}-redis"
     env:
       OWNCLOUD_DOMAIN: "{{ pdmn_owncloud_domain }}"
       OWNCLOUD_DB_TYPE: "{{ pdmn_owncloud_db_type }}"
@@ -91,7 +91,7 @@ pdmn_owncloud_containers:
       OWNCLOUD_OVERWRITEHOST: "{{ pdmn_owncloud_overwritehost }}"
       OWNCLOUD_OVERWRITEWEBROOT: "{{ pdmn_owncloud_overwritewebroot }}"
     volumes:
-      - /containers/owncloud/data:/mnt/data:Z
+      - /containers/{{ pdmn_owncloud_podname }}/data:/mnt/data:Z
     healthcheck:
       test: ["CMD", "/usr/bin/healthcheck"]
       interval: 30s

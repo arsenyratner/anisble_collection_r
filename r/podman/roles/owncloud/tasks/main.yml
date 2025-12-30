@@ -56,6 +56,7 @@
   loop_control:
     loop_var: pdmn_owncloud_item
     label: "{{ pdmn_owncloud_item.name }}"
+  when: pdmn_owncloud_pods != []
 #   notify: restart owncloud
 
 - name: Run containers

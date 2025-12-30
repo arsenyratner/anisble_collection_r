@@ -4,11 +4,48 @@
 
 quadlet_dir  
 
+## import connections
+
+```yaml
+---
+  - name: rdp://appc@appc-pc
+    protocol: rdp
+    parameters:
+      username: appc
+      password: pass2
+      hostname: 192.168.126.5
+    group: ROOT
+    users:
+      - appc
+    attributes:
+      guacd-encryption: none
+  - name: ssh://appc@appc-pc
+    protocol: ssh
+    parameters:
+      username: appc
+      password: pass3
+      hostname: 192.168.126.5
+    group: ROOT
+    users:
+      - appc
+  - name: ssh://appc@r-pve1
+    protocol: ssh
+    parameters:
+      username: appc
+      password: pass3
+      hostname: 192.168.126.10
+    group: ROOT
+    users:
+      - appc
+```
+
 ## ручками
 
 ```bash
+# нужны для очистки и для создания
 guacamolepodname="guacamole"
 guacamolelocalpath="/containers/guacamole"
+# нужня для создания
 guacamolemysqldb="guacamoledb"
 guacamolemysqluser="guacamoleuser"
 guacamolemysqlpass="RandomPass"
@@ -19,15 +56,20 @@ guacamole_guacd_url="docker.io/guacamole/guacd:${guacamolerelease}"
 guacamole_db_env="MYSQL_ROOT_PASSWORD=$guacamolemysqlpass"
 guacamole_db_url="docker.io/mysql:9.4.0"
 
-podman pull $guacamole_guacamole_url
-podman pull $guacamole_guacd_url
-podman pull $guacamole_db_url
+# backupdb
+mysqldump -u root -p $guacamolemysqldb > $guacamolemysqldb.sql
 
 
+# очистка 
 podman pod rm -f $guacamolepodname
 rm -rf $guacamolelocalpath
 rm -f /etc/systemd/system/*${guacamolepodname}*
 systemctl daemon-reload
+
+# создание
+podman pull $guacamole_guacamole_url
+podman pull $guacamole_guacd_url
+podman pull $guacamole_db_url
 
 podman pod create --name $guacamolepodname -p 127.0.0.1:8080:8080
 
@@ -85,4 +127,3 @@ systemctl enable pod-${guacamolepodname}
 systemctl stop pod-${guacamolepodname}
 systemctl start pod-${guacamolepodname}
 ```
-

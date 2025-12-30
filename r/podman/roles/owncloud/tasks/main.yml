@@ -1,0 +1,80 @@
+---
+- name: pod dirs
+  ansible.builtin.set_fact:
+    pdmn_owncloud_dirs: "{{
+        pdmn_owncloud_dirs | default([]) +
+        [
+          {
+            'path': pdmn_owncloud_item.rootdir
+          }
+        ]
+      }}"
+  loop: "{{ pdmn_owncloud_pods }}"
+  loop_control:
+    loop_var: pdmn_owncloud_item
+    label: "{{ pdmn_owncloud_item.rootdir }}"
+
+- name: create dirs list
+  ansible.builtin.set_fact:
+    pdmn_owncloud_dirs: "{{
+        pdmn_owncloud_dirs | default([]) +
+        pdmn_owncloud_item.volumes | map('split', ':') | map('first') | map('community.general.dict_kv', 'path')
+      }}"
+  loop: "{{ pdmn_owncloud_containers }}"
+  loop_control:
+    loop_var: pdmn_owncloud_item
+    label: "{{ pdmn_owncloud_item.name }}"
+
+- name: Create dirs
+  ansible.builtin.file:
+    state: directory
+    # owner: "{{ pdmn_owncloud_item.owner | default(pdmn_owncloud_default_owner) }}"
+    # group: "{{ pdmn_owncloud_item.group | default(pdmn_owncloud_default_group) }}"
+    # mode: "{{ pdmn_owncloud_item.mode | default(pdmn_owncloud_default_dir_mode) }}"
+    path: "{{ pdmn_owncloud_item.path }}"
+  loop: "{{ pdmn_owncloud_dirs }}"
+  loop_control:
+    loop_var: pdmn_owncloud_item
+    label: "{{ pdmn_owncloud_item.path }}"
+
+- name: Pull images
+  containers.podman.podman_image:
+    name: "{{ pdmn_owncloud_item.image }}:{{ pdmn_owncloud_item.release }}"
+    state: present
+  loop: "{{ pdmn_owncloud_containers }}"
+  loop_control:
+    loop_var: pdmn_owncloud_item
+    label: "{{ pdmn_owncloud_item.name }}"
+  ignore_errors: true
+
+- name: Create pod
+  containers.podman.podman_pod:
+    state: created
+    name: "{{ pdmn_owncloud_item.name }}"
+    publish: "{{ pdmn_owncloud_item.publish }}"
+  loop: "{{ pdmn_owncloud_pods }}"
+  loop_control:
+    loop_var: pdmn_owncloud_item
+    label: "{{ pdmn_owncloud_item.name }}"
+#   notify: restart owncloud
+
+- name: Run containers
+  containers.podman.podman_container:
+    state: started
+    privileged: true
+    pod: "{{ pdmn_owncloud_item.pod }}"
+    name: "{{ pdmn_owncloud_item.name }}"
+    image: "{{ pdmn_owncloud_item.image }}"
+    env: "{{ pdmn_owncloud_item.env | default({}) }}"
+    restart_policy: "{{ pdmn_owncloud_item.restart | default('always') }}"
+    requires: "{{ pdmn_owncloud_item.requires | default([]) }}"
+    volume: "{{ pdmn_owncloud_item.volumes }}"
+    healthcheck: "{{ pdmn_owncloud_item.healthcheck.test[1] }}"
+    healthcheck_interval: "{{ pdmn_owncloud_item.healthcheck.interval }}"
+    healthcheck_timeout: "{{ pdmn_owncloud_item.healthcheck.timeout }}"
+    healthcheck_retries: "{{ pdmn_owncloud_item.healthcheck.retries }}"
+  loop: "{{ pdmn_owncloud_containers }}"
+  loop_control:
+    loop_var: pdmn_owncloud_item
+    label: "{{ pdmn_owncloud_item.name }}"
+  ignore_errors: true

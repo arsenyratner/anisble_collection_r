@@ -2,9 +2,9 @@
 pdmn_gcml_force: false
 pdmn_gcml_systemd_dir: /etc/systemd/system
 pdmn_gcml_podname: "guacamole"
-pdmn_gcml_podpublish:
+pdmn_gcml_podpublish: []
   # hostport:podport
-  - 127.0.0.1:8080:8080
+  # - 127.0.0.1:8080:8080
 pdmn_gcml_release: "1.6.0"
 pdmn_gcml_localpath: "{{ pdmn_root_dir }}/{{ pdmn_gcml_podname }}"
 pdmn_gcml_db_name: "{{ pdmn_gcml_podname }}_db"

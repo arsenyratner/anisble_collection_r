@@ -5,7 +5,6 @@ pdmn_owncloud_default_group: root
 pdmn_owncloud_default_dir_mode: '0750'
 pdmn_owncloud_default_file_mode: '0640'
 
-# pdmn_owncloud_forwarded_for_headers: ['HTTP_X_FORWARDED_FOR']
 pdmn_owncloud_trusted_proxies: 
   - 10.88.0.1
 pdmn_owncloud_overwriteprotocol: https
@@ -25,10 +24,11 @@ pdmn_owncloud_admin_user: admin
 pdmn_owncloud_admin_pass: ""
 
 pdmn_owncloud_podname: owncloud
-pdmn_owncloud_pods: 
-  - name: "{{ pdmn_owncloud_podname }}"
-    publish: "{{ pdmn_publish[pdmn_owncloud_podname] }}"
-    rootdir: /containers/{{ pdmn_owncloud_podname }}
+pdmn_owncloud_publish: []
+pdmn_owncloud_pod_dir: "{{ pdmn_root_dir }}/{{ pdmn_owncloud_podname }}"
+
+pdmn_owncloud_dirs:
+  - path: "{{ pdmn_owncloud_pod_dir }}"
 
 pdmn_owncloud_containers:
   - name: "{{ pdmn_owncloud_podname }}-db"
@@ -44,8 +44,8 @@ pdmn_owncloud_containers:
       MARIADB_MAX_ALLOWED_PACKET: 128M
       MARIADB_INNODB_LOG_FILE_SIZE: 64M
     volumes:
-      - /containers/{{ pdmn_owncloud_podname }}/mysql:/var/lib/mysql:Z
-      - /containers/{{ pdmn_owncloud_podname }}/backup:/var/lib/backup:Z
+      - "{{ pdmn_owncloud_pod_dir }}/mysql:/var/lib/mysql:Z"
+      - "{{ pdmn_owncloud_pod_dir }}/backup:/var/lib/backup:Z"
     healthcheck:
       test: ["CMD", "/usr/bin/healthcheck"]
       interval: 30s
@@ -59,7 +59,7 @@ pdmn_owncloud_containers:
     env:
       REDIS_DATABASES: 1
     volumes:
-      - /containers/owncloud/redis:/var/lib/redis:Z
+      - "{{ pdmn_owncloud_pod_dir }}/redis:/var/lib/redis:Z"
     healthcheck:
       test: ["CMD", "/usr/bin/healthcheck"]
       interval: 30s
@@ -91,7 +91,7 @@ pdmn_owncloud_containers:
       OWNCLOUD_OVERWRITEHOST: "{{ pdmn_owncloud_overwritehost }}"
       OWNCLOUD_OVERWRITEWEBROOT: "{{ pdmn_owncloud_overwritewebroot }}"
     volumes:
-      - /containers/{{ pdmn_owncloud_podname }}/data:/mnt/data:Z
+      - "{{ pdmn_owncloud_pod_dir }}/data:/mnt/data:Z"
     healthcheck:
       test: ["CMD", "/usr/bin/healthcheck"]
       interval: 30s

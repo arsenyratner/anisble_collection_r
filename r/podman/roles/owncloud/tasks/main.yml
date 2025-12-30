@@ -1,19 +1,4 @@
 ---
-- name: pod dirs
-  ansible.builtin.set_fact:
-    pdmn_owncloud_dirs: "{{
-        pdmn_owncloud_dirs | default([]) +
-        [
-          {
-            'path': pdmn_owncloud_item.rootdir
-          }
-        ]
-      }}"
-  loop: "{{ pdmn_owncloud_pods }}"
-  loop_control:
-    loop_var: pdmn_owncloud_item
-    label: "{{ pdmn_owncloud_item.rootdir }}"
-
 - name: create dirs list
   ansible.builtin.set_fact:
     pdmn_owncloud_dirs: "{{
@@ -50,14 +35,8 @@
 - name: Create pod
   containers.podman.podman_pod:
     state: created
-    name: "{{ pdmn_owncloud_item.name }}"
-    publish: "{{ pdmn_owncloud_item.publish }}"
-  loop: "{{ pdmn_owncloud_pods }}"
-  loop_control:
-    loop_var: pdmn_owncloud_item
-    label: "{{ pdmn_owncloud_item.name }}"
-  when: pdmn_owncloud_pods != []
-#   notify: restart owncloud
+    name: "{{ pdmn_owncloud_podname }}"
+    publish: "{{ pdmn_owncloud_publish }}"
 
 - name: Run containers
   containers.podman.podman_container:

@@ -54,7 +54,7 @@
         cert_certbot_issue_msg: "issue certificate, SAN are differ"
       when:
         - cert_certbot_san | default(cert_certbot_default_san) != []
-        - cert_certbot_san | default(cert_certbot_default_san) | sort | lower != cert_certbot_crt_info.subject_alt_name | default([]) | sort | lower
+        - (['DNS:' + cert_certbot_cn] + cert_certbot_san | default(cert_certbot_default_san)) | sort | lower != cert_certbot_crt_info.subject_alt_name | default([]) | sort | lower
         - cert_certbot_issue is false
   ### block end
 
@@ -79,12 +79,11 @@
       /usr/bin/certbot certonly --agree-tos -n -q
       --email {{ cert_certbot_email_address }}
       --cert-name {{ cert_certbot_cn }}
+      -d {{ cert_certbot_cn }}
       {% if cert_certbot_san != [] %}
       {%- for san in cert_certbot_san -%}
       {{ '-d ' + (san | split(':'))[1] if (san | split(':'))[0] | lower == 'dns' else '' }}
       {% endfor %}
-      {%- else -%}
-      -d {{ cert_certbot_cn }}
       {% endif %}
       {{ cert_certbot_plugins[cert_certbot_useplugin] }}
       {% if cert_certbot_reloadservices | default(cert_certbot_default_reloadservices) != [] %}
@@ -105,7 +104,16 @@
     creates: "{{ cert_certbot_fullchain_file if not (cert_certbot_force or cert_certbot_issue) else '' }}"
   register: cert_certbot_result
   notify: "{{ cert_certbot_notify }}"
-  when: cert_certbot_issue
+  when: 
+    - cert_certbot_issue
+    - not cert_certbot_dryrun
+
+- name: certbot dryrun {{ cert_certbot_cn }}
+  ansible.builtin.debug:
+    msg: "{{ cert_certbot_create_cmd }}"
+  when: 
+    - cert_certbot_issue
+    - cert_certbot_dryrun
 
 # - debug:
 #     msg:

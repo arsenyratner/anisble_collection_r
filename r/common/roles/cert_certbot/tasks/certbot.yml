@@ -6,6 +6,7 @@
     cert_certbot_crt_info: {}
     cert_certbot_result: {}
     cert_certbot_issue: false
+    cert_certbot_reloadservices: '{{ cert_certbot_item.reloadservices | default(cert_certbot_default_reloadservices) }}'
 
 - name: Stat crt {{ cert_certbot_cn }}
   ansible.builtin.stat:
@@ -71,13 +72,16 @@
 - name: use standalone if port 80/tcp not listen
   ansible.builtin.set_fact:
     cert_certbot_useplugin: standalone
+    # cert_certbot_reloadservices: []
   when: cert_certbot_result.failed
 
 - name: set command line
   ansible.builtin.set_fact:
     cert_certbot_create_cmd: >-
       /usr/bin/certbot certonly --agree-tos -n -q
+      {% if cert_certbot_email_address != "" %}
       --email {{ cert_certbot_email_address }}
+      {% endif %}
       --cert-name {{ cert_certbot_cn }}
       {% if cert_certbot_san != [] %}
       {%- for san in cert_certbot_san -%}

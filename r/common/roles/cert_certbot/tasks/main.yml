@@ -34,7 +34,7 @@
     cert_certbot_force: "{{ cert_certbot_item.force | default(false) }}"
     cert_certbot_notify: '{{ cert_certbot_item.notify | default(cert_certbot_default_notify) }}'
     cert_certbot_webroot: '{{ cert_certbot_item.webroot | default(cert_certbot_default_certbot_webroot) }}'
-    cert_certbot_reloadservices: '{{ cert_certbot_item.reloadservices | default(cert_certbot_default_reloadservices) }}'
+    # cert_certbot_reloadservices: '{{ cert_certbot_item.reloadservices | default(cert_certbot_default_reloadservices) }}'
     # csr
     cert_certbot_email_address: '{{ cert_certbot_item.email_address | default(cert_certbot_default_email_address) }}'
     cert_certbot_cn: '{{ cert_certbot_item.cn | default(cert_certbot_default_cn) }}'

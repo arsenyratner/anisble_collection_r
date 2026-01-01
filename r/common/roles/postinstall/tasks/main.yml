@@ -26,6 +26,7 @@
     name: |-
       {% if postinstall_domainname != "" %}{{ postinstall_hostname }}.{{ postinstall_domainname }}
       {% elif postinstall_domainname == "" %}{{ postinstall_hostname }}{% endif %}
+  notify: General reboot system
 
 - name: Populate service facts
   ansible.builtin.service_facts:
@@ -59,3 +60,6 @@
   community.general.timezone:
     name: "{{ postinstall_timezone }}"
   when: postinstall_timezone is defined
+
+- name: Flush handlers
+  ansible.builtin.meta: flush_handlers

@@ -1,3 +1,4 @@
+cert_certbot_dryrun: false
 cert_certbot_list: []
   # - cn: "bbb.r.ratners.ru"
   #   san:

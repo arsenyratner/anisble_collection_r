@@ -1,24 +1,36 @@
 - name: Distribution specific variables
-  ansible.builtin.include_vars: "{{ nginx_item }}"
-  with_first_found:
-    - "_{{ ansible_distribution | lower }}-{{ ansible_distribution_version | lower }}.yml"
-    - "_{{ ansible_distribution | lower }}.yml"
-    - "_{{ ansible_os_family | lower }}.yml"
-  ignore_errors: true
-  failed_when: false
-  loop_control:
-    loop_var: nginx_item
+  vars:
+    distribution_firstfound_paths: ['vars']
+  ansible.builtin.include_vars:
+    file: "{{ lookup('ansible.builtin.first_found', distribution_firstfound) }}"
 
 - name: Distribution specific tasks
+  vars:
+    distribution_firstfound_paths: ['tasks']
   ansible.builtin.include_tasks:
-    file: "{{ nginx_item }}"
-  with_first_found:
-    - "_{{ ansible_distribution | lower }}-{{ ansible_distribution_version | lower }}.yml"
-    - "_{{ ansible_distribution | lower }}.yml"
-    - "_{{ ansible_os_family | lower }}.yml"
-  ignore_errors: true
-  loop_control:
-    loop_var: nginx_item
+    file: "{{ lookup('ansible.builtin.first_found', distribution_firstfound) }}"
+
+# - name: Distribution specific variables
+#   ansible.builtin.include_vars: "{{ nginx_item }}"
+#   with_first_found:
+#     - "_{{ ansible_distribution | lower }}-{{ ansible_distribution_version | lower }}.yml"
+#     - "_{{ ansible_distribution | lower }}.yml"
+#     - "_{{ ansible_os_family | lower }}.yml"
+#   ignore_errors: true
+#   failed_when: false
+#   loop_control:
+#     loop_var: nginx_item
+
+# - name: Distribution specific tasks
+#   ansible.builtin.include_tasks:
+#     file: "{{ nginx_item }}"
+#   with_first_found:
+#     - "_{{ ansible_distribution | lower }}-{{ ansible_distribution_version | lower }}.yml"
+#     - "_{{ ansible_distribution | lower }}.yml"
+#     - "_{{ ansible_os_family | lower }}.yml"
+#   ignore_errors: true
+#   loop_control:
+#     loop_var: nginx_item
 
 - name: remove unmanaged files
   ansible.builtin.include_tasks:

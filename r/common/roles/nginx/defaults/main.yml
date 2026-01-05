@@ -1,3 +1,14 @@
+distribution_firstfound_paths: []
+distribution_firstfound_files:
+  - "_{{ ansible_distribution | lower }}-{{ ansible_distribution_version | lower }}.yml"
+  - "_{{ ansible_distribution | lower }}.yml"
+  - "_{{ ansible_os_family | lower }}.yml"
+
+distribution_firstfound:
+  files: "{{ distribution_firstfound_files }}"
+  paths: "{{ distribution_firstfound_paths }}"
+  skip: true 
+
 nginx_conf_file: /etc/nginx/nginx.conf
 nginx_pid_file: /run/nginx.pid
 nginx_conf_dir: /etc/nginx
@@ -29,6 +40,7 @@ nginx_dirs:
 nginx_snippets: []
   # - filename:
   #   content:
+
 nginx_servers: []
 nginx_default_server:
   - server_name: _

@@ -26,23 +26,43 @@
       changed_when: false
   ### block end
 
-- name: set default value {{ server.server_name }}
+- name: set default values {{ server.server_name }}
   ansible.builtin.set_fact:
     nginx_server_disabled: false
+    nginx_server_cert_file: ""
+    nginx_server_key_file: ""
+    nginx_server_accesslog_file: "{{ server.access_log | default(nginx_log_dir + '/' + server.server_name + '_access.log') }}"
+    nginx_server_errorlog_file: "{{ server.error_log | default(nginx_log_dir + '/' + server.server_name + '_error.log') }}"
 
-- name: Check key and cert exists
+- name: Set specified cert and key path
   when:
+    - not server.ssl.certbot | default(false)
     - server.ssl.certificate is defined
     - server.ssl.key is defined
+  ansible.builtin.set_fact:
+    nginx_server_cert_file: "{{ server.ssl.certificate }}"
+    nginx_server_key_file: "{{ server.ssl.key }}"
+
+- name: Set certbot cert and key path
+  when:
+    - server.ssl.certbot | default(false)
+  ansible.builtin.set_fact:
+    nginx_server_cert_file: "/etc/letsencrypt/live/{{ server.server_name }}/fullchain.pem"
+    nginx_server_key_file: "/etc/letsencrypt/live/{{ server.server_name }}/privkey.pem"
+
+- name: check cert files
+  when: 
+    - nginx_server_cert_file != ""
+    - nginx_server_key_file != ""
   ### block start
   block:
     - name: stat certificate {{ server.server_name }}
       ansible.builtin.stat:
-        path: "{{ server.ssl.certificate }}"
+        path: "{{ nginx_server_cert_file }}"
       register: nginx_server_cert_stat
     - name: stat key {{ server.server_name }}
       ansible.builtin.stat:
-        path: "{{ server.ssl.key }}"
+        path: "{{ nginx_server_key_file }}"
       register: nginx_server_key_stat
     - name: set server enabled flag {{ server.server_name }}
       ansible.builtin.set_fact:

@@ -1,0 +1,60 @@
+- name: "Load a variable file based on the OS distribution"
+  ansible.builtin.include_vars: 
+    file: "{{ lookup('ansible.builtin.first_found', sambadc_lookup_distr) }}"
+
+- name: Distribution specific tasks
+  ansible.builtin.include_tasks:
+    file: "{{ lookup('ansible.builtin.first_found', sambadc_lookup_distr) }}"
+
+- name: Check, are domain alredy provisioned?
+  ansible.builtin.shell: samba-tool domain info 127.0.0.1
+  register: check_domain
+  #failed_when: check_domain.rc == 0 or sambadc_domain_fqdn in check_domain.stdout
+  changed_when: domain_name not in check_domain.stdout
+  ignore_errors: true
+
+- name: Debug check_domain
+  ansible.builtin.debug:
+    var: check_domain.stdout_lines
+  when: check_domain.rc == 0 or sambadc_domain_fqdn in check_domain.stdout
+
+- name: Sambadc install packages
+  ansible.builtin.dnf:
+    name: "{{ sambadc_packages }}"
+    state: present
+
+- name: First DC
+  ansible.builtin.include_tasks:
+    file: firstdc.yml
+  when:
+    - sambadc_deploy_firstdc is true
+    - sambadc_deploy_adddc is false
+    - check_domain.rc != 0 or sambadc_domain_fqdn not in check_domain.stdout
+
+- name: Add DC
+  ansible.builtin.include_tasks:
+    file: adddc.yml
+  when:
+    - sambadc_deploy_adddc is true
+    - sambadc_deploy_firstdc is false
+    - check_domain.rc != 0 or sambadc_domain_fqdn not in check_domain.stdout
+
+- name: Copy smb conf
+  ansible.builtin.template:
+    src: smb.conf
+    dest: "{{ sambadc_config_dir }}/smb.conf"
+  notify: sambadc restart samba
+
+- name: Copy krb5.conf
+  ansible.builtin.copy:
+    src: "{{ sambadc_data_dir }}/private/krb5.conf"
+    dest: /etc/krb5.conf
+    remote_src: true
+    follow: true
+  notify: General reboot system
+
+- name: Restart samba
+  ansible.builtin.systemd:
+    name: samba
+    state: restarted
+    enabled: true

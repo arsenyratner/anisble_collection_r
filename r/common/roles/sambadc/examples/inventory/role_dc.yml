@@ -1,0 +1,9 @@
+role_dc:
+  children:
+    role_firstdc:
+      hosts:
+        reddc1:
+  hosts:
+    reddc2:
+    reddc3:
+    reddc4:

@@ -1,0 +1,35 @@
+---
+sambadc_admin_user: ""
+sambadc_admin_password: ""
+sambadc_domain_fqdn: ""
+sambadc_domain_shortname: ""
+sambadc_dnsbackend: SAMBA_INTERNAL # BIND9_DLZ #
+sambadc_firstdc_name: ""
+sambadc_firstdc_ip: ""
+sambadc_forwarders: []
+sambadc_force_deploy: false
+sambadc_config_dir: /etc/samba
+sambadc_data_dir: /var/lib/samba
+sambadc_cache_dir: /var/cache/samba
+sambadc_sysvol_dir: "{{ sambadc_data_dir }}/sysvol"
+sambadc_deploy_firstdc: false
+sambadc_deploy_adddc: false
+sambadc_sitename: Default-First-Site-Name
+sambadc_packages:
+  - samba-client
+  - samba-common.noarch
+  - samba-common
+  - samba-dc
+  - samba-libs
+  - samba-winbind
+  - krb5-workstation
+  - samba-dc-bind-dlz
+
+sambadc_lookup_distr:
+  files:
+    - "_{{ ansible_distribution | lower }}-{{ ansible_distribution_version | lower }}.yml"
+    - "_{{ ansible_distribution | lower }}.yml"
+    - "_{{ ansible_os_family | lower }}.yml"
+  paths:
+    - "{{ role_path }}/vars"
+  skip: true 

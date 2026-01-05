@@ -1,0 +1,22 @@
+---
+- name: First dc
+  hosts: role_firstdc
+  roles:
+    - general-redos
+  tasks:
+    - name: Setup networking
+      ansible.builtin.include_role:
+        name: network-redos
+      vars: 
+        network_ipv4_method: "manual"
+        network_dns_servers: "{{ domain_forwarders }}"
+        network_ipv4:
+          address: "{{ ansible_default_ipv4.address }}"
+          prefix: "{{ ansible_default_ipv4.prefix }}"
+          gw: "{{ ansible_default_ipv4.gateway }}"
+
+    - name: Standard postinstall settings 
+      ansible.builtin.include_role:
+        name: postinstall-redos
+      vars:
+        postinstall_updatepackages: true

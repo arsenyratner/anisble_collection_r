@@ -1,0 +1,15 @@
+---
+- name: Add DC
+  hosts: role_dc
+  tasks:
+    - name: Role sambadc
+      ansible.builtin.include_role:
+        name: sambadc-redos
+
+    - name: Role bind
+      ansible.builtin.include_role:
+        name: bind9-redos
+
+    - name: Setup DNS settings
+      ansible.builtin.include_role:
+        name: network-redos

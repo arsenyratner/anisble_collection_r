@@ -1,0 +1,10 @@
+---
+sambadc_packages:
+  - samba-client
+  - samba-common.noarch
+  - samba-common
+  - samba-dc
+  - samba-libs
+  - samba-winbind
+  - krb5-workstation
+  - samba-dc-bind-dlz

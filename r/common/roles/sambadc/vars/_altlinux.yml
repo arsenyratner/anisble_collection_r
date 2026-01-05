@@ -1,0 +1,7 @@
+---
+sambadc_packages:
+  - task-samba-dc 
+  - bind 
+  - bind-utils
+  - mc
+  - chrony

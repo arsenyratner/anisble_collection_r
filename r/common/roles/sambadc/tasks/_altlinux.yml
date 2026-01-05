@@ -1,0 +1,50 @@
+- name: Install bind
+  community.general.apt_rpm:
+    pkg: "{{ bind_packages }}"
+    state: present_not_latest
+
+- name: Disable chroot
+  block:
+    - name: Check
+      ansible.builtin.shell: |
+        control | grep bind-chroot | awk '{ print $2 }'
+      register: _check_chroot
+      changed_when: "'enabled' in _check_chroot.stdout"
+    # - debug: "var=_check_chroot"
+    - name: Dsiable chroot
+      ansible.builtin.command: control bind-chroot disabled
+      when: "'disabled' not in _check_chroot.stdout"
+
+- name: Allow named user to bind port 53
+  block:
+    - name: set sysctl 
+      ansible.posix.sysctl:
+        name: net.ipv4.ip_unprivileged_port_start
+        value: '0'
+        sysctl_set: true
+        state: present
+        reload: true
+    - name: /etc/sysctl.d/98-bind.conf
+      ansible.builtin.copy:
+        dest: /etc/sysctl.d/98-bind.conf
+        content: "net.ipv4.ip_unprivileged_port_start=0"
+    - name: apply sysctl 
+      ansible.builtin.shell: |
+        sysctl -p
+        sysctl net.ipv4.ip_unprivileged_port_start
+      register: bind_sysctl_result
+      changed_when: bind_sysctl_result.stdout != 'net.ipv4.ip_unprivileged_port_start = 0'
+
+# - name: /etc/systemd/system/bind.service
+#   ansible.builtin.template:
+#     src: bind.service
+#     dest: /etc/systemd/system/bind.service
+#     owner: root
+#     group: root
+#     mode: "0644"
+#     # validate: "/bin/named-checkconf %s"
+#   notify: Bind restart
+
+# - name: systemd daemon-reload
+#   ansible.builtin.systemd:
+#     daemon_reload: true

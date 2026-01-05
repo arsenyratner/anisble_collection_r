@@ -1,0 +1,7 @@
+---
+- name: sambadc restart samba
+  ansible.builtin.service:
+    name: samba
+    state: restarted
+  ignore_errors: true
+  listen: restart samba

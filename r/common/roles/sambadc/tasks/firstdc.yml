@@ -1,0 +1,30 @@
+- name: First DC Remove old config dirs
+  ansible.builtin.shell: |
+    rm -rf {{ sambadc_data_dir }}/*
+    rm -rf {{ sambadc_cache_dir }}/*
+
+- name: First DC create sysvol dir
+  ansible.builtin.file:
+    path: "{{ sambadc_data_dir }}/sysvol"
+    state: directory
+
+- name: First DC remove old config files
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - /etc/krb5.conf
+    - "{{ sambadc_config_dir }}/smb.conf"
+
+- name: First DC Create
+  ansible.builtin.shell:
+    cmd: >
+      samba-tool domain provision --use-rfc2307 
+      --server-role=dc 
+      --realm={{ sambadc_domain_fqdn | upper }} 
+      --domain={{ sambadc_domain_shortname | upper }} 
+      --adminpass={{ sambadc_admin_password }} 
+      --dns-backend={{ sambadc_dnsbackend }}
+      --backend-store=mdb
+      --backend-store-size=12GB
+  notify: General reboot system

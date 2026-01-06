@@ -1,0 +1,138 @@
+---
+# pdmn_nextcloud_
+pdmn_nextcloud_default_owner: root
+pdmn_nextcloud_default_group: root
+pdmn_nextcloud_default_dir_mode: '0750'
+pdmn_nextcloud_default_file_mode: '0640'
+
+pdmn_nextcloud_trusted_proxies: 
+  - 10.88.0.1
+pdmn_nextcloud_overwriteprotocol: https
+pdmn_nextcloud_overwritehost: ""
+pdmn_nextcloud_overwritewebroot: "/" #/nextcloud
+pdmn_nextcloud_trusted_domains:
+  - localhost
+  - "{{ pdmn_nextcloud_domain }}"
+
+pdmn_nextcloud_db_name: "{{ pdmn_nextcloud_podname }}"
+pdmn_nextcloud_db_user: "{{ pdmn_nextcloud_podname }}user"
+pdmn_nextcloud_db_host: 127.0.0.1
+pdmn_nextcloud_redis_host: 127.0.0.1
+pdmn_nextcloud_redis_port: 6379
+pdmn_nextcloud_pod_dir: "{{ pdmn_root_dir }}/{{ pdmn_nextcloud_podname }}"
+pdmn_nextcloud_dirs:
+  - path: "{{ pdmn_nextcloud_pod_dir }}"
+
+pdmn_nextcloud_podname: nextcloud
+pdmn_nextcloud_domain: ""
+pdmn_nextcloud_db_pass: ""
+pdmn_nextcloud_admin_user: admin
+pdmn_nextcloud_admin_pass: ""
+pdmn_nextcloud_publish: []
+pdmn_nextcloud_mail_domain: "" # r.ratners.ru
+pdmn_nextcloud_mail_from_address: "" # noreply@r.ratners.ru
+pdmn_nextcloud_smtp_secure: tls
+pdmn_nextcloud_smtp_host: "" # smtp.r.ratners.ru
+pdmn_nextcloud_smtp_port: 25 # 587
+pdmn_nextcloud_smtp_name: "" # noreply@r.ratners.ru
+pdmn_nextcloud_smtp_password: "" # vault.pdmn_nextcloud_SMTP_PASSWORD
+
+pdmn_nextcloud_containers:
+    ### container start
+  - name: "{{ pdmn_nextcloud_podname }}-redis"
+    pod: "{{ pdmn_nextcloud_podname }}"
+    image: docker.io/library/redis
+    release: latest
+    restart: on-failure
+    env:
+      REDIS_HOST: "{{ pdmn_nextcloud_redis_host }}"
+      REDIS_PORT: "{{ pdmn_nextcloud_redis_port }}"
+    volumes:
+      - "{{ pdmn_nextcloud_pod_dir }}/redis:/var/lib/redis:Z"
+    healthcheck:
+      test: [ "CMD", "redis-cli --raw incr ping" ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    ### container end
+    ### container start
+  - name: "{{ pdmn_nextcloud_podname }}-db"
+    pod: "{{ pdmn_nextcloud_podname }}"
+    image: docker.io/library/mariadb
+    release: 11.8
+    restart: on-failure
+    env:
+      MYSQL_ROOT_PASSWORD: "{{ pdmn_nextcloud_db_pass }}"
+      MYSQL_USER: "{{ pdmn_nextcloud_db_user }}"
+      MYSQL_PASSWORD: "{{ pdmn_nextcloud_db_pass }}"
+      MYSQL_DATABASE: "{{ pdmn_nextcloud_db_name }}"
+    volumes:
+      - "{{ pdmn_nextcloud_pod_dir }}/db:/var/lib/mysql:Z"
+    healthcheck:
+      # healthcheck.sh --su-mysql --connect --innodb_initialized
+      test: [ "CMD", "healthcheck.sh --su-mysql --connect --innodb_initialized" ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    ### container end
+    ### container start
+  - name: "{{ pdmn_nextcloud_podname }}-server"
+    pod: "{{ pdmn_nextcloud_podname }}"
+    image: "docker.io/library/nextcloud"
+    release: latest
+    restart: on-failure
+    requires:
+      - "{{ pdmn_nextcloud_podname }}-db"
+      - "{{ pdmn_nextcloud_podname }}-redis"
+    env:
+      ## Postgres
+      # POSTGRES_DB: "{{ pdmn_nextcloud_db_name }}"
+      # POSTGRES_USER: "{{ pdmn_nextcloud_db_user }}"
+      # POSTGRES_PASSWORD: "{{ pdmn_nextcloud_db_pass }}"
+      # POSTGRES_HOST: "{{ pdmn_nextcloud_db_host }}"
+      ## MySQL
+      MYSQL_HOST: "{{ pdmn_nextcloud_db_host }}"
+      MYSQL_DATABASE: "{{ pdmn_nextcloud_db_name }}"
+      MYSQL_USER: "{{ pdmn_nextcloud_db_user }}"
+      MYSQL_PASSWORD: "{{ pdmn_nextcloud_db_pass }}"
+      ## NextCloud
+      NEXTCLOUD_ADMIN_USER: "{{ pdmn_nextcloud_admin_user }}"
+      NEXTCLOUD_ADMIN_PASSWORD: "{{ pdmn_nextcloud_admin_pass }}"
+      NEXTCLOUD_TRUSTED_DOMAINS: "{{ pdmn_nextcloud_trusted_domains | join(' ') }}"
+      ## EMAIL
+      MAIL_DOMAIN: "{{ pdmn_nextcloud_mail_domain }}"
+      MAIL_FROM_ADDRESS: "{{ pdmn_nextcloud_mail_from_address }}"
+      SMTP_SECURE: "{{ pdmn_nextcloud_smtp_secure }}"
+      SMTP_HOST: "{{ pdmn_nextcloud_smtp_host }}"
+      SMTP_PORT: "{{ pdmn_nextcloud_smtp_port }}"
+      SMTP_AUTHTYPE: PLAIN # LOGIN
+      SMTP_NAME: "{{ pdmn_nextcloud_smtp_name }}"
+      SMTP_PASSWORD: "{{ pdmn_nextcloud_smtp_password }}"
+      ## REDIS
+      REDIS_HOST: "{{ pdmn_nextcloud_redis_host }}"
+      # REDIS_HOST_PORT:
+      # REDIS_HOST_USER:
+      # REDIS_HOST_PASSWORD:
+      ## APACHE
+      PHP_MEMORY_LIMIT: 512M
+      PHP_UPLOAD_LIMIT: 512M
+      PHP_OPCACHE_MEMORY_CONSUMPTION: 128
+      APACHE_BODY_LIMIT: 1073741824 # 1GiB
+      ## PROXY
+      APACHE_DISABLE_REWRITE_IP: 1 # for reverse proxy
+      TRUSTED_PROXIES: "{{ pdmn_nextcloud_trusted_proxies | join(' ') }}"
+      OVERWRITEHOST: "{{ pdmn_nextcloud_overwritehost }}" # (empty by default): Set the hostname of the proxy. Can also specify a port.
+      OVERWRITEPROTOCOL: "{{ pdmn_nextcloud_overwriteprotocol }}" # (empty by default): Set the protocol of the proxy, http or https.
+      # OVERWRITECLIURL: # (empty by default): Set the cli url of the proxy (e.g. https://mydnsname.example.com)
+      OVERWRITEWEBROOT: "{{ pdmn_nextcloud_overwritewebroot }}" # (empty by default): Set the absolute path of the proxy.
+      # OVERWRITECONDADDR: # (empty by default): Regex to overwrite the values dependent on the remote address.
+      # FORWARDED_FOR_HEADERS: # (empty by default): HTTP headers with the original client IP address
+    volumes:
+      - "{{ pdmn_nextcloud_pod_dir }}/data:/var/www/html:Z"
+    # healthcheck:
+    #   test: ["CMD", "/usr/bin/healthcheck"]
+    #   interval: 30s
+    #   timeout: 10s
+    #   retries: 5
+    ### container end

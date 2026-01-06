@@ -3,7 +3,9 @@
 
 - name: create server root {{ server.server_name }}
   ### block start
-  when: server.root is defined
+  when:
+    - server.root_create | default(true)
+    - server.root is defined
   block:
     - name: create server root
       ansible.builtin.file:

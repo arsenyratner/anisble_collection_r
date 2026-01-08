@@ -108,7 +108,7 @@
     - createlxc_description != ""
     - createlxc_description != lxcinfo.proxmox_vms[0].config.description | default('') | trim
 
-- name: state {{ createlxc_state }}
+- name: set state
   community.proxmox.proxmox:
     api_host: "{{ createlxc_api_host }}"
     api_user: "{{ createlxc_api_user | default(omit) }}"

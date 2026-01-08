@@ -1,102 +1,33 @@
+- name: set defaults
+  ansible.builtin.set_fact:
+    sambafs_share_ro_group: "{{ sambafs_group_pre }}_{{ share.path | replace('/', '') }}_{{ sambafs_group_suf_ro }}" 
+    sambafs_share_rw_group: "{{ sambafs_group_pre }}_{{ share.path | replace('/', '') }}_{{ sambafs_group_suf_rw }}"
+
 - name: create folder
   ansible.builtin.file:
     state: directory
     path: "{{ share.path }}"
     owner: "{{ share.owner | default('root') }}"
     group: "{{ share.group | default('root') }}"
-    mode: "{{ share.mode | default('0755') }}"
+    # mode: "{{ share.mode | default('0770') }}"
 
-# - name: Set acl when entity is defined
-#   ansible.posix.acl:
-#     path: "{{ sambafs_folder.path }}"
-#     entity: "{{ acl.entity }}"
-#     etype: "{{ acl.type }}"
-#     permissions: "{{ acl.permissions }}"
-#     default: "{{ acl.default }}"
-#     state: present
-#     recursive: true
-#   loop_control:
-#     loop_var: acl
-#   loop: "{{ sambafs_folder.acl | default(sambafs_default_folder_acl) }}"
-#   when: acl.entity is defined
-
-# - name: Set acl when suffix is defined
-#   ansible.posix.acl:
-#     path: "{{ sambafs_folder.path }}"
-#     entity: "{{ sambafs_group_pre }}_folder_{{ sambafs_folder.name }}_{{ acl.suffix }}"
-#     etype: "{{ acl.type }}"
-#     permissions: "{{ acl.permissions }}"
-#     default: "{{ acl.default }}"
-#     state: present
-#     recursive: true
-#   loop_control:
-#     loop_var: acl
-#   loop: "{{ sambafs_folder.acl | default(sambafs_default_folder_acl) }}"
-#   when: acl.suffix is defined
-
-# - name: create automount ou
-#   community.general.ldap_entry:
-#     bind_dn: "{{ domain_shortname }}\\{{ ldap_admin_user }}"
-#     bind_pw: "{{ ldap_admin_pass }}"
-#     server_uri: "ldap://{{ domainjoin_dc1 }}"
-#     state: present
-#     dn: "{{ ldap_autofsou }},{{ ldap_basedn }}"
-#     objectClass: 
-#     - top
-#     - organizationalUnit
-#     attributes:
-#       ou: ${ROOTOU}
-
-# - name: create auto.master nismap
-#   community.general.ldap_entry:
-#     bind_dn: "{{ domain_shortname }}\\{{ ldap_admin_user }}"
-#     bind_pw: "{{ ldap_admin_pass }}"
-#     server_uri: "ldap://{{ domainjoin_dc1 }}"
-#     state: present
-#     dn: CN=auto.master,{{ ldap_autofsou }},{{ ldap_basedn }}
-#     objectClass: 
-#     - nisMap
-#     attributes:
-#       nisMapName: auto.master
-
-# - name: create direct nisobject
-#   community.general.ldap_entry:
-#     bind_dn: "{{ domain_shortname }}\\{{ ldap_admin_user }}"
-#     bind_pw: "{{ ldap_admin_pass }}"
-#     server_uri: "ldap://{{ domainjoin_dc1 }}"
-#     state: present
-#     dn: CN=/-,CN=auto.master,{{ ldap_autofsou }},{{ ldap_basedn }}
-#     objectClass: 
-#     - nisObject
-#     attributes:
-#       nisMapName: /-
-#       nisMapEntry: auto.direct
-
-# - name: create auto.direct nismap container fo mountpoints
-#   community.general.ldap_entry:
-#     bind_dn: "{{ domain_shortname }}\\{{ ldap_admin_user }}"
-#     bind_pw: "{{ ldap_admin_pass }}"
-#     server_uri: "ldap://{{ domainjoin_dc1 }}"
-#     state: present
-#     dn: CN=auto.direct,{{ ldap_autofsou }},{{ ldap_basedn }}
-#     objectClass: 
-#     - nisMap
-#     attributes:
-#       nisMapName: auto.direct
-
-# - name: add mountpoint
-#   vars:
-#     sambafs_folder_mountpoint: "/mnt/autofs/{{ sambafs_folder.name }}"
-#     sambafs_folder_mountsrc: "//{{ ansible_hostname }}.{{ domain_name }}/{{sambafs_folder.share}}/{{sambafs_folder.mountsrc | default(sambafs_folder.name) }}"
-#     sambafs_folder_mountopts: "{{ sambafs_mountopts }}"
-#   community.general.ldap_entry:
-#     bind_dn: "{{ domain_shortname }}\\{{ ldap_admin_user }}"
-#     bind_pw: "{{ ldap_admin_pass }}"
-#     server_uri: "ldap://{{ domainjoin_dc1 }}"
-#     state: present
-#     dn: "CN={{ sambafs_folder_mountpoint }},CN=auto.direct,{{ ldap_autofsou }},{{ ldap_basedn }}"
-#     objectClass: 
-#     - nisObject
-#     attributes:
-#       nisMapName: "{{ sambafs_folder_mountpoint }}"
-#       nisMapEntry: "{{ sambafs_folder_mountopts }}{{ sambafs_folder_mountsrc }}"
+- name: set permissions
+  ansible.posix.acl:
+    recursive: true
+    state: "{{ sambafs_share_item.state | default('present')}}"
+    etype: "{{ sambafs_share_item.etype | default('group')}}"
+    path: "{{ share.path }}"
+    entity: "{{ sambafs_share_item.entity | default('') }}"
+    permissions: "{{ sambafs_share_item.permissions }}"
+    default: "{{ sambafs_share_item.default }}"
+  loop: "{{
+      share.acls | default([]) +
+      [
+        { 'default': false, 'permissions': 'r-x', 'entity': sambafs_share_ro_group },
+        { 'default': false, 'permissions': 'rwx', 'entity': sambafs_share_rw_group },
+        { 'default': true,  'permissions': 'r-x', 'entity': sambafs_share_ro_group },
+        { 'default': true,  'permissions': 'rwx', 'entity': sambafs_share_rw_group },
+      ]
+    }}"
+  loop_control:
+    loop_var: sambafs_share_item

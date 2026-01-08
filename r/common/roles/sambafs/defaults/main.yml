@@ -2,7 +2,7 @@ sambafs_default_user: root
 sambafs_default_group: root
 sambafs_default_mode_dir: '0755'
 sambafs_default_mode_file: '0644'
-
+sambafs_conf_dir: /etc/samba
 sambafs_usershare_path: /var/lib/samba/usershares
 sambafs_dirs:
   - path: "{{ sambafs_usershare_path }}"
@@ -17,9 +17,38 @@ sambafs_groups: []
 sambafs_group_pre: fs
 sambafs_group_suf_rw: rw
 sambafs_group_suf_ro: ro
-# replace('/', '_')
+sambafs_share_ro_group: ''
+sambafs_share_rw_group: ''
 sambafs_shares:
   - name: pub
     path: /data/pub
+    mode: '0755'
+    acls:
+      - { default: false, permissions: rwx, etype: "user" }
+      - { default: false, permissions: r-x, etype: "group" }
+      - { default: false, permissions: r-x, etype: "other" }
+      - { default: true, permissions: rwx, etype: "user" }
+      - { default: true, permissions: r-x, etype: "group" }
+      - { default: true, permissions: r-x, etype: "other" }
+    comment: "Общие папки"
+    guest_ok: "Yes"
+    hide_unreadable: "Yes"
+    writable: "Yes"
+    browseable: "Yes"
+    read_only: "No"
   - name: private
     path: /data/private
+    mode: '0700'
+    acls:
+      - { default: false, permissions: rwx, etype: "user" }
+      - { default: false, permissions: ---, etype: "group" }
+      - { default: false, permissions: ---, etype: "other" }
+      - { default: true, permissions: rwx, etype: "user" }
+      - { default: true, permissions: ---, etype: "group" }
+      - { default: true, permissions: ---, etype: "other" }
+    comment: "Личные папки"
+    guest_ok: "Yes"
+    hide_unreadable: "Yes"
+    writable: "Yes"
+    browseable: "Yes"
+    read_only: "No"

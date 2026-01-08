@@ -21,13 +21,6 @@
   when: sambafs_dirs != []
   notify: restart samba
 
-- name: /etc/samba/smb.conf
-  ansible.builtin.template:
-    backup: true
-    src: etc/samba/smb.conf
-    dest: /etc/samba/smb.conf
-  notify: restart samba
-
 - name: create group list
   ansible.builtin.set_fact:
     sambafs_groups: "{{
@@ -57,12 +50,15 @@
     loop_var: share
     label: "{{ share.path }}"
 
-# - name: create share conf
-#   ansible.builtin.template:
-#     src: share.conf
-#     dest: "{{ sambafs_share_confd }}/{{ share.name }}"
-#   loop: "{{ sambafs_shares }}"
-#   loop_control:
-#     loop_var: share
-#     label: "{{ share.name }}"
-#   notify: restart samba
+- name: /etc/samba/smb.conf
+  ansible.builtin.template:
+    backup: true
+    src: smb.conf
+    dest: "{{ sambafs_conf_dir }}/smb.conf"
+  notify: restart samba
+
+- name: systemctl enable smbd
+  ansible.builtin.systemd_service:
+    name: smbd
+    enabled: true
+  notify: restart samba

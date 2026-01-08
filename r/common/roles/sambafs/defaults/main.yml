@@ -1,0 +1,25 @@
+sambafs_default_user: root
+sambafs_default_group: root
+sambafs_default_mode_dir: '0755'
+sambafs_default_mode_file: '0644'
+
+sambafs_usershare_path: /var/lib/samba/usershares
+sambafs_dirs:
+  - path: "{{ sambafs_usershare_path }}"
+    owner: root
+    group: sambashare
+    mode: '0770'
+
+sambafs_users:
+  - appc
+sambafs_groups: []
+
+sambafs_group_pre: fs
+sambafs_group_suf_rw: rw
+sambafs_group_suf_ro: ro
+# replace('/', '_')
+sambafs_shares:
+  - name: pub
+    path: /data/pub
+  - name: private
+    path: /data/private

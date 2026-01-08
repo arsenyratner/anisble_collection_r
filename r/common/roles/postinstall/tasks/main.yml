@@ -21,12 +21,19 @@
     loop_var: postinstall_item
 
 - name: Set fqdn
-  ansible.builtin.hostname:
-    use: systemd
-    name: |-
-      {% if postinstall_domainname != "" %}{{ postinstall_hostname }}.{{ postinstall_domainname }}
-      {% elif postinstall_domainname == "" %}{{ postinstall_hostname }}{% endif %}
-  notify: General reboot system
+  block:
+    - name: create empty file
+      ansible.builtin.copy:
+        dest: /etc/.pve-ignore.hostname
+        content: ''
+
+    - name: set hostname
+      ansible.builtin.hostname:
+        use: "{{ postinstall_hostname_use | default('systemd') }}"
+        name: |-
+          {% if postinstall_domainname != "" %}{{ postinstall_hostname }}.{{ postinstall_domainname }}
+          {% elif postinstall_domainname == "" %}{{ postinstall_hostname }}{% endif %}
+      notify: General reboot system
 
 - name: Populate service facts
   ansible.builtin.service_facts:

@@ -1,0 +1,9 @@
+distribution_firstfound_paths: []
+distribution_firstfound_files:
+  - "_{{ ansible_distribution | lower }}-{{ ansible_distribution_version | lower }}.yml"
+  - "_{{ ansible_distribution | lower }}.yml"
+  - "_{{ ansible_os_family | lower }}.yml"
+distribution_firstfound:
+  paths: "{{ distribution_firstfound_paths }}"
+  files: "{{ distribution_firstfound_files }}"
+  skip: true 

@@ -1,0 +1,5 @@
+- name: systemctl restart smbd
+  ansible.builtin.systemd_service:
+    name: smbd
+    state: restarted
+  listen: restart samba

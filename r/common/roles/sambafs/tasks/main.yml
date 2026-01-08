@@ -1,0 +1,68 @@
+- name: Distribution specific variables
+  vars:
+    distribution_firstfound_paths: ['vars']
+  ansible.builtin.include_vars:
+    file: "{{ lookup('ansible.builtin.first_found', distribution_firstfound) }}"
+
+- name: Distribution specific tasks
+  vars:
+    distribution_firstfound_paths: ['tasks']
+  ansible.builtin.include_tasks:
+    file: "{{ lookup('ansible.builtin.first_found', distribution_firstfound) }}"
+
+- name: Create dirs
+  ansible.builtin.file:
+    state: directory
+    path: "{{ item.path }}"
+    mode: "{{ item.mode | default(sambfs_default_mode_dir) }}"
+    owner: "{{ item.owner | default(sambafs_default_user) }}"
+    group: "{{ item.group | default(sambafs_default_group) }}"
+  loop: "{{ sambafs_dirs }}"
+  when: sambafs_dirs != []
+  notify: restart samba
+
+- name: /etc/samba/smb.conf
+  ansible.builtin.template:
+    backup: true
+    src: etc/samba/smb.conf
+    dest: /etc/samba/smb.conf
+  notify: restart samba
+
+- name: create group list
+  ansible.builtin.set_fact:
+    sambafs_groups: "{{
+        sambafs_groups +
+        [
+          sambafs_group_pre + '_' + share.path | replace('/', '') + '_' + sambafs_group_suf_rw,
+          sambafs_group_pre + '_' + share.path | replace('/', '') + '_' + sambafs_group_suf_ro,
+        ]
+      }}"
+  loop: "{{ sambafs_shares }}"
+  loop_control:
+    loop_var: share
+    label: "{{ share.path }}"
+
+- name: create groups
+  ansible.builtin.group:
+    name: "{{ sambafs_item }}"
+  loop: "{{ sambafs_groups }}"
+  loop_control:
+    loop_var: sambafs_item
+
+- name: create folders
+  ansible.builtin.include_tasks:
+    file: tasks/folder.yml
+  loop: "{{ sambafs_shares }}"
+  loop_control:
+    loop_var: share
+    label: "{{ share.path }}"
+
+# - name: create share conf
+#   ansible.builtin.template:
+#     src: share.conf
+#     dest: "{{ sambafs_share_confd }}/{{ share.name }}"
+#   loop: "{{ sambafs_shares }}"
+#   loop_control:
+#     loop_var: share
+#     label: "{{ share.name }}"
+#   notify: restart samba

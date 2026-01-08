@@ -1,0 +1,12 @@
+sambafs_packages:
+  - smbclient
+  - samba-common
+  - samba
+  - libpam-krb5
+  - krb5-user
+  - ldap-utils
+  - acl
+  - attr
+  - cockpit
+  - cockpit-storaged
+  - cockpit-system

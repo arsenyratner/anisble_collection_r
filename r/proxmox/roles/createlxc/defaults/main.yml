@@ -79,11 +79,11 @@ createlxc_disk_volume: {}
   # storage:
   # volume:
 createlxc_mount_volumes: []
-  # - host_path:
+  # - id:
+  #   host_path:
+  #   mountpoint: 
   #   options:
   #   size:
-  #   storage:
-  #   volume:
 # network
 createlxc_nameservers: []
 createlxc_searchdomains: []

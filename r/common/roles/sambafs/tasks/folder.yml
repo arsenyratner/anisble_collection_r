@@ -1,0 +1,102 @@
+- name: create folder
+  ansible.builtin.file:
+    state: directory
+    path: "{{ share.path }}"
+    owner: "{{ share.owner | default('root') }}"
+    group: "{{ share.group | default('root') }}"
+    mode: "{{ share.mode | default('0755') }}"
+
+# - name: Set acl when entity is defined
+#   ansible.posix.acl:
+#     path: "{{ sambafs_folder.path }}"
+#     entity: "{{ acl.entity }}"
+#     etype: "{{ acl.type }}"
+#     permissions: "{{ acl.permissions }}"
+#     default: "{{ acl.default }}"
+#     state: present
+#     recursive: true
+#   loop_control:
+#     loop_var: acl
+#   loop: "{{ sambafs_folder.acl | default(sambafs_default_folder_acl) }}"
+#   when: acl.entity is defined
+
+# - name: Set acl when suffix is defined
+#   ansible.posix.acl:
+#     path: "{{ sambafs_folder.path }}"
+#     entity: "{{ sambafs_group_pre }}_folder_{{ sambafs_folder.name }}_{{ acl.suffix }}"
+#     etype: "{{ acl.type }}"
+#     permissions: "{{ acl.permissions }}"
+#     default: "{{ acl.default }}"
+#     state: present
+#     recursive: true
+#   loop_control:
+#     loop_var: acl
+#   loop: "{{ sambafs_folder.acl | default(sambafs_default_folder_acl) }}"
+#   when: acl.suffix is defined
+
+# - name: create automount ou
+#   community.general.ldap_entry:
+#     bind_dn: "{{ domain_shortname }}\\{{ ldap_admin_user }}"
+#     bind_pw: "{{ ldap_admin_pass }}"
+#     server_uri: "ldap://{{ domainjoin_dc1 }}"
+#     state: present
+#     dn: "{{ ldap_autofsou }},{{ ldap_basedn }}"
+#     objectClass: 
+#     - top
+#     - organizationalUnit
+#     attributes:
+#       ou: ${ROOTOU}
+
+# - name: create auto.master nismap
+#   community.general.ldap_entry:
+#     bind_dn: "{{ domain_shortname }}\\{{ ldap_admin_user }}"
+#     bind_pw: "{{ ldap_admin_pass }}"
+#     server_uri: "ldap://{{ domainjoin_dc1 }}"
+#     state: present
+#     dn: CN=auto.master,{{ ldap_autofsou }},{{ ldap_basedn }}
+#     objectClass: 
+#     - nisMap
+#     attributes:
+#       nisMapName: auto.master
+
+# - name: create direct nisobject
+#   community.general.ldap_entry:
+#     bind_dn: "{{ domain_shortname }}\\{{ ldap_admin_user }}"
+#     bind_pw: "{{ ldap_admin_pass }}"
+#     server_uri: "ldap://{{ domainjoin_dc1 }}"
+#     state: present
+#     dn: CN=/-,CN=auto.master,{{ ldap_autofsou }},{{ ldap_basedn }}
+#     objectClass: 
+#     - nisObject
+#     attributes:
+#       nisMapName: /-
+#       nisMapEntry: auto.direct
+
+# - name: create auto.direct nismap container fo mountpoints
+#   community.general.ldap_entry:
+#     bind_dn: "{{ domain_shortname }}\\{{ ldap_admin_user }}"
+#     bind_pw: "{{ ldap_admin_pass }}"
+#     server_uri: "ldap://{{ domainjoin_dc1 }}"
+#     state: present
+#     dn: CN=auto.direct,{{ ldap_autofsou }},{{ ldap_basedn }}
+#     objectClass: 
+#     - nisMap
+#     attributes:
+#       nisMapName: auto.direct
+
+# - name: add mountpoint
+#   vars:
+#     sambafs_folder_mountpoint: "/mnt/autofs/{{ sambafs_folder.name }}"
+#     sambafs_folder_mountsrc: "//{{ ansible_hostname }}.{{ domain_name }}/{{sambafs_folder.share}}/{{sambafs_folder.mountsrc | default(sambafs_folder.name) }}"
+#     sambafs_folder_mountopts: "{{ sambafs_mountopts }}"
+#   community.general.ldap_entry:
+#     bind_dn: "{{ domain_shortname }}\\{{ ldap_admin_user }}"
+#     bind_pw: "{{ ldap_admin_pass }}"
+#     server_uri: "ldap://{{ domainjoin_dc1 }}"
+#     state: present
+#     dn: "CN={{ sambafs_folder_mountpoint }},CN=auto.direct,{{ ldap_autofsou }},{{ ldap_basedn }}"
+#     objectClass: 
+#     - nisObject
+#     attributes:
+#       nisMapName: "{{ sambafs_folder_mountpoint }}"
+#       nisMapEntry: "{{ sambafs_folder_mountopts }}{{ sambafs_folder_mountsrc }}"

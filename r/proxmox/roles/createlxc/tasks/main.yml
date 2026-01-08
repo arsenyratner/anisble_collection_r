@@ -50,6 +50,10 @@
     swap: "{{ createlxc_swap }}"
     # disk
     disk: "{{ createlxc_disk }}"
+    # mount_volumes
+    mount_volumes: "{{ createlxc_mount_volumes }}"
+    unprivileged: "{{ createlxc_unprivileged }}"
+    features: "{{ createlxc_features }}"
   register: createlxc_result
 
 - name: debug create

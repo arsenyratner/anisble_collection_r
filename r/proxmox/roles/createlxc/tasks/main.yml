@@ -52,6 +52,7 @@
     disk: "{{ createlxc_disk }}"
     # mount_volumes
     mount_volumes: "{{ createlxc_mount_volumes }}"
+    # others
     unprivileged: "{{ createlxc_unprivileged }}"
     features: "{{ createlxc_features }}"
   register: createlxc_result

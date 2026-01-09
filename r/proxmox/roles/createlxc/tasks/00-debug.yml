@@ -25,6 +25,7 @@
       - "createlxc_ostype: {{ createlxc_ostype }}"
       #  cpu
       - "createlxc_cpus: {{ createlxc_cpus }}"
+      - "createlxc_cores: {{ createlxc_cores }}"
       # - "createlxc_cpuunits: {{ createlxc_cpuunits }}"
       #  memory
       - "createlxc_memory: {{ createlxc_memory }}"

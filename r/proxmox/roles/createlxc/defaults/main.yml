@@ -32,6 +32,7 @@ createlxc_ostype: "auto"
 
 # cpu 
 createlxc_cpus: 1
+createlxc_cores: 1
 # createlxc_cpuunits: 
 # memory 
 createlxc_memory: 1024 # MB 

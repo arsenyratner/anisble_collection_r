@@ -68,5 +68,15 @@
     name: "{{ postinstall_timezone }}"
   when: postinstall_timezone is defined
 
+- name: install locales
+  community.general.locale_gen:
+    name: "{{ postinstall_locales }}"
+    state: present
+
+- name: set default locale
+  ansible.builtin.command: localectl set-locale LANG={{ postinstall_locale_default }}
+  register: postinstall_result
+  changed_when: "('LANG=' + postinstall_locale_default) not in ansible_facts.env.LANG" # Simple idempotency check
+
 - name: Flush handlers
   ansible.builtin.meta: flush_handlers

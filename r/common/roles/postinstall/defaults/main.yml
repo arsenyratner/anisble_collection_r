@@ -10,3 +10,7 @@ postinstall_reboot_force: false
 postinstall_update: false
 postinstall_packages:
   - mc
+postinstall_locales:
+  - en_US.UTF-8
+  - ru_RU.UTF-8
+postinstall_locale_default: en_US.UTF-8

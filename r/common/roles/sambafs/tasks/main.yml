@@ -62,3 +62,12 @@
     name: smbd
     enabled: true
   notify: restart samba
+
+- name: create samba users and folders
+  ansible.builtin.include_tasks:
+    file: tasks/user.yml
+  loop: "{{ sambafs_users }}"
+  loop_control:
+    loop_var: sambafs_user
+    label: "{{ sambafs_user.name }}"
+  when: sambafs_users != []

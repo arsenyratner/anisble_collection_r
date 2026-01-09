@@ -4,6 +4,3 @@ sambafs_packages:
   - samba
   - acl
   - attr
-  - cockpit
-  - cockpit-storaged
-  - cockpit-system

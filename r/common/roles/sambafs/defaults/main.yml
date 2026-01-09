@@ -10,8 +10,6 @@ sambafs_dirs:
     group: sambashare
     mode: '0770'
 
-sambafs_users:
-  - appc
 sambafs_groups: []
 
 sambafs_group_pre: fs
@@ -21,3 +19,6 @@ sambafs_share_ro_group: ''
 sambafs_share_rw_group: ''
 sambafs_shares: [] 
 sambafs_folders: []
+sambafs_users: []
+sambafs_folder_public: ''
+sambafs_folder_private: ''

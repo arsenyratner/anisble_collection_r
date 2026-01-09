@@ -3,7 +3,7 @@
     sambafs_share_ro_group: "{{ sambafs_group_pre }}_{{ sambafs_folder.path | replace('/', '') }}_{{ sambafs_group_suf_ro }}" 
     sambafs_share_rw_group: "{{ sambafs_group_pre }}_{{ sambafs_folder.path | replace('/', '') }}_{{ sambafs_group_suf_rw }}"
 
-- name: create folder
+- name: create folder {{ sambafs_folder.path }}
   ansible.builtin.file:
     state: directory
     path: "{{ sambafs_folder.path }}"
@@ -11,7 +11,7 @@
     group: "{{ sambafs_folder.group | default('root') }}"
     # mode: "{{ sambafs_folder.mode | default('0770') }}"
 
-- name: set permissions
+- name: set permissions {{ sambafs_folder.path }}
   ansible.posix.acl:
     recursive: true
     state: "{{ sambafs_share_item.state | default('present')}}"

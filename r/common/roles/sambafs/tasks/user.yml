@@ -1,0 +1,44 @@
+- name: create unix user {{ sambafs_user.name }}
+  ansible.builtin.user:
+    shell: /bin/bash
+    create_home: false
+    update_password: on_create
+    name: "{{ sambafs_user.name }}"
+    password: "{{ sambafs_user.password | password_hash('sha512') }}"
+
+- name: create samba user {{ sambafs_user.name }}
+  ansible.builtin.shell: >
+    set -o nounset -o pipefail -o errexit &&
+    (pdbedit --user={{ sambafs_user.name }} 2>&1 > /dev/null) ||
+    (echo '{{ sambafs_user.password }}'; echo '{{ sambafs_user.password }}') | smbpasswd -s -a {{ sambafs_user.name }}
+  args:
+    executable: /bin/bash
+  no_log: true
+  register: create_user_output
+  changed_when: "'Added user' in create_user_output.stdout"
+
+- name: create private folder {{ sambafs_folder_private }}/{{ sambafs_user.name }}
+  ansible.builtin.file:
+    state: directory
+    recurse: true
+    path: "{{ sambafs_folder_private }}/{{ sambafs_user.name }}"
+    owner: "{{ sambafs_user.name }}"
+    group: "{{ sambafs_user.name }}"
+
+- name: set permissions {{ sambafs_folder_private }}/{{ sambafs_user.name }}
+  ansible.posix.acl:
+    recursive: true
+    state: "{{ sambafs_share_item.state | default('present')}}"
+    etype: "{{ sambafs_share_item.etype | default('group')}}"
+    path: "{{ sambafs_folder_private }}/{{ sambafs_user.name }}"
+    entity: "{{ sambafs_share_item.entity | default('') }}"
+    permissions: "{{ sambafs_share_item.permissions }}"
+    default: "{{ sambafs_share_item.default }}"
+  loop: "{{
+      [
+        { 'default': false, 'permissions': 'rwx', 'etype': 'user', 'entity': sambafs_user.name },
+        { 'default': true,  'permissions': 'rwx', 'etype': 'user', 'entity': sambafs_user.name },
+      ]
+    }}"
+  loop_control:
+    loop_var: sambafs_share_item

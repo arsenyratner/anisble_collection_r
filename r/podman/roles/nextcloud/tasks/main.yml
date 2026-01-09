@@ -44,7 +44,7 @@
     privileged: true
     pod: "{{ pdmn_nextcloud_item.pod }}"
     name: "{{ pdmn_nextcloud_item.name }}"
-    image: "{{ pdmn_nextcloud_item.image }}"
+    image: "{{ pdmn_nextcloud_item.image }}:{{ pdmn_nextcloud_item.release }}"
     env: "{{ pdmn_nextcloud_item.env | default({}) }}"
     restart_policy: "{{ pdmn_nextcloud_item.restart | default('always') }}"
     requires: "{{ pdmn_nextcloud_item.requires | default([]) }}"

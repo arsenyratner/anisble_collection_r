@@ -26,14 +26,14 @@
     sambafs_groups: "{{
         sambafs_groups +
         [
-          sambafs_group_pre + '_' + share.path | replace('/', '') + '_' + sambafs_group_suf_rw,
-          sambafs_group_pre + '_' + share.path | replace('/', '') + '_' + sambafs_group_suf_ro,
+          sambafs_group_pre + '_' + sambafs_folder.path | replace('/', '') + '_' + sambafs_group_suf_rw,
+          sambafs_group_pre + '_' + sambafs_folder.path | replace('/', '') + '_' + sambafs_group_suf_ro,
         ]
       }}"
-  loop: "{{ sambafs_shares }}"
+  loop: "{{ sambafs_folders }}"
   loop_control:
-    loop_var: share
-    label: "{{ share.path }}"
+    loop_var: sambafs_folder
+    label: "{{ sambafs_folder.path }}"
 
 - name: create groups
   ansible.builtin.group:
@@ -45,10 +45,10 @@
 - name: create folders
   ansible.builtin.include_tasks:
     file: tasks/folder.yml
-  loop: "{{ sambafs_shares }}"
+  loop: "{{ sambafs_folders }}"
   loop_control:
-    loop_var: share
-    label: "{{ share.path }}"
+    loop_var: sambafs_folder
+    label: "{{ sambafs_folder.path }}"
 
 - name: /etc/samba/smb.conf
   ansible.builtin.template:

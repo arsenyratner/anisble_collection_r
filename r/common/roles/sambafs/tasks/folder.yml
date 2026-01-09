@@ -1,27 +1,27 @@
 - name: set defaults
   ansible.builtin.set_fact:
-    sambafs_share_ro_group: "{{ sambafs_group_pre }}_{{ share.path | replace('/', '') }}_{{ sambafs_group_suf_ro }}" 
-    sambafs_share_rw_group: "{{ sambafs_group_pre }}_{{ share.path | replace('/', '') }}_{{ sambafs_group_suf_rw }}"
+    sambafs_share_ro_group: "{{ sambafs_group_pre }}_{{ sambafs_folder.path | replace('/', '') }}_{{ sambafs_group_suf_ro }}" 
+    sambafs_share_rw_group: "{{ sambafs_group_pre }}_{{ sambafs_folder.path | replace('/', '') }}_{{ sambafs_group_suf_rw }}"
 
 - name: create folder
   ansible.builtin.file:
     state: directory
-    path: "{{ share.path }}"
-    owner: "{{ share.owner | default('root') }}"
-    group: "{{ share.group | default('root') }}"
-    # mode: "{{ share.mode | default('0770') }}"
+    path: "{{ sambafs_folder.path }}"
+    owner: "{{ sambafs_folder.owner | default('root') }}"
+    group: "{{ sambafs_folder.group | default('root') }}"
+    # mode: "{{ sambafs_folder.mode | default('0770') }}"
 
 - name: set permissions
   ansible.posix.acl:
     recursive: true
     state: "{{ sambafs_share_item.state | default('present')}}"
     etype: "{{ sambafs_share_item.etype | default('group')}}"
-    path: "{{ share.path }}"
+    path: "{{ sambafs_folder.path }}"
     entity: "{{ sambafs_share_item.entity | default('') }}"
     permissions: "{{ sambafs_share_item.permissions }}"
     default: "{{ sambafs_share_item.default }}"
   loop: "{{
-      share.acls | default([]) +
+      sambafs_folder.acls | default([]) +
       [
         { 'default': false, 'permissions': 'r-x', 'entity': sambafs_share_ro_group },
         { 'default': false, 'permissions': 'rwx', 'entity': sambafs_share_rw_group },

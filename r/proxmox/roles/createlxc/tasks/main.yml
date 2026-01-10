@@ -43,8 +43,9 @@
     password: "{{ createlxc_password }}"
     pubkey: "{{ createlxc_pubkey }}"
     # cpu
+    cores: "{{ createlxc_cores | default(1) }}"
     cpus: "{{ createlxc_cpus | default(omit) }}"
-    cores: "{{ createlxc_cores | default(omit) }}"
+    cpuunits: "{{ createlxc_cpuunits | default(omit) }}"
     # memory
     memory: "{{ createlxc_memory }}"
     swap: "{{ createlxc_swap }}"
@@ -121,4 +122,5 @@
     api_token_id: "{{ createlxc_api_token_id | default(omit) }}"
     api_token_secret: "{{ createlxc_api_token_secret | default(omit) }}"
     vmid: "{{ createlxc_result.vmid }}"
+    hostname: "{{ createlxc_hostname }}"
     state: "{{ createlxc_state | default('stopped') }}"

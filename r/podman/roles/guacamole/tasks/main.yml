@@ -1,140 +1,73 @@
 ---
-- name: remove before create if forced
-  when: pdmn_gcml_force
-  ### block start
-  block:
-    - name: Disable and stop
-      ansible.builtin.systemd_service:
-        enabled: false
-        masked: false
-        state: stopped
-        name: "pod-{{ pdmn_gcml_podname }}"
+- name: create dirs list
+  ansible.builtin.set_fact:
+    pdmn_guacamole_dirs: "{{
+        pdmn_guacamole_dirs | default([]) +
+        pdmn_guacamole_item.volumes | map('split', ':') | map('first') | map('community.general.dict_kv', 'path')
+      }}"
+  loop: "{{ pdmn_guacamole_containers }}"
+  loop_control:
+    loop_var: pdmn_guacamole_item
+    label: "{{ pdmn_guacamole_item.name }}"
 
-    - name: Stop and remove existing pod if exists
-      containers.podman.podman_pod:
-        name: "{{ pdmn_gcml_podname }}"
-        state: stopped
-      ignore_errors: yes
-
-    - name: Remove pod systemd service if exists
-      ansible.builtin.file:
-        path: "{{ pdmn_gcml_systemd_dir }}/pod-{{ pdmn_gcml_podname }}.service"
-        state: absent
-      loop:
-        - "{{ pdmn_gcml_systemd_dir }}/pod-{{ pdmn_gcml_podname }}.service"
-        - "{{ pdmn_gcml_systemd_dir }}/container-{{ pdmn_gcml_podname }}-guacd.service"
-        - "{{ pdmn_gcml_systemd_dir }}/container-{{ pdmn_gcml_podname }}-mysql.service"
-        - "{{ pdmn_gcml_systemd_dir }}/container-{{ pdmn_gcml_podname }}-tomcat.service"
-      ignore_errors: yes
-
-    - name: systemctl daemon-reload
-      ansible.builtin.systemd_service:
-        daemon_reload: true
-
-    - name: Remove existing local directory
-      ansible.builtin.file:
-        state: absent
-        path: "{{ pdmn_gcml_localpath }}"
-  ### block end
-
-- name: Create local directory structure
+- name: Create dirs
   ansible.builtin.file:
     state: directory
-    mode: '0777'
-    path: "{{ pdmn_gcml_item }}"
-  loop:
-    - "{{ pdmn_gcml_localpath }}/db/docker-entrypoint-initdb.d"
-    - "{{ pdmn_gcml_localpath }}/db/data"
+    # owner: "{{ pdmn_guacamole_item.owner | default(pdmn_guacamole_default_owner) }}"
+    # group: "{{ pdmn_guacamole_item.group | default(pdmn_guacamole_default_group) }}"
+    # mode: "{{ pdmn_guacamole_item.mode | default(pdmn_guacamole_default_dir_mode) }}"
+    path: "{{ pdmn_guacamole_item.path }}"
+  loop: "{{ pdmn_guacamole_dirs }}"
   loop_control:
-    loop_var: pdmn_gcml_item
+    loop_var: pdmn_guacamole_item
+    label: "{{ pdmn_guacamole_item.path }}"
 
-- name: Pull container images
+- name: Pull images
   containers.podman.podman_image:
-    name: "{{ pdmn_gcml_item }}"
+    name: "{{ pdmn_guacamole_item.image }}:{{ pdmn_guacamole_item.release }}"
     state: present
-  loop: "{{ pdmn_gcml_pull_images }}"
+  loop: "{{ pdmn_guacamole_containers }}"
   loop_control:
-    loop_var: pdmn_gcml_item
+    loop_var: pdmn_guacamole_item
+    label: "{{ pdmn_guacamole_item.name }}"
+  ignore_errors: true
 
 - name: Create 01_initdb.sql
   ansible.builtin.template:
-    src: "{{ pdmn_gcml_release }}/01_initdb.sql"
-    dest: "{{ pdmn_gcml_localpath }}/db/docker-entrypoint-initdb.d/01_initdb.sql"
+    src: "{{ pdmn_guacamole_release }}/01_initdb.sql"
+    dest: "{{ pdmn_guacamole_pod_dir }}/db/docker-entrypoint-initdb.d/01_initdb.sql"
 
 - name: Create 02_initdb.sql with schema
   ansible.builtin.template:
-    src: "{{ pdmn_gcml_release }}/02_initdb.sql"
-    dest: "{{ pdmn_gcml_localpath }}/db/docker-entrypoint-initdb.d/02_initdb.sql"
+    src: "{{ pdmn_guacamole_release }}/02_initdb.sql"
+    dest: "{{ pdmn_guacamole_pod_dir }}/db/docker-entrypoint-initdb.d/02_initdb.sql"
 
-- name: Create pod for guacamole
+- name: Create pod
   containers.podman.podman_pod:
     state: created
-    publish: "{{ pdmn_gcml_podpublish }}"
-    name: "{{ pdmn_gcml_podname }}"
-  notify: restart guacamole
+    name: "{{ pdmn_guacamole_podname }}"
+    publish: "{{ pdmn_guacamole_publish }}"
 
-- name: Run MySQL container
-  containers.podman.podman_container:
-    env:
-      MYSQL_ROOT_PASSWORD: "{{ pdmn_gcml_db_pass }}"
-    state: started
-    privileged: true
-    name: "{{ pdmn_gcml_podname }}-mysql"
-    image: "{{ pdmn_gcml_db_image }}"
-    pod: "{{ pdmn_gcml_podname }}"
-    restart_policy: "unless-stopped"
-    volume:
-      - "{{ pdmn_gcml_localpath }}/db/docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d:Z"
-      - "{{ pdmn_gcml_localpath }}/db/data:/var/lib/mysql:Z"
-  notify: restart guacamole
-
-# - name: Wait until the container reports as "healthy"
-#   ansible.builtin.command: "podman wait --condition=healthy {{ pdmn_gcml_podname }}-mysql"
-#   register: wait_result
-#   changed_when: false
-
-- name: Run guacd container
+- name: Run containers
   containers.podman.podman_container:
     state: started
-    restart_policy: "unless-stopped"
     privileged: true
-    name: "{{ pdmn_gcml_podname }}-guacd"
-    image: "{{ pdmn_gcml_guacd_image }}"
-    pod: "{{ pdmn_gcml_podname }}"
-  notify: restart guacamole
-
-# - name: Wait until the container reports as "healthy"
-#   ansible.builtin.command: "podman wait --condition=healthy {{ pdmn_gcml_podname }}-guacd"
-#   register: wait_result
-#   changed_when: false
-
-- name: Run guacamole container
-  containers.podman.podman_container:
-    state: started
-    restart_policy: "unless-stopped"
-    privileged: true
-    env:
-      GUACD_HOSTNAME: "127.0.0.1"
-      GUACD_PORT: "4822"
-      MYSQL_HOSTNAME: "127.0.0.1"
-      MYSQL_PORT: "3306"
-      MYSQL_DATABASE: "{{ pdmn_gcml_db_name }}"
-      MYSQL_USERNAME: "{{ pdmn_gcml_db_user }}"
-      MYSQL_PASSWORD: "{{ pdmn_gcml_db_pass }}"
-    name: "{{ pdmn_gcml_podname }}-tomcat"
-    image: "{{ pdmn_gcml_guacamole_image }}"
-    pod: "{{ pdmn_gcml_podname }}"
-  notify: restart guacamole
-
-# - name: Wait until the container reports as "healthy"
-#   ansible.builtin.command: "podman wait --condition=healthy {{ pdmn_gcml_podname }}-tomcat"
-#   register: wait_result
-#   changed_when: false
-
-# - name: Generate systemd unit files
-#   ansible.builtin.shell:
-#     cmd: "cd {{ pdmn_gcml_systemd_dir }} && podman generate systemd --files --name {{ pdmn_gcml_podname }}"
-#   changed_when: false
+    pod: "{{ pdmn_guacamole_item.pod }}"
+    name: "{{ pdmn_guacamole_item.name }}"
+    image: "{{ pdmn_guacamole_item.image }}:{{ pdmn_guacamole_item.release }}"
+    env: "{{ pdmn_guacamole_item.env | default({}) }}"
+    restart_policy: "{{ pdmn_guacamole_item.restart | default('always') }}"
+    requires: "{{ pdmn_guacamole_item.requires | default([]) }}"
+    volume: "{{ pdmn_guacamole_item.volumes }}"
+    healthcheck: "{{ pdmn_guacamole_item.healthcheck.test[1] | default(omit) }}"
+    healthcheck_interval: "{{ pdmn_guacamole_item.healthcheck.interval | default(omit) }}"
+    healthcheck_timeout: "{{ pdmn_guacamole_item.healthcheck.timeout | default(omit) }}"
+    healthcheck_retries: "{{ pdmn_guacamole_item.healthcheck.retries | default(omit) }}"
+  loop: "{{ pdmn_guacamole_containers }}"
+  loop_control:
+    loop_var: pdmn_guacamole_item
+    label: "{{ pdmn_guacamole_item.name }}"
+  ignore_errors: true
 
 - name: Generate systemd unit files
   containers.podman.podman_generate_systemd:
@@ -143,9 +76,9 @@
     restart_policy: always
     restart_sec: 60
     use_names: true
-    dest: "{{ pdmn_gcml_systemd_dir }}"
-    force: "{{ pdmn_gcml_force }}"
-    name: "{{ pdmn_gcml_podname }}"
+    dest: "{{ pdmn_guacamole_systemd_dir }}"
+    force: "{{ pdmn_guacamole_force }}"
+    name: "{{ pdmn_guacamole_podname }}"
   notify: restart guacamole
 
 - name: Enable and start systemd unit
@@ -159,7 +92,7 @@
         enabled: true
         masked: false
         state: started
-        name: "pod-{{ pdmn_gcml_podname }}"
+        name: "pod-{{ pdmn_guacamole_podname }}"
   rescue:
     - ansible.builtin.pause:
         seconds: 30
@@ -168,5 +101,5 @@
         enabled: true
         masked: false
         state: restarted
-        name: "pod-{{ pdmn_gcml_podname }}"
+        name: "pod-{{ pdmn_guacamole_podname }}"
   ### block end

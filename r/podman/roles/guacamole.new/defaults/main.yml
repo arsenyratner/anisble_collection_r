@@ -1,0 +1,90 @@
+---
+pdmn_guacamole_default_owner: root
+pdmn_guacamole_default_group: root
+pdmn_guacamole_default_dir_mode: '0750'
+pdmn_guacamole_default_file_mode: '0640'
+
+pdmn_guacamole_force: false
+pdmn_guacamole_systemd_dir: /etc/systemd/system
+
+pdmn_guacamole_podname: guacamole
+pdmn_guacamole_release: 1.6.0
+pdmn_guacamole_db_host: 127.0.0.1
+pdmn_guacamole_db_name: "{{ pdmn_guacamole_podname }}"
+pdmn_guacamole_db_user: "{{ pdmn_guacamole_podname }}user"
+pdmn_guacamole_db_pass: ""
+pdmn_guacamole_pod_dir: "{{ pdmn_root_dir }}/{{ pdmn_guacamole_podname }}"
+pdmn_guacamole_dirs:
+  - path: "{{ pdmn_guacamole_pod_dir }}"
+
+pdmn_guacamole_domain: ""
+pdmn_guacamole_admin_user: admin
+pdmn_guacamole_admin_pass: ""
+
+pdmn_guacamole_containers:
+    ### container start
+  - name: "{{ pdmn_guacamole_podname }}-db"
+    pod: "{{ pdmn_guacamole_podname }}"
+    # image: docker.io/library/mariadb
+    image: docker.io/mysql
+    release: 9.4.0
+    restart: on-failure
+    env:
+      MYSQL_ROOT_PASSWORD: "{{ pdmn_guacamole_db_pass }}"
+      MYSQL_USER: "{{ pdmn_guacamole_db_user }}"
+      MYSQL_PASSWORD: "{{ pdmn_guacamole_db_pass }}"
+      MYSQL_DATABASE: "{{ pdmn_guacamole_db_name }}"
+    volumes:
+      - "{{ pdmn_guacamole_pod_dir }}/db/docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d:Z"
+      - "{{ pdmn_guacamole_pod_dir }}/db/data:/var/lib/mysql:Z"
+    volumes_files:
+      - "{{ pdmn_guacamole_pod_dir }}/db/healthcheck.cnf:/etc/mysql/conf.d/healthcheck.cnf:ro"
+    healthcheck:
+      # test: [ "CMD", "healthcheck.sh --su-mysql --connect --innodb_initialized" ]
+      # test: [ "CMD", "mysqladmin ping -h localhost -u root -p${MYSQL_ROOT_PASSWORD}" ]
+      test: [ "CMD", "mysqladmin ping -h localhost" ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    ### container end
+    ### container start
+  - name: "{{ pdmn_guacamole_podname }}-guacd"
+    pod: "{{ pdmn_guacamole_podname }}"
+    image: docker.io/guacamole/guacd
+    release: "{{ pdmn_guacamole_release }}"
+    restart: on-failure
+    volumes:
+      - "{{ pdmn_guacamole_pod_dir }}/guacd:/home/guacd:Z"
+    healthcheck:
+      test: ["CMD", "nc -z 127.0.0.1 4822"]
+      interval: 5m
+      timeout: 5s
+      start_period: 15s    
+    ### container end
+    ### container start
+  - name: "{{ pdmn_guacamole_podname }}-tomcat"
+    pod: "{{ pdmn_guacamole_podname }}"
+    image: "docker.io/guacamole/guacamole"
+    release: "{{ pdmn_guacamole_release }}"
+    restart: on-failure
+    requires:
+      - "{{ pdmn_guacamole_podname }}-db"
+      # - "{{ pdmn_guacamole_podname }}-gaucd"
+    env:
+      ## MySQL
+      MYSQL_HOSTNAME: "{{ pdmn_guacamole_db_host }}"
+      MYSQL_DATABASE: "{{ pdmn_guacamole_db_name }}"
+      MYSQL_USERNAME: "{{ pdmn_guacamole_db_user }}"
+      MYSQL_PASSWORD: "{{ pdmn_guacamole_db_pass }}"
+      MYSQL_PORT: "3306"
+      ## GUACD
+      GUACD_HOSTNAME: "127.0.0.1"
+      GUACD_PORT: "4822"
+    healthcheck:
+      test: ['CMD-SHELL', 'curl -fsS http://127.0.0.1:8080/guacamole/ || exit 1']
+      interval: 1m30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    ### container end

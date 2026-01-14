@@ -1,0 +1,118 @@
+---
+- name: create dirs list
+  ansible.builtin.set_fact:
+    pdmn_guacamole_dirs: "{{
+        pdmn_guacamole_dirs | default([]) +
+        pdmn_guacamole_item.volumes | default([]) | map('split', ':') | map('first') | map('community.general.dict_kv', 'path')
+      }}"
+  loop: "{{ pdmn_guacamole_containers }}"
+  loop_control:
+    loop_var: pdmn_guacamole_item
+    label: "{{ pdmn_guacamole_item.name }}"
+
+- name: Create dirs
+  ansible.builtin.file:
+    state: directory
+    # owner: "{{ pdmn_guacamole_item.owner | default(pdmn_guacamole_default_owner) }}"
+    # group: "{{ pdmn_guacamole_item.group | default(pdmn_guacamole_default_group) }}"
+    # mode: "{{ pdmn_guacamole_item.mode | default(pdmn_guacamole_default_dir_mode) }}"
+    path: "{{ pdmn_guacamole_item.path }}"
+  loop: "{{ pdmn_guacamole_dirs }}"
+  loop_control:
+    loop_var: pdmn_guacamole_item
+    label: "{{ pdmn_guacamole_item.path }}"
+
+- name: Pull images
+  containers.podman.podman_image:
+    name: "{{ pdmn_guacamole_item.image }}:{{ pdmn_guacamole_item.release }}"
+    state: present
+  loop: "{{ pdmn_guacamole_containers }}"
+  loop_control:
+    loop_var: pdmn_guacamole_item
+    label: "{{ pdmn_guacamole_item.name }}"
+  ignore_errors: true
+
+- name: Create 01_initdb.sql
+  ansible.builtin.template:
+    src: "{{ pdmn_guacamole_release }}/01_initdb.sql"
+    dest: "{{ pdmn_guacamole_pod_dir }}/db/docker-entrypoint-initdb.d/01_initdb.sql"
+
+- name: Create 02_initdb.sql with schema
+  ansible.builtin.template:
+    src: "{{ pdmn_guacamole_release }}/02_initdb.sql"
+    dest: "{{ pdmn_guacamole_pod_dir }}/db/docker-entrypoint-initdb.d/02_initdb.sql"
+
+- name: helathcheck.cnf
+  ansible.builtin.copy:
+    dest: "{{ pdmn_guacamole_pod_dir }}/db/healthcheck.cnf"
+    content: |
+      [client]
+      user=root
+      password={{ pdmn_guacamole_db_pass }}
+
+- name: Create pod
+  containers.podman.podman_pod:
+    state: created
+    name: "{{ pdmn_guacamole_podname }}"
+    publish: "{{ pdmn_guacamole_publish }}"
+  notify: restart guacamole
+
+- name: Run containers
+  containers.podman.podman_container:
+    state: started
+    privileged: true
+    pod: "{{ pdmn_guacamole_item.pod }}"
+    name: "{{ pdmn_guacamole_item.name }}"
+    image: "{{ pdmn_guacamole_item.image }}:{{ pdmn_guacamole_item.release }}"
+    env: "{{ pdmn_guacamole_item.env | default({}) }}"
+    restart_policy: "{{ pdmn_guacamole_item.restart | default('always') }}"
+    requires: "{{ pdmn_guacamole_item.requires | default([]) }}"
+    volume: "{{
+        pdmn_guacamole_item.volumes | default([]) +
+        pdmn_guacamole_item.volumes_files | default([])
+      }}"
+    healthcheck: "{{ pdmn_guacamole_item.healthcheck.test[1] | default(omit) }}"
+    healthcheck_interval: "{{ pdmn_guacamole_item.healthcheck.interval | default(omit) }}"
+    healthcheck_timeout: "{{ pdmn_guacamole_item.healthcheck.timeout | default(omit) }}"
+    healthcheck_retries: "{{ pdmn_guacamole_item.healthcheck.retries | default(omit) }}"
+  loop: "{{ pdmn_guacamole_containers }}"
+  loop_control:
+    loop_var: pdmn_guacamole_item
+    label: "{{ pdmn_guacamole_item.name }}"
+  ignore_errors: true
+  notify: restart guacamole
+
+- name: Generate systemd unit files
+  containers.podman.podman_generate_systemd:
+    new: false
+    no_header: false
+    restart_policy: always
+    restart_sec: 60
+    use_names: true
+    dest: "{{ pdmn_guacamole_systemd_dir }}"
+    force: "{{ pdmn_guacamole_force }}"
+    name: "{{ pdmn_guacamole_podname }}"
+  notify: restart guacamole
+
+- name: Enable and start systemd unit
+  ### block start
+  block:
+    - name: systemctl daemon-reload
+      ansible.builtin.systemd_service:
+        daemon_reload: true
+    - name: Enable and start pod service
+      ansible.builtin.systemd_service:
+        enabled: true
+        masked: false
+        state: started
+        name: "pod-{{ pdmn_guacamole_podname }}"
+  rescue:
+    - ansible.builtin.pause:
+        seconds: 30
+    - name: Enable and start pod service
+      ansible.builtin.systemd_service:
+        enabled: true
+        masked: false
+        state: restarted
+        name: "pod-{{ pdmn_guacamole_podname }}"
+  ### block end

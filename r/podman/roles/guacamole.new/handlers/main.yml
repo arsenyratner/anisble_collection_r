@@ -1,0 +1,12 @@
+- name: systemctl daemon-reload
+  ansible.builtin.systemd_service:
+    daemon_reload: true
+  listen: restart guacamole
+
+- name: Enable and start pod service
+  ansible.builtin.systemd_service:
+    enabled: true
+    masked: false
+    state: restarted
+    name: "pod-{{ pdmn_gcml_podname }}"
+  listen: restart guacamole

@@ -6,37 +6,77 @@ quadlet_dir
 
 ## import connections
 
+<https://github.com/apache/guacamole-client/blob/main/guacamole-ext/src/main/resources/org/apache/guacamole/protocols/rdp.json>
+
+
 ```yaml
----
-  - name: rdp://appc@appc-pc
-    protocol: rdp
-    parameters:
-      username: appc
-      password: pass2
-      hostname: 192.168.126.5
-    group: ROOT
-    users:
-      - appc
-    attributes:
-      guacd-encryption: none
-  - name: ssh://appc@appc-pc
-    protocol: ssh
-    parameters:
-      username: appc
-      password: pass3
-      hostname: 192.168.126.5
-    group: ROOT
-    users:
-      - appc
-  - name: ssh://appc@r-pve1
-    protocol: ssh
-    parameters:
-      username: appc
-      password: pass3
-      hostname: 192.168.126.10
-    group: ROOT
-    users:
-      - appc
+- name: rdp://appc@appc-pc
+  protocol: rdp
+  parameters:
+    hostname: 192.168.126.5
+    port: 3389
+    username: appc
+    password: 
+    security: any
+    ignore-cert: true
+    server-layout: en-us-qwerty
+    timezone: Europe/Moscow
+    color-depth: 32
+    resize-method: display-update
+    normalize-clipboard: windows
+    disable-copy: false
+    disable-paste: false
+    enable-wallpaper: true
+    enable-theming: true
+    enable-font-smoothing: true
+  group: ROOT
+  users:
+    - appc
+  attributes:
+    guacd-encryption: none
+- name: ssh://appc@appc-pc
+  protocol: ssh
+  parameters:
+    hostname: 192.168.126.5
+    port: 22
+    username: appc
+    private-key: |
+        -----BEGIN OPENSSH PRIVATE KEY-----
+
+        -----END OPENSSH PRIVATE KEY-----
+    color-scheme: white-black
+    font-name: Consolas
+    font-size: 10
+    scrollback: 10000
+    disable-copy: false
+    disable-paste: false
+    locale: ru_RU.UTF-8
+    timezone: Europe/Moscow
+  group: ROOT
+  users:
+    - appc
+- name: ssh://appc@r-pve1
+  protocol: ssh
+  parameters:
+    hostname: 192.168.126.10
+    port: 22
+    username: appc
+    private-key: |
+        -----BEGIN OPENSSH PRIVATE KEY-----
+
+        -----END OPENSSH PRIVATE KEY-----
+    color-scheme: white-black
+    font-name: Consolas
+    font-size: 10
+    scrollback: 10000
+    disable-copy: false
+    disable-paste: false
+    locale: ru_RU.UTF-8
+    timezone: Europe/Moscow
+  group: ROOT
+  users:
+    - appc
+
 ```
 
 ## ручками

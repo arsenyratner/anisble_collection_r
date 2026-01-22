@@ -1,0 +1,59 @@
+---
+# pdmn_redosrepo_
+pdmn_redosrepo_default_owner: root
+pdmn_redosrepo_default_group: root
+pdmn_redosrepo_default_dir_mode: '0750'
+pdmn_redosrepo_default_file_mode: '0640'
+
+pdmn_redosrepo_podname: redosrepo
+pdmn_redosrepo_pod_dir: "{{ pdmn_root_dir }}/{{ pdmn_redosrepo_podname }}"
+pdmn_redosrepo_dirs:
+  - path: "{{ pdmn_redosrepo_pod_dir }}"
+
+pdmn_redosrepo_containers:
+    ### container start
+  - name: "{{ pdmn_redosrepo_podname }}-ubi"
+    pod: "{{ pdmn_redosrepo_podname }}"
+    image: registry.red-soft.ru/ubi8/ubi
+    release: latest
+    restart: on-failure
+    volumes:
+      - "{{ pdmn_redosrepo_pod_dir }}{{ reposync_reporoot }}:{{ reposync_reporoot }}:Z"
+      - "{{ pdmn_redosrepo_pod_dir }}{{ reposync_reposd }}:{{ reposync_reposd }}:Z"
+      - "{{ pdmn_redosrepo_pod_dir }}{{ reposync_scriptroot }}:{{ reposync_scriptroot }}:Z"
+    # healthcheck:
+    #   test: [ "CMD", "redis-cli --raw incr ping" ]
+    #   interval: 30s
+    #   timeout: 10s
+    #   retries: 5
+    ### container end
+    ### container start
+
+reposync_reporoot: /srv/repo/redos
+reposync_reposd: /etc/yum.repos.d
+reposync_scriptroot: /usr/local/bin
+reposync_repolist:
+  - name: reposync-base80
+    description: RedOS - Base
+    baseurl: https://mirror.yandex.ru/redos/8.0/x86_64/os/
+    localpath: "{{ reposync_reporoot }}/redos/8.0/base"
+    file: reposync
+    gpgkey: file:///etc/pki/rpm-gpg/RPM-GPG-KEY-RED-SOFT
+    gpgcheck: true
+    enabled: false
+    state: "present"
+  - name: reposync-updates80
+    description: RedOS - Updates
+    baseurl: https://mirror.yandex.ru/redos/8.0/x86_64/updates/
+    localpath: "{{ reposync_reporoot }}/redos/8.0/updates"
+    file: reposync
+    gpgkey: file:///etc/pki/rpm-gpg/RPM-GPG-KEY-RED-SOFT
+    gpgcheck: true
+    enabled: false
+    state: "present"
+reposync_weekday: "*"
+reposync_hour: 22
+reposync_scriptsdir: /usr/local/bin
+reposync_packages: 
+      - dnf-utils
+      - createrepo 

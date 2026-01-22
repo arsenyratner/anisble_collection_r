@@ -10,6 +10,7 @@ postinstall_reboot_force: false
 postinstall_update: false
 postinstall_packages:
   - mc
+  - util-linux-extra
 postinstall_locales:
   - en_US.UTF-8
   - ru_RU.UTF-8

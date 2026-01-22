@@ -1,0 +1,46 @@
+- name: Role repo
+  vars:
+    repo: "{{ reposync_repolist }}"
+  ansible.builtin.include_role:
+    name: repo
+
+- name: remove syncscripts
+  ansible.builtin.shell: |
+    rm -f reposync-*.sh
+  args:
+    chdir: "{{ reposync_scriptsdir }}"
+
+- name: Copy syncscript for each repo
+  ansible.builtin.template:
+    src: templates/reposync.sh.j2
+    dest: "{{ reposync_scriptsdir }}/{{ item.name }}.sh"
+    owner: root
+    group: root
+    mode: '0755'
+  loop: "{{ reposync_repolist }}"
+  loop_control:
+    label: "{{ item.name }}"
+
+- name: remove cron jobs
+  ansible.builtin.shell: |
+    rm -f reposync_*
+    rm -f reposync-*
+  args:
+    chdir: /etc/cron.d
+
+- name: Creates a cron file under /etc/cron.d
+  ansible.builtin.cron:
+    name: "{{ item.name }}"
+    weekday: "{{ reposync_weekday }}"
+    minute: "{{ (ansible_loop.index0*59/ansible_loop.length)|int|abs }}"
+    hour: "{{ reposync_hour }}"
+    user: root
+    job: "{{ reposync_scriptsdir }}/{{ item.name }}.sh > /var/log/{{ item.name }}.log 2>&1"
+    cron_file: "{{ item.name }}"
+    disabled: false
+  loop: "{{ reposync_repolist }}"
+  loop_control:
+    extended: true
+  register: cronjob_result
+
+- debug: "var=cronjob_result"

@@ -34,6 +34,7 @@
           {% if postinstall_domainname != "" %}{{ postinstall_hostname }}.{{ postinstall_domainname }}
           {% elif postinstall_domainname == "" %}{{ postinstall_hostname }}{% endif %}
       notify: General reboot system
+      ignore_errors: true
 
 - name: Populate service facts
   ansible.builtin.service_facts:

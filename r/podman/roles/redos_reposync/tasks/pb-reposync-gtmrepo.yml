@@ -1,0 +1,130 @@
+  vars:
+      reposync_redos_80:
+      - name: base80
+        description: RedOS-reposync-base8
+        baseurl: https://mirror.yandex.ru/redos/8.0/x86_64/os
+        localpath: /var/www/html/repo/redos/8.0/base
+        file: reposync_redos_80
+        gpgkey: file:///etc/pki/rpm-gpg/RPM-GPG-KEY-RED-SOFT
+        gpgcheck: true
+        enabled: false
+        state: "present"
+      - name: updates80
+        description: RedOS-reposync-updates8
+        baseurl: https://mirror.yandex.ru/redos/8.0/x86_64/updates
+        localpath: /var/www/html/repo/redos/8.0/updates
+        file: reposync_redos_80
+        gpgkey: file:///etc/pki/rpm-gpg/RPM-GPG-KEY-RED-SOFT
+        gpgcheck: true
+        enabled: false
+        state: "present"
+
+      reposync_redos_73:
+        - name: base73
+          description: RedOS-reposync-base7.3
+          baseurl: https://mirror.yandex.ru/redos/7.3/x86_64/os
+          localpath: /var/www/html/repo/redos/7.3/base
+          file: reposync_redos_73
+          gpgkey: file:///etc/pki/rpm-gpg/RPM-GPG-KEY-RED-SOFT
+          gpgcheck: true
+          enabled: false
+          state: "present"
+        - name: updates73
+          description: RedOS-reposync-updates7.3
+          baseurl: hhttps://mirror.yandex.ru/redos/7.3/x86_64/updates/
+          localpath: /var/www/html/repo/redos/7.3/updates
+          file: reposync_redos_73
+          gpgkey: file:///etc/pki/rpm-gpg/RPM-GPG-KEY-RED-SOFT
+          gpgcheck: true
+          enabled: false
+          state: "present"
+        - name: kernels73
+          description: RedOS-reposync-kernels7.3
+          baseurl: https://mirror.yandex.ru/redos/7.3/x86_64/kernels/
+          localpath: /var/www/html/repo/redos/7.3/kernels
+          file: reposync_redos_73
+          gpgkey: file:///etc/pki/rpm-gpg/RPM-GPG-KEY-RED-SOFT
+          gpgcheck: true
+          enabled: false
+          state: "present"
+        - name: extras73
+          description: RedOS-reposync-kernels7.3
+          baseurl: https://mirror.yandex.ru/redos/7.3/x86_64/extras/
+          localpath: /var/www/html/repo/redos/7.3/extras
+          file: reposync_redos_73
+          gpgkey: file:///etc/pki/rpm-gpg/RPM-GPG-KEY-RED-SOFT
+          gpgcheck: true
+          enabled: false
+          state: "present"
+        - name: php8173
+          description: RedOS-reposync-kernels7.3
+          baseurl: https://repo1.red-soft.ru/redos/7.3/$basearch/extras/php81-73
+          localpath: /var/www/html/repo/redos/7.3/php8.1
+          file: reposync_redos_73
+          gpgkey: file:///etc/pki/rpm-gpg/RPM-GPG-KEY-RED-SOFT
+          gpgcheck: true
+          enabled: false
+          state: "present"
+
+  tasks:
+    - name: reposync_redos_80
+      block:
+      - name: Create repo
+        ansible.builtin.include_role:
+          name: repo
+        vars:
+          repo_deleteoldrepofiles: false
+          repo_installupdates: false
+          repo_rebootafterupdate: false
+          repo: "{{ reposync_redos_80 }}"
+      - name: Copy script template
+        ansible.builtin.template:
+          src: templates/reposync.sh.j2
+          dest: "/usr/local/bin/reposync-{{ item.name }}.sh"
+          owner: root
+          group: root
+          mode: '0755'
+        loop: "{{ reposync_redos_80 }}"
+      - name: Creates a cron file
+        ansible.builtin.cron:
+          name: reposync-{{ item.name }}
+          weekday: "*"
+          minute: "{{ (ansible_loop.index0*59/ansible_loop.length)|int|abs }}"
+          hour: "20"
+          user: root
+          job: "/usr/local/bin/reposync-{{ item.name }}.sh > /var/log/reposync-{{ item.name }}.log 2>/var/log/reposync-{{ item.name }}.err"
+          cron_file: reposync_{{ item.name }}
+        loop: "{{ reposync_redos_80 }}"
+        loop_control:
+          extended: true
+
+    - name: reposync_redos_73
+      block:
+      - name: Create repo
+        ansible.builtin.include_role:
+          name: repo
+        vars:
+          repo_deleteoldrepofiles: false
+          repo_installupdates: false
+          repo_rebootafterupdate: false
+          repo: "{{ reposync_redos_73 }}"
+      - name: Copy script template
+        ansible.builtin.template:
+          src: templates/reposync.sh.j2
+          dest: "/usr/local/bin/reposync-{{ item.name }}.sh"
+          owner: root
+          group: root
+          mode: '0755'
+        loop: "{{ reposync_redos_73 }}"
+      - name: Creates a cron file
+        ansible.builtin.cron:
+          name: reposync-{{ item.name }}
+          weekday: "*"
+          minute: "{{ (ansible_loop.index0*59/ansible_loop.length)|int|abs }}"
+          hour: "21"
+          user: root
+          job: "/usr/local/bin/reposync-{{ item.name }}.sh > /var/log/reposync-{{ item.name }}.log 2>&1"
+          cron_file: reposync_{{ item.name }}
+        loop: "{{ reposync_redos_73 }}"
+        loop_control:
+          extended: true

@@ -1,0 +1,61 @@
+---
+- name: create dirs list
+  ansible.builtin.set_fact:
+    pdmn_redosrepo_dirs: "{{
+        pdmn_redosrepo_dirs | default([]) +
+        pdmn_redosrepo_item.volumes | map('split', ':') | map('first') | map('community.general.dict_kv', 'path')
+      }}"
+  loop: "{{ pdmn_redosrepo_containers }}"
+  loop_control:
+    loop_var: pdmn_redosrepo_item
+    label: "{{ pdmn_redosrepo_item.name }}"
+
+- name: Create dirs
+  ansible.builtin.file:
+    mode: '0755'
+    state: directory
+    # owner: "{{ pdmn_redosrepo_item.owner | default(pdmn_redosrepo_default_owner) }}"
+    # group: "{{ pdmn_redosrepo_item.group | default(pdmn_redosrepo_default_group) }}"
+    # mode: "{{ pdmn_redosrepo_item.mode | default(pdmn_redosrepo_default_dir_mode) }}"
+    path: "{{ pdmn_redosrepo_item.path }}"
+  loop: "{{ pdmn_redosrepo_dirs }}"
+  loop_control:
+    loop_var: pdmn_redosrepo_item
+    label: "{{ pdmn_redosrepo_item.path }}"
+
+- name: Pull images
+  containers.podman.podman_image:
+    name: "{{ pdmn_redosrepo_item.image }}:{{ pdmn_redosrepo_item.release }}"
+    state: present
+  loop: "{{ pdmn_redosrepo_containers }}"
+  loop_control:
+    loop_var: pdmn_redosrepo_item
+    label: "{{ pdmn_redosrepo_item.name }}"
+  ignore_errors: true
+
+- name: Create pod
+  containers.podman.podman_pod:
+    state: created
+    name: "{{ pdmn_redosrepo_podname }}"
+    # publish: "{{ pdmn_redosrepo_publish }}"
+
+- name: Run containers
+  containers.podman.podman_container:
+    state: started
+    privileged: true
+    pod: "{{ pdmn_redosrepo_item.pod }}"
+    name: "{{ pdmn_redosrepo_item.name }}"
+    image: "{{ pdmn_redosrepo_item.image }}:{{ pdmn_redosrepo_item.release }}"
+    env: "{{ pdmn_redosrepo_item.env | default({}) }}"
+    restart_policy: "{{ pdmn_redosrepo_item.restart | default('always') }}"
+    # requires: "{{ pdmn_redosrepo_item.requires | default([]) }}"
+    volume: "{{ pdmn_redosrepo_item.volumes }}"
+    healthcheck: "{{ pdmn_redosrepo_item.healthcheck.test[1] | default(omit) }}"
+    healthcheck_interval: "{{ pdmn_redosrepo_item.healthcheck.interval | default(omit) }}"
+    healthcheck_timeout: "{{ pdmn_redosrepo_item.healthcheck.timeout | default(omit) }}"
+    healthcheck_retries: "{{ pdmn_redosrepo_item.healthcheck.retries | default(omit) }}"
+  loop: "{{ pdmn_redosrepo_containers }}"
+  loop_control:
+    loop_var: pdmn_redosrepo_item
+    label: "{{ pdmn_redosrepo_item.name }}"
+  ignore_errors: true

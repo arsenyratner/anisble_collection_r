@@ -5,6 +5,7 @@
 
 - name: create folder {{ sambafs_folder.path }}
   ansible.builtin.file:
+    mode: '0755'
     state: directory
     path: "{{ sambafs_folder.path }}"
     owner: "{{ sambafs_folder.owner | default('root') }}"
@@ -31,3 +32,4 @@
     }}"
   loop_control:
     loop_var: sambafs_share_item
+  when: sambafs_set_permissions_flag 

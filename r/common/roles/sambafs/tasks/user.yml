@@ -4,18 +4,19 @@
     create_home: false
     update_password: on_create
     name: "{{ sambafs_user.name }}"
-    password: "{{ sambafs_user.password | password_hash('sha512') }}"
+    password: "{{ (sambafs_passwords[sambafs_user.name] | default(sambafs_default_userpassword)) | password_hash('sha512') }}"
+  no_log: true
 
 - name: create samba user {{ sambafs_user.name }}
   ansible.builtin.shell: >
     set -o nounset -o pipefail -o errexit &&
     (pdbedit --user={{ sambafs_user.name }} 2>&1 > /dev/null) ||
-    (echo '{{ sambafs_user.password }}'; echo '{{ sambafs_user.password }}') | smbpasswd -s -a {{ sambafs_user.name }}
+    (echo '{{ sambafs_passwords[sambafs_user.name] | default(sambafs_default_userpassword) }}'; echo '{{ sambafs_passwords[sambafs_user.name] | default(sambafs_default_userpassword) }}') | smbpasswd -s -a {{ sambafs_user.name }}
   args:
     executable: /bin/bash
   no_log: true
-  register: create_user_output
-  changed_when: "'Added user' in create_user_output.stdout"
+  register: sambafs_create_user_output
+  changed_when: "'Added user' in sambafs_create_user_output.stdout"
 
 - name: create private folder {{ sambafs_folder_private }}/{{ sambafs_user.name }}
   ansible.builtin.file:
@@ -42,3 +43,4 @@
     }}"
   loop_control:
     loop_var: sambafs_share_item
+  when: sambafs_set_permissions_flag 

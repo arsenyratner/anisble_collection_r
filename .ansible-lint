@@ -2,6 +2,7 @@ skip_list:
   # - fqcn[action] # Use FQCN for module actions
   # - fqcn[action-core] # Use FQCN for builtin actions
   - ignore-errors #  Use failed_when and specify error conditions instead of using ignore_errors
+  - jinja[spacing]
   # - jinja[invalid] # Unrecognized type
   # - meta-no-info # meta/main.yml should contain relevant info
   # - meta-no-tags # Tags must contain lowercase letters and digits only

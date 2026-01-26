@@ -2,6 +2,7 @@ sambafs_default_user: root
 sambafs_default_group: root
 sambafs_default_mode_dir: '0755'
 sambafs_default_mode_file: '0644'
+sambafs_default_userpassword: CuhaydipodNiap5
 sambafs_conf_dir: /etc/samba
 sambafs_usershare_path: /var/lib/samba/usershares
 sambafs_dirs:
@@ -20,5 +21,7 @@ sambafs_share_rw_group: ''
 sambafs_shares: [] 
 sambafs_folders: []
 sambafs_users: []
+sambafs_passwords: []
 sambafs_folder_public: ''
 sambafs_folder_private: ''
+sambafs_set_permissions_flag: true

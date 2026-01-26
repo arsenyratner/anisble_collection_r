@@ -52,6 +52,7 @@
 
 - name: /etc/samba/smb.conf
   ansible.builtin.template:
+    mode: '0644'
     backup: true
     src: smb.conf
     dest: "{{ sambafs_conf_dir }}/smb.conf"

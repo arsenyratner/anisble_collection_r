@@ -3,20 +3,20 @@
       ansible.builtin.gather_facts:
   rescue:
     - name: install python
-      ansible.builtin.raw: "pkg install -y python sudo"
+      ansible.builtin.raw: "pkg install -y python sudo bash"
       changed_when: false
     - name: gather facts
       ansible.builtin.gather_facts:
+
+- name: Install packages
+  ansible.builtin.package:
+    state: present
+    name: "{{ postinstall_packages }}"
 
 - name: hostname
   ansible.builtin.hostname:
     name: "{{ inventory_hostname }}"
     use: freebsd
-
-- name: packages
-  community.general.pkgng:
-    state: present
-    name: "{{ postinstall_packages }}"
 
 - name: sysrc
   community.general.sysrc:

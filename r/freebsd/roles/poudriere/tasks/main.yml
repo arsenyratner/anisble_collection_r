@@ -1,7 +1,7 @@
 - name: Install packages
-  community.general.pkgng:
-    name: "{{ poudriere_packages }}"
+  ansible.builtin.package:
     state: present
+    name: "{{ poudriere_packages }}"
 
 - name: Create dirs
   ansible.builtin.file:
@@ -15,22 +15,41 @@
     label: "{{ item.dir }}"
   when: poudriere_dirs != []
 
+- name: create {{ poudriere_conf }}
+  ansible.builtin.copy:
+    mode: '0644'
+    owner: root
+    group: wheel
+    backup: true
+    dest: "{{ poudriere_conf }}"
+    content: |
+      RESOLV_CONF={{ poudriere_resolv_conf }}
+      FREEBSD_HOST={{ poudriere_freebsd_host }}
+      DISTFILES_CACHE={{ poudriere_distfiles_cache }}
+      BASEFS={{ poudriere_basefs }}
+      USE_PORTLINT=no
+      USE_TMPFS=yes
+      ZPOOL=zroot
+      CHECK_CHANGED_OPTIONS=verbose
+      CHECK_CHANGED_DEPS=yes
+      NOLINUX=yes
+
 - name: Create jails
   ansible.builtin.command: 
     cmd: poudriere jail -c -j {{ item.jailname }} -v {{ item.jailrelease }}
-    creates: /usr/local/poudriere/jails/{{ item.jailname }}
+    creates: "{{ poudriere_basefs }}/jails/{{ item.jailname }}"
   loop: "{{ poudrier_jails }}"
   loop_control:
-    label: "{{ item.jailrelease }}:/usr/local/poudriere/jails/{{ item.jailname }}"
+    label: "{{ item.jailrelease }}:{{ poudriere_basefs }}/jails/{{ item.jailname }}"
   when: poudrier_jails != []
 
 - name: Create ports tree
   ansible.builtin.command:
     cmd: poudriere ports -c -p {{ item.treename }} 
-    creates: /usr/local/poudriere/ports/{{ item.treename }}
+    creates: "{{ poudriere_basefs }}/ports/{{ item.treename }}"
   loop: "{{ poudrier_portstrees }}"
   loop_control:
-    label: "{{ item.treename }}:/usr/local/poudriere/ports/{{ item.treename }}"
+    label: "{{ item.treename }}:{{ poudriere_basefs }}/ports/{{ item.treename }}"
   when: poudrier_portstrees != []
 
 - name: Create ports packagelist
@@ -44,13 +63,3 @@
   loop_control:
     label: "{{ item.treename }}:{{ poudriere_confd_dir }}/packages-{{ item.treename }}"
   when: poudrier_portstrees != []
-
-# - name: "{{ poudriere_conf_file }}"
-#   tags: poudriere_conf_file
-#   ansible.builtin.template:
-#     src: "{{ poudriere_conf_template }}"
-#     dest: "{{ poudriere_conf_file }}"
-#     owner: "{{ poudriere_owner }}"
-#     group: "{{ poudriere_group }}"
-#     mode: "{{ poudriere_mode }}"
-#     backup: true

@@ -1,0 +1,78 @@
+- name: Distribution specific variables
+  vars:
+    distribution_firstfound_paths: ['vars']
+  ansible.builtin.include_vars:
+    file: "{{ lookup('ansible.builtin.first_found', distribution_firstfound) }}"
+
+- name: Distribution specific tasks
+  vars:
+    distribution_firstfound_paths: ['tasks']
+  ansible.builtin.include_tasks:
+    file: "{{ lookup('ansible.builtin.first_found', distribution_firstfound) }}"
+
+- block:
+    - name: check connection
+      become: true
+      ansible.builtin.raw: whoami
+      register: result
+      ignore_unreachable: true
+      changed_when: false
+      failed_when: "'root' not in result.stdout_lines"
+  rescue:
+    - debug: "var=result"
+
+    - name: install python sudo bash
+      become: true
+      become_method: su
+      ansible.builtin.raw: "pkg install -y python sudo bash"
+      register: result
+      changed_when: "'The most recent versions of packages are already installed' not in result.stdout_lines"
+
+    - name: allow sudo
+      become: true
+      become_method: su
+      vars:
+        ansible_python_interpreter: "{{ ansibleuser_python_interpreter }}"
+      ansible.builtin.copy: 
+        dest: /usr/local/etc/sudoers.d/{{ ansible_user }}
+        content: |
+          {{ ansible_user }} ALL=(ALL:ALL) NOPASSWD: ALL
+
+- name: useradd
+  ansible.builtin.user:
+    state: "{{ item.state | default('present') }}"
+    uid: "{{ item.uid | default(omit) }}"
+    name: "{{ item.name }}"
+    create_home: "{{ item.create_home | default(true) }}"
+    update_password: "{{ item.update_password | default('on_create') }}"
+    password: "{{ item.password | default('*') }}"
+    comment: "{{ item.comment | default('') }}"
+    shell: "{{ item.shell | default(ansibleuser_shell) }}"
+  loop: "{{ project_users }}"
+  loop_control:
+    label: "{{ item.name }}"
+
+- name: authorized key
+  ansible.posix.authorized_key:
+    state: present
+    user: "{{ item.name }}"
+    key: "{{ item.key }}"
+    exclusive: "{{ item.exclusive | default(false) }}"
+  loop: "{{ project_users }}"
+  loop_control:
+    label: "{{ item.name }}"
+  when: item.key is defined
+
+- name: sudoers
+  ansible.builtin.copy:
+    dest: "{{ ansibleuser_sudoers_dir }}/{{ item.name }}"
+    owner: "{{ ansibleuser_sudoers_owner | default('root') }}"
+    group: "{{ ansibleuser_sudoers_group | default('root') }}"
+    mode: '0440'
+    validate: "{{ ansibleuser_sudoers_visudo | default('/usr/sbin/visudo') }} -cf %s"
+    content: |
+      {{ item.name }} {{ item.sudo }}
+  loop: "{{ project_users }}"
+  loop_control:
+    label: "{{ item.name }}"
+  when: item.sudo is defined

@@ -1,5 +1,3 @@
-ansibleuser_python_interpreter: /usr/local/bin/python3
-
 ansibleuser_shell: /usr/local/bin/bash
 ansibleuser_sudoers_dir: /usr/local/etc/sudoers.d
 ansibleuser_sudoers_visudo: /usr/local/sbin/visudo

@@ -1,6 +1,8 @@
 postinstall_packages:
   - qemu-guest-agent
   - mc
+  - sudo
+  - bash
 
 postinstall_sysrc:
   - sysrc_name: hostname

@@ -1,7 +1,12 @@
-poudriere_cert_key: "/usr/local/openssl/private/{{ ansible_nodename }}.key"
-poudriere_cert_crt: "/usr/local/openssl/cert/{{ ansible_nodename }}.crt"
+poudriere_cert_key: "/usr/local/openssl/private/{{ inventory_hostname }}.key"
+poudriere_cert_crt: "/usr/local/openssl/cert/{{ inventory_hostname }}.crt"
 
 poudriere_confd_dir: /usr/local/etc/poudriere.d
+poudriere_conf: /usr/local/etc/poudriere.conf
+poudriere_basefs: /usr/local/poudriere
+poudriere_resolv_conf: /etc/resolv.conf
+poudriere_freebsd_host: ftp://ftp.freebsd.org
+poudriere_distfiles_cache: /usr/ports/distfiles
 
 poudriere_owner: root
 poudriere_group: wheel
@@ -15,6 +20,7 @@ poudriere_packages:
   - git
 
 poudriere_dirs: []
+
 poudrier_jails:
   - jailname: 143x64
     jailrelease: 14.3-RELEASE

@@ -19,7 +19,8 @@ poudriere_packages:
   - ccache
   - git
 
-poudriere_dirs: []
+poudriere_dirs:
+  - path: "{{ poudriere_distfiles_cache }}"
 
 poudrier_jails:
   - jailname: 143x64

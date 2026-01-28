@@ -6,13 +6,13 @@
 - name: Create dirs
   ansible.builtin.file:
     state: directory
-    path: "{{ item.dir }}"
+    path: "{{ item.path }}"
     owner: "{{ item.owner | default(poudriere_owner) }}"
     group: "{{ item.group | default(poudriere_group) }}"
     mode: "{{ item.mode | default(poudriere_mode_dir) }}"
   loop: "{{ poudriere_dirs }}"
   loop_control:
-    label: "{{ item.dir }}"
+    label: "{{ item.path }}"
   when: poudriere_dirs != []
 
 - name: create {{ poudriere_conf }}

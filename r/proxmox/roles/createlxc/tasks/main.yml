@@ -14,12 +14,12 @@
     type: lxc
     name: "{{ createlxc_hostname }}"
     config: current
-  register: lxcinfo
+  register: createlxc_lxcinfo
 
 - name: debug info
   ansible.builtin.debug:
     msg:
-      - "{{ lxcinfo }}"
+      - "{{ createlxc_lxcinfo }}"
   when:
     - createlxc_debug
 
@@ -95,7 +95,7 @@
     tags: "{{ createlxc_tags }}"
   when:
     - createlxc_tags != []
-    - lxcinfo.proxmox_vms[0].config.tags | default(';') | split(';') | difference(createlxc_tags) != []
+    - createlxc_lxcinfo.proxmox_vms[0].config.tags | default(';') | split(';') | difference(createlxc_tags) != []
 
 - name: update description
   community.proxmox.proxmox:
@@ -112,7 +112,7 @@
     description: "{{ createlxc_description }}"
   when:
     - createlxc_description != ""
-    - createlxc_description != lxcinfo.proxmox_vms[0].config.description | default('') | trim
+    - createlxc_description != createlxc_lxcinfo.proxmox_vms[0].config.description | default('') | trim
 
 - name: set state
   community.proxmox.proxmox:

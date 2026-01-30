@@ -24,7 +24,7 @@
       - "createlxc_ostemplate: {{ createlxc_ostemplate }}"
       - "createlxc_ostype: {{ createlxc_ostype }}"
       #  cpu
-      - "createlxc_cpus: {{ createlxc_cpus }}"
+      - "createlxc_cpus: {{ createlxc_cpus | default(omit) }}"
       - "createlxc_cores: {{ createlxc_cores }}"
       # - "createlxc_cpuunits: {{ createlxc_cpuunits }}"
       #  memory

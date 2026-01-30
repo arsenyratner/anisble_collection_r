@@ -124,6 +124,7 @@
     restart_policy: "unless-stopped"
     privileged: true
     env:
+      BAN_ENABLED: "false"
       GUACD_HOSTNAME: "127.0.0.1"
       GUACD_PORT: "4822"
       MYSQL_HOSTNAME: "127.0.0.1"

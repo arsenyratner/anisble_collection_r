@@ -38,19 +38,19 @@
   ansible.builtin.command: 
     cmd: poudriere jail -c -j {{ item.jailname }} -v {{ item.jailrelease }}
     creates: "{{ poudriere_basefs }}/jails/{{ item.jailname }}"
-  loop: "{{ poudrier_jails }}"
+  loop: "{{ poudriere_jails }}"
   loop_control:
     label: "{{ item.jailrelease }}:{{ poudriere_basefs }}/jails/{{ item.jailname }}"
-  when: poudrier_jails != []
+  when: poudriere_jails != []
 
 - name: Create ports tree
   ansible.builtin.command:
     cmd: poudriere ports -c -p {{ item.treename }} 
     creates: "{{ poudriere_basefs }}/ports/{{ item.treename }}"
-  loop: "{{ poudrier_portstrees }}"
+  loop: "{{ poudriere_portstrees }}"
   loop_control:
     label: "{{ item.treename }}:{{ poudriere_basefs }}/ports/{{ item.treename }}"
-  when: poudrier_portstrees != []
+  when: poudriere_portstrees != []
 
 - name: Create ports packagelist
   ansible.builtin.copy:
@@ -59,7 +59,7 @@
     owner: "{{ item.owner | default(poudriere_owner) }}"
     group: "{{ item.group | default(poudriere_group) }}"
     mode: "{{ item.mode | default(poudriere_mode) }}"
-  loop: "{{ poudrier_portstrees }}"
+  loop: "{{ poudriere_portstrees }}"
   loop_control:
     label: "{{ item.treename }}:{{ poudriere_confd_dir }}/packages-{{ item.treename }}"
-  when: poudrier_portstrees != []
+  when: poudriere_portstrees != []

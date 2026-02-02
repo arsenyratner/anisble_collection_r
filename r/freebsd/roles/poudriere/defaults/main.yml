@@ -22,11 +22,11 @@ poudriere_packages:
 poudriere_dirs:
   - path: "{{ poudriere_distfiles_cache }}"
 
-poudrier_jails:
+poudriere_jails:
   - jailname: 143x64
     jailrelease: 14.3-RELEASE
 
-poudrier_portstrees:
+poudriere_portstrees:
   - treename: default
     packagelist: |
       misc/mc

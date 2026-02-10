@@ -285,7 +285,7 @@ gateway_config_ipfirewallfilter_default:
       - { chain: 'forward', action: 'fasttrack-connection', hw-offload: true, comment: 'E,R', connection-state: 'established,related', connection-bytes: '10240-0' }
       - { chain: 'forward', action: 'accept', comment: 'E,R,U', connection-state: 'established,related,untracked' }
       - { chain: 'forward', action: 'accept', comment: 'DNATed', connection-state: 'new', connection-nat-state: 'dstnat' }
-      - { chain: 'forward', action: 'jump', jump-target: 'allowed_fwd' }
+      - { chain: 'forward', action: 'jump', jump-target: 'fwd_after' }
       - { chain: 'forward', action: 'drop' }
       - { chain: 'input', action: 'accept', comment: 'E,R', connection-state: 'established,related' }
       - { chain: 'input', action: 'drop', comment: 'drop invalid', connection-state: 'invalid' }
@@ -305,16 +305,16 @@ gateway_config_ipfirewallfilter_allowed_in:
       - { chain: 'allowed_in', action: 'accept', in-interface-list: '!WAN', dst-port: '53', protocol: 'tcp' }
       - { chain: 'allowed_in', action: 'accept', in-interface-list: '!WAN', dst-port: '53', protocol: 'udp' }
 
-gateway_config_ipfirewallfilter_allowed_fwd:
-      - { chain: 'allowed_fwd', action: 'accept', comment: 'in ipsec policy', ipsec-policy: 'in,ipsec' }
-      - { chain: 'allowed_fwd', action: 'accept', comment: 'out ipsec policy', ipsec-policy: 'out,ipsec' }
-      - { chain: 'allowed_fwd', action: 'accept', src-address-list: 'internet_dst_white_list' }
-      - { chain: 'allowed_fwd', action: 'accept', dst-address-list: 'internet_dst_white_list' }
-      - { chain: 'allowed_fwd', action: 'accept', src-address-list: 'trusted_ip', dst-address-list: 'trusted_ip' }
-      - { chain: 'allowed_fwd', action: 'accept', in-interface-list: 'LAN', out-interface-list: 'LAN' }
-      - { chain: 'allowed_fwd', action: 'accept', src-address-list: 'internet_allow', out-interface-list: 'WAN' }
-      - { chain: 'allowed_fwd', action: 'accept', disabled: true, comment: 'f6to20', src-address-list: 'internet_allow_f6to20', in-interface-list: '!WAN', time: '6h-20h,sun,mon,tue,wed,thu' }
-      - { chain: 'allowed_fwd', action: 'accept', disabled: true, comment: 'f6to20', src-address-list: 'internet_allow_f6to20', in-interface-list: '!WAN', time: '6h-20h30m,fri,sat' }
+gateway_config_ipfirewallfilter_fwd_after:
+      - { chain: 'fwd_after', action: 'accept', comment: 'in ipsec policy', ipsec-policy: 'in,ipsec' }
+      - { chain: 'fwd_after', action: 'accept', comment: 'out ipsec policy', ipsec-policy: 'out,ipsec' }
+      - { chain: 'fwd_after', action: 'accept', src-address-list: 'internet_dst_white_list' }
+      - { chain: 'fwd_after', action: 'accept', dst-address-list: 'internet_dst_white_list' }
+      - { chain: 'fwd_after', action: 'accept', src-address-list: 'trusted_ip', dst-address-list: 'trusted_ip' }
+      - { chain: 'fwd_after', action: 'accept', in-interface-list: 'LAN', out-interface-list: 'LAN' }
+      - { chain: 'fwd_after', action: 'accept', src-address-list: 'internet_allow', out-interface-list: 'WAN' }
+      - { chain: 'fwd_after', action: 'accept', disabled: true, comment: 'f6to20', src-address-list: 'internet_allow_f6to20', in-interface-list: '!WAN', time: '6h-20h,sun,mon,tue,wed,thu' }
+      - { chain: 'fwd_after', action: 'accept', disabled: true, comment: 'f6to20', src-address-list: 'internet_allow_f6to20', in-interface-list: '!WAN', time: '6h-20h30m,fri,sat' }
 
 gateway_config_ipfirewallmangle_default:
       - { chain: 'prerouting', action: 'mark-packet', passthrough: true, comment: 'nat-loopback', dst-address-type: 'local', connection-state: 'new', in-interface-list: 'LAN', new-packet-mark: 'nat-loopback' }
@@ -388,7 +388,7 @@ gateway_config:
 #       {{
 #         gateway_config_ipfirewallfilter_default +
 #         gateway_config_ipfirewallfilter_allowed_in +
-#         gateway_config_ipfirewallfilter_allowed_fwd | default([]) 
+#         gateway_config_ipfirewallfilter_fwd_after | default([]) 
 #       }}
 #   # - path: ip firewall layer7-protocol
 #   #   data: []

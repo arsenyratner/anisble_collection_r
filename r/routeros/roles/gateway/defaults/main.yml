@@ -79,13 +79,14 @@ gateway_config:
       - name: WAN
   - path: ip firewall filter
     data:
+      - { chain: 'forward', action: 'jump', jump-target: 'fwd_before' }
       - { chain: 'forward', action: 'jump', comment: 'jump to kid-control rules', jump-target: 'kid-control' }
       - { chain: 'forward', action: 'drop', comment: 'drop invalid', connection-state: 'invalid' }
       - { chain: 'forward', action: 'drop', comment: 'internet_deny', src-address-list: 'internet_deny', out-interface-list: 'WAN' }
       - { chain: 'forward', action: 'fasttrack-connection', hw-offload: true, comment: 'E,R', connection-state: 'established,related', connection-bytes: '10240-0' }
       - { chain: 'forward', action: 'accept', connection-state: 'established,related,untracked' }
       - { chain: 'forward', action: 'accept', connection-state: 'new', connection-nat-state: 'dstnat' }
-      - { chain: 'forward', action: 'jump', jump-target: 'allowed_fwd' }
+      - { chain: 'forward', action: 'jump', jump-target: 'fwd_after' }
       - { chain: 'forward', action: 'drop' }
       - { chain: 'input', action: 'accept', comment: 'E,R', connection-state: 'established,related' }
       - { chain: 'input', action: 'drop', comment: 'drop invalid', connection-state: 'invalid' }
@@ -97,13 +98,13 @@ gateway_config:
       - { chain: 'allowed_in', action: 'accept', src-address-list: 'trusted_ip', connection-state: 'new' }
       - { chain: 'allowed_in', action: 'accept', in-interface-list: 'LAN', connection-state: 'new' }
       - { chain: 'allowed_in', action: 'accept', protocol: 'icmp' }
-      - { chain: 'allowed_fwd', action: 'accept', src-address-list: 'internet_dst_white_list' }
-      - { chain: 'allowed_fwd', action: 'accept', dst-address-list: 'internet_dst_white_list' }
-      - { chain: 'allowed_fwd', action: 'accept', src-address-list: 'trusted_ip', dst-address-list: 'trusted_ip' }
-      - { chain: 'allowed_fwd', action: 'accept', in-interface-list: 'LAN', out-interface-list: 'LAN' }
-      - { chain: 'allowed_fwd', action: 'accept', src-address-list: 'internet_allow', out-interface-list: 'WAN' }
-      - { chain: 'allowed_fwd', action: 'accept', disabled: true, src-address-list: 'internet_allow_f6to20', in-interface-list: '!WAN', time: '6h-20h,sun,mon,tue,wed,thu' }
-      - { chain: 'allowed_fwd', action: 'accept', disabled: true, src-address-list: 'internet_allow_f6to20', in-interface-list: '!WAN', time: '6h-20h30m,fri,sat' }
+      - { chain: 'fwd_after', action: 'accept', src-address-list: 'internet_dst_white_list' }
+      - { chain: 'fwd_after', action: 'accept', dst-address-list: 'internet_dst_white_list' }
+      - { chain: 'fwd_after', action: 'accept', src-address-list: 'trusted_ip', dst-address-list: 'trusted_ip' }
+      - { chain: 'fwd_after', action: 'accept', in-interface-list: 'LAN', out-interface-list: 'LAN' }
+      - { chain: 'fwd_after', action: 'accept', src-address-list: 'internet_allow', out-interface-list: 'WAN' }
+      - { chain: 'fwd_after', action: 'accept', disabled: true, src-address-list: 'internet_allow_f6to20', in-interface-list: '!WAN', time: '6h-20h,sun,mon,tue,wed,thu' }
+      - { chain: 'fwd_after', action: 'accept', disabled: true, src-address-list: 'internet_allow_f6to20', in-interface-list: '!WAN', time: '6h-20h30m,fri,sat' }
   - path: ip firewall mangle
     data:
       - { chain: 'prerouting', action: 'mark-packet', passthrough: true, comment: 'nat-loopback', dst-address-type: 'local', connection-state: 'new', in-interface-list: 'LAN', new-packet-mark: 'nat-loopback' }

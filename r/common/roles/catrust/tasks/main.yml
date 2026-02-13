@@ -49,6 +49,23 @@
   when: catrust_cacert_files != []
   notify: catrust update
 
-- name: Update ca trust
-  ansible.builtin.command: "{{ catrust_update_cmd }}"
-  when: catrust_update_force is true
+- name: Copy ca certs to one file
+  ansible.builtin.copy:
+    dest: "{{ catrust_cacerts_onefile }}"
+    owner: root
+    group: root
+    mode: "0644"
+    content: |
+      # This file is managed by Ansible
+      {% for file_path in catrust_cacert_files %}
+      {{ lookup('file', file_path) }}
+      {% endfor %}
+  register: result
+  when: catrust_cacerts_onefile != ''
+
+- name: Flush handlers
+  ansible.builtin.meta: flush_handlers
+
+# - name: Update ca trust
+#   ansible.builtin.command: "{{ catrust_update_cmd }}"
+#   when: catrust_update_force is true

@@ -4,3 +4,4 @@ catrust_cacert_dir: ""
 catrust_update_cmd: ""
 catrust_update_force: false
 catrust_packages: []
+catrust_cacerts_onefile: ''

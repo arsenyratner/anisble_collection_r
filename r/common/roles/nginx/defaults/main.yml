@@ -9,6 +9,7 @@ distribution_firstfound:
   paths: "{{ distribution_firstfound_paths }}"
   skip: true 
 
+nginx_ca_file: /etc/nginx/ca.crt
 nginx_conf_file: /etc/nginx/nginx.conf
 nginx_pid_file: /run/nginx.pid
 nginx_conf_dir: /etc/nginx
@@ -55,6 +56,7 @@ nginx_default_server:
     root: "{{ nginx_default_root }}"
 
 nginx_managed_files:
+  - "{{ nginx_ca_file }}"
   - "{{ nginx_conf_file }}"
   - "{{ nginx_conf_dir }}/well-known.conf"
   - "{{ nginx_conf_dir }}/fastcgi.conf"

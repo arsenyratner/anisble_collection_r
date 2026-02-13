@@ -23,12 +23,14 @@ pdmn_webssh2_dirs:
   - path: "{{ pdmn_webssh2_pod_dir }}"
 pdmn_webssh2_config:
   user:
-    name: "{{ pdmn_webssh2_user_name }}"
+    name: null
     password: null
-    privateKey: "{{ pdmn_webssh2_ssh_key_content.splitlines() | join('\n') }}"
-    passphrase: "{{ pdmn_webssh2_user_passphrase }}"
   ssh:
     host: null
+    username: "{{ pdmn_webssh2_user_name }}"
+    privateKey: "{{ pdmn_webssh2_ssh_key_content.splitlines() | join('\n') }}"
+    passphrase: "{{ pdmn_webssh2_user_passphrase }}"
+    password: "{{ pdmn_webssh2_user_passphrase }}"
     auth:
       publickey: true
       password: false

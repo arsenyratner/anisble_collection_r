@@ -54,12 +54,12 @@
 
 - name: Create ports packagelist
   ansible.builtin.copy:
-    dest: "{{ poudriere_confd_dir }}/packages-{{ item.treename }}"
+    dest: "{{ poudriere_confd_dir }}/{{ item.name }}"
     content: "{{ item.packagelist }}"
     owner: "{{ item.owner | default(poudriere_owner) }}"
     group: "{{ item.group | default(poudriere_group) }}"
     mode: "{{ item.mode | default(poudriere_mode) }}"
-  loop: "{{ poudriere_portstrees }}"
+  loop: "{{ poudriere_pkglist }}"
   loop_control:
-    label: "{{ item.treename }}:{{ poudriere_confd_dir }}/packages-{{ item.treename }}"
+    label: "{{ item.treename }}:{{ poudriere_confd_dir }}/{{ item.name }}"
   when: poudriere_portstrees != []

@@ -1,0 +1,68 @@
+---
+# pdmn_webssh2_
+pdmn_webssh2_default_owner: root
+pdmn_webssh2_default_group: root
+pdmn_webssh2_default_dir_mode: '0750'
+pdmn_webssh2_default_file_mode: '0640'
+
+pdmn_webssh2_ssh_host: "ssh.r.ratners.ru"
+pdmn_webssh2_listen_port: 2222
+pdmn_webssh2_ssh_port: 22
+pdmn_webssh2_header_text: WebSSH2
+pdmn_webssh2_http_origins: "*:*"
+
+pdmn_webssh2_podname: webssh2
+pdmn_webssh2_publish: []
+pdmn_webssh2_pod_dir: "{{ pdmn_root_dir }}/{{ pdmn_webssh2_podname }}"
+# pdmn_webssh2_ssh_key: /srv/webssh2/.ssh/id_ed25519
+pdmn_webssh2_user_name: webssh2
+pdmn_webssh2_user_private_key: ''
+pdmn_webssh2_user_passphrase: ''
+pdmn_webssh2_user_password: ''
+pdmn_webssh2_dirs:
+  - path: "{{ pdmn_webssh2_pod_dir }}"
+pdmn_webssh2_config:
+  user:
+    name: "{{ pdmn_webssh2_user_name }}"
+    password: null
+    privateKey: "{{ pdmn_webssh2_ssh_key_content.splitlines() | join('\n') }}"
+    passphrase: "{{ pdmn_webssh2_user_passphrase }}"
+  ssh:
+    host: null
+    auth:
+      publickey: true
+      password: false
+
+pdmn_webssh2_containers:
+    ### container start
+  - name: "{{ pdmn_webssh2_podname }}-server"
+    pod: "{{ pdmn_webssh2_podname }}"
+    image: "ghcr.io/billchurch/webssh2"
+    release: "latest"
+    restart: always
+    env:
+      WEBSSH2_LISTEN_PORT: "{{ pdmn_webssh2_listen_port }}"
+      WEBSSH2_SSH_HOST: "{{ pdmn_webssh2_ssh_host }}"
+      WEBSSH2_SSH_PORT: "{{ pdmn_webssh2_ssh_port | default(22) }}"
+      WEBSSH2_HEADER_TEXT: "{{ pdmn_webssh2_header_text }}"
+      WEBSSH2_HTTP_ORIGINS: "{{ pdmn_webssh2_http_origins | default('*:*') }}"
+      WEBSSH2_SSH_ALGORITHMS_PRESET: modern
+      # WEBSSH2_AUTH_ALLOWED: publickey
+      # WEBSSH2_USER_NAME: "{{ pdmn_webssh2_user_name }}"
+      # WEBSSH2_USER_PRIVATE_KEY: "{{ pdmn_webssh2_ssh_key_content.splitlines() | join('\n') }}"
+      # WEBSSH2_USER_PASSPHRASE: "{{ pdmn_webssh2_user_passphrase }}"
+      # WEBSSH2_USER_PASSWORD: "{{ pdmn_webssh2_user_password }}"
+    volumes:
+      - "{{ pdmn_webssh2_pod_dir }}/srv/webssh2/.ssh:/srv/webssh2/.ssh:Z"    
+    files:
+      - "{{ pdmn_webssh2_pod_dir }}/config.json:/srv/webssh2/config.json:ro"    
+    # healthcheck:
+    #   test: 
+    #     - "CMD"
+    #     - |
+    #       node -e "require('http').get('http://127.0.0.22:2222/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
+    #   interval: 30s
+    #   timeout: 3s
+    #   startperiod: 5s
+    #   retries: 5
+    ### container end

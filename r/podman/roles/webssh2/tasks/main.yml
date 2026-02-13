@@ -1,0 +1,70 @@
+---
+- name: create dirs list
+  ansible.builtin.set_fact:
+    pdmn_webssh2_dirs: |
+      {{
+        pdmn_webssh2_dirs | default([]) +
+        pdmn_webssh2_item.volumes | map('split', ':') | map('first') | map('community.general.dict_kv', 'path')
+      }}
+  loop: "{{ pdmn_webssh2_containers }}"
+  loop_control:
+    loop_var: pdmn_webssh2_item
+    label: "{{ pdmn_webssh2_item.name }}"
+  when: pdmn_webssh2_item.volumes is defined
+
+- name: Create dirs
+  ansible.builtin.file:
+    state: directory
+    owner: "{{ pdmn_webssh2_item.owner | default(pdmn_webssh2_default_owner) }}"
+    group: "{{ pdmn_webssh2_item.group | default(pdmn_webssh2_default_group) }}"
+    mode: "{{ pdmn_webssh2_item.mode | default(pdmn_webssh2_default_dir_mode) }}"
+    path: "{{ pdmn_webssh2_item.path }}"
+  loop: "{{ pdmn_webssh2_dirs }}"
+  loop_control:
+    loop_var: pdmn_webssh2_item
+    label: "{{ pdmn_webssh2_item.path }}"
+
+- name: Pull images
+  containers.podman.podman_image:
+    name: "{{ pdmn_webssh2_item.image }}:{{ pdmn_webssh2_item.release }}"
+    state: present
+  loop: "{{ pdmn_webssh2_containers }}"
+  loop_control:
+    loop_var: pdmn_webssh2_item
+    label: "{{ pdmn_webssh2_item.name }}"
+  ignore_errors: true
+
+- name: config.json
+  ansible.builtin.copy:
+    owner: 1000
+    group: 1000
+    mode: '0600'
+    dest: "{{ pdmn_webssh2_pod_dir }}/config.json"
+    content: "{{ pdmn_webssh2_config | to_nice_json }}"
+
+- name: Create pod
+  containers.podman.podman_pod:
+    state: created
+    name: "{{ pdmn_webssh2_podname }}"
+    publish: "{{ pdmn_webssh2_publish }}"
+
+- name: Run containers
+  containers.podman.podman_container:
+    state: started
+    privileged: true
+    pod: "{{ pdmn_webssh2_item.pod }}"
+    name: "{{ pdmn_webssh2_item.name }}"
+    image: "{{ pdmn_webssh2_item.image }}:{{ pdmn_webssh2_item.release }}"
+    env: "{{ pdmn_webssh2_item.env | default({}) }}"
+    restart_policy: "{{ pdmn_webssh2_item.restart | default('always') }}"
+    requires: "{{ pdmn_webssh2_item.requires | default([]) }}"
+    volume: "{{ (pdmn_webssh2_item.volumes | default([]) + pdmn_webssh2_item.files | default([])) }}"
+    healthcheck: "{{ pdmn_webssh2_item.healthcheck.test[1] | default(omit) }}"
+    healthcheck_interval: "{{ pdmn_webssh2_item.healthcheck.interval | default(omit) }}"
+    healthcheck_timeout: "{{ pdmn_webssh2_item.healthcheck.timeout | default(omit) }}"
+    healthcheck_retries: "{{ pdmn_webssh2_item.healthcheck.retries | default(omit) }}"
+  loop: "{{ pdmn_webssh2_containers }}"
+  loop_control:
+    loop_var: pdmn_webssh2_item
+    label: "{{ pdmn_webssh2_item.name }}"
+  ignore_errors: true

@@ -79,37 +79,37 @@ COMMIT
 {% if firewall_policy_input in ['DROP'] %}
 -A fw4-before-input -i lo -j ACCEPT
 -A fw4-before-input -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
-{% if firewall_policy_input in ['DROP']  %}
-{% if firewall_log_enabled %}
+  {% if firewall_policy_input in ['DROP']  %}
+    {% if firewall_log_enabled %}
 -A fw4-before-input -m conntrack --ctstate INVALID {{ firewall_log_level }} -j LOG --log-prefix "[IPT BLOCK INVALID] "
-{% endif %}
+    {% endif %}
 -A fw4-before-input -m conntrack --ctstate INVALID -j {{ firewall_policy_input }}
-{% endif %}
+  {% endif %}
 -A fw4-before-input -p icmp -m icmp --icmp-type 3 -j ACCEPT
 -A fw4-before-input -p icmp -m icmp --icmp-type 4 -j ACCEPT
 -A fw4-before-input -p icmp -m icmp --icmp-type 11 -j ACCEPT
 -A fw4-before-input -p icmp -m icmp --icmp-type 12 -j ACCEPT
-{% if firewall_echo_request_from_ipv4 is defined %}
+  {% if firewall_echo_request_from_ipv4 is defined %}
 -A fw4-before-input -s {{ firewall_echo_request_from_ipv4 }} -p icmp -m icmp --icmp-type 8 -j ACCEPT
-{% else %}
+  {% else %}
 -A fw4-before-input -p icmp -m icmp --icmp-type 8 -j ACCEPT
-{% endif %}
+  {% endif %}
 -A fw4-before-input -p udp -m udp --sport 67 --dport 68 -j ACCEPT
 -A fw4-before-input -j fw4-not-local
 -A fw4-not-local -m addrtype --dst-type LOCAL -j RETURN
 -A fw4-not-local -m addrtype --dst-type MULTICAST -j RETURN
 -A fw4-not-local -m addrtype --dst-type BROADCAST -j RETURN
-{% if firewall_log_enabled %}
+  {% if firewall_log_enabled %}
 -A fw4-not-local -j fw4-log-deny
 {% endif %}
 -A fw4-not-local -j DROP
-{% endif %}
+  {% endif %}
 
-{% if firewall_policy_input in ['DROP']  %}
-{% if firewall_log_enabled %}
+  {% if firewall_policy_input in ['DROP']  %}
+    {% if firewall_log_enabled %}
 -A fw4-after-input {{ firewall_log_level }} -j LOG --log-prefix "[IPT BLOCK INPUT] "
-{% endif %}
-{% endif %}
+    {% endif %}
+  {% endif %}
 {% endif %}
 
 {% if firewall_policy_forward in ['ACCEPT', 'DROP'] %}

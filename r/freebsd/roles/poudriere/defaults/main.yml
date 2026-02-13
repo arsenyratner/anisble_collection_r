@@ -28,5 +28,13 @@ poudriere_jails:
 
 poudriere_portstrees:
   - treename: default
+
+poudriere_pkglist:
+  - name: pkglist-mc
+    treename: default
     packagelist: |
       misc/mc
+  - name: pkglist-beats7
+    treename: default
+    packagelist: |
+      misc/beats7
